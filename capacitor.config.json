@@ -1,0 +1,17 @@
+{
+  "appId": "com.ellavandurpe.hypernotes",
+  "appName": "Hypernotes",
+  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "limitsNavigationsToAppBoundDomains": true
+  }
+}
