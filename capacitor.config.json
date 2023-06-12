@@ -1,5 +1,5 @@
 {
-  "appId": "com.ellavandurpe.hypernotes",
+  "appId": "com.ellavandurpe.blocknotes",
   "appName": "Blocknotes",
   "bundledWebRuntime": false,
   "webDir": "dist",
