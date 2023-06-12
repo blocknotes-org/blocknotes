@@ -79,7 +79,7 @@ async function onClick() {
       // landingPage: '/wp-admin/plugins.php?plugin_status=mustuse',
       preferredVersions: {
         php: '8.0',
-        wp: 'latest',
+        wp: '6.2',
       },
       steps: [
         {
