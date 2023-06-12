@@ -4,6 +4,8 @@ PODS:
   - CapacitorCordova (5.0.4)
   - CapacitorFilesystem (5.0.4):
     - Capacitor
+  - CapacitorKeyboard (5.0.4):
+    - Capacitor
   - CapacitorSplashScreen (5.0.2):
     - Capacitor
   - Embassy (4.1.4)
@@ -14,6 +16,7 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
+  - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - Embassy (~> 4.1.4)
   - EnvoyAmbassador (~> 4.0.5)
@@ -30,6 +33,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
     :path: "../../node_modules/@capacitor/filesystem"
+  CapacitorKeyboard:
+    :path: "../../node_modules/@capacitor/keyboard"
   CapacitorSplashScreen:
     :path: "../../node_modules/@capacitor/splash-screen"
 
@@ -37,10 +42,11 @@ SPEC CHECKSUMS:
   Capacitor: d3d4463573438b9fa65326d1f3549da6f4c21634
   CapacitorCordova: b1fe6bf1f36974a8e4a9044b342d22d49c0996d6
   CapacitorFilesystem: e1bdfab09b95b181c844c16abcfda45ec8e8ed6b
+  CapacitorKeyboard: d1b25fde6f19744ad09c890862aefc6e2a7ded3d
   CapacitorSplashScreen: d22414cbe4bf1730e35cb06eabc4d3cc2f813148
   Embassy: d752c8de4795d6d7ec0e533cd69b9275917a5211
   EnvoyAmbassador: 21cef10e70d003801c68ba5281948684a4e25486
 
-PODFILE CHECKSUM: 7f61f8f470aef152e48b1c4273ec922c6631ebd2
+PODFILE CHECKSUM: 8d03e4e5c6f28c2895c4cec4bc09f702db9c170e
 
 COCOAPODS: 1.12.1
