@@ -1,8 +1,6 @@
 PODS:
   - Capacitor (5.0.4):
     - CapacitorCordova
-  - CapacitorCamera (5.0.3):
-    - Capacitor
   - CapacitorCordova (5.0.4)
   - CapacitorFilesystem (5.0.4):
     - Capacitor
@@ -11,29 +9,23 @@ PODS:
   - Embassy (4.1.4)
   - EnvoyAmbassador (4.0.5):
     - Embassy (~> 4.0)
-  - Swifter (1.5.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
-  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - Embassy (~> 4.1.4)
   - EnvoyAmbassador (~> 4.0.5)
-  - Swifter (~> 1.5.0)
 
 SPEC REPOS:
   trunk:
     - Embassy
     - EnvoyAmbassador
-    - Swifter
 
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
-  CapacitorCamera:
-    :path: "../../node_modules/@capacitor/camera"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -43,14 +35,12 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: d3d4463573438b9fa65326d1f3549da6f4c21634
-  CapacitorCamera: 3ec48ab5d97b2e16079bd453d68d984b157b06e5
   CapacitorCordova: b1fe6bf1f36974a8e4a9044b342d22d49c0996d6
   CapacitorFilesystem: e1bdfab09b95b181c844c16abcfda45ec8e8ed6b
   CapacitorSplashScreen: d22414cbe4bf1730e35cb06eabc4d3cc2f813148
   Embassy: d752c8de4795d6d7ec0e533cd69b9275917a5211
   EnvoyAmbassador: 21cef10e70d003801c68ba5281948684a4e25486
-  Swifter: e71dd674404923d7f03ebb03f3f222d1c570bc8e
 
-PODFILE CHECKSUM: 5123f1bdb7da46f6daa881b6cff723761aada5c5
+PODFILE CHECKSUM: 7f61f8f470aef152e48b1c4273ec922c6631ebd2
 
 COCOAPODS: 1.12.1
