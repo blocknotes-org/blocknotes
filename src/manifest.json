@@ -1,6 +1,6 @@
 {
-  "name": "Hypernotes",
-  "short_name": "Hypernotes",
+  "name": "Blocknotes",
+  "short_name": "Blocknotes",
   "start_url": "index.html",
   "display": "standalone",
   "icons": [{

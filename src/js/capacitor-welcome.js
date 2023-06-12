@@ -6,7 +6,7 @@ async function onClick() {
 
   const dir = await Filesystem.readdir({
     path: '',
-    directory: Directory.Documents,
+    directory: 'ICLOUD',
   });
 
   for ( const file of dir.files ) {
@@ -14,7 +14,7 @@ async function onClick() {
       console.log(file)
       const text = await Filesystem.readFile({
         path: file.name,
-        directory: Directory.Documents,
+        directory: 'ICLOUD',
         encoding: Encoding.UTF8,
       });
       posts[ file.name.replace( /\.html$/i, '' ) ] = text.data.replace( "'", "\\'" );
@@ -113,13 +113,13 @@ async function onClick() {
     await Filesystem.writeFile({
       path: name + '.html',
       data: content,
-      directory: Directory.Documents,
+      directory: 'ICLOUD',
       encoding: Encoding.UTF8,
     });
     await Filesystem.rename({
       from: name + '.html',
       to: newName + '.html',
-      directory: Directory.Documents,
+      directory: 'ICLOUD',
     });
   } )
 
