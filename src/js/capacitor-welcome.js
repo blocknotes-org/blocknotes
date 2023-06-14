@@ -1,5 +1,8 @@
 import { startPlaygroundWeb } from './client.js';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+StatusBar.setStyle({ style: Style.Dark });
 
 async function onClick() {
   const posts = {};
@@ -142,6 +145,16 @@ add_filter(
 );
 
 add_action( 'admin_menu', function() {
+  remove_menu_page( 'index.php' );
+  remove_menu_page( 'edit.php' );
+  remove_menu_page( 'upload.php' );
+  remove_menu_page( 'edit.php?post_type=page' );
+  remove_menu_page( 'edit-comments.php' );
+  remove_menu_page( 'themes.php' );
+  remove_menu_page( 'plugins.php' );
+  remove_menu_page( 'users.php' );
+  remove_menu_page( 'tools.php' );
+  remove_menu_page( 'options-general.php' );
 	remove_submenu_page( 'edit.php?post_type=hypernote', 'post-new.php?post_type=hypernote' );
 	$terms = get_terms( 'hypernote-folder', array( 'hide_empty' => false ) );
 	foreach ( $terms as $term ) {
@@ -155,6 +168,79 @@ add_action( 'admin_menu', function() {
 			1
 		);
 	}
+} );
+
+add_action( 'admin_init', 'change_admin_color_scheme' );
+
+function change_admin_color_scheme() {
+    $user_id = get_current_user_id();
+    update_user_option( $user_id, 'admin_color', 'modern' );
+}
+
+add_action( 'wp_before_admin_bar_render', 'my_plugin_remove_all_admin_bar_items' );
+
+function my_plugin_remove_all_admin_bar_items() {
+    global $wp_admin_bar;
+    
+    // Get an array of all the toolbar nodes
+    $all_toolbar_nodes = $wp_admin_bar->get_nodes();
+    
+    // Iterate through all the toolbar nodes and remove each one
+    foreach ( $all_toolbar_nodes as $node ) {
+        if ( $node->id === 'top-secondary' ) continue;
+        $wp_admin_bar->remove_node( $node->id );
+    }
+
+    $args = array(
+        'id'    => 'my_button',
+        'title' => '◀ Back',
+        'href'  => '#',
+        'meta'  => array( 'class' => 'my-toolbar-page' )
+    );
+    $wp_admin_bar->add_node( $args );
+
+    $wp_admin_bar->add_node( array(
+        'id'    => 'new-note',
+        'parent' => 'top-secondary',
+        'title' => 'New Note',
+        'href'  => 'post-new.php?post_type=hypernote',
+    ) );
+}
+
+add_action( 'admin_print_scripts', function() {
+  ?>
+  <script type="text/javascript">
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => {
+        document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
+      };
+      window.top.postMessage( 'hypernotes', '*', [
+        channel.port2
+      ] );
+      // listen for load
+      document.addEventListener( 'DOMContentLoaded', function() {
+        document.querySelector( '#wp-admin-bar-my_button' ).style.display = 'block';
+        document.querySelector( '#wp-admin-bar-my_button' ).style.marginLeft = '10px';
+        document.querySelector( '#wp-admin-bar-my_button a' ).addEventListener( 'click', function() {
+          document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
+          event.preventDefault();
+        } );
+      } );
+  </script>
+  <style>
+      body {
+        width: calc( 100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+        height: calc( 100vh - env(safe-area-inset-bottom) );
+        margin-bottom: env(safe-area-inset-bottom);
+        margin-left: env(safe-area-inset-left);
+        margin-right: env(safe-area-inset-right);
+      }
+      #wpadminbar li#wp-admin-bar-new-note {
+        display: block;
+        margin-right: 10px;
+      }
+  </style>
+  <?php
 } );
 
 add_filter( 'parent_file', function( $parent_file ) {
@@ -198,6 +284,17 @@ add_filter( 'wp_insert_post_data', function( $data ) {
 } );
   `;
 
+  let messageChannel = null;
+
+  window.addEventListener( 'message', function( event ) {
+    if ( event.data === 'hypernotes' ) {
+      messageChannel = event.ports[0];
+      window.addEventListener('statusTap', function () {
+        messageChannel.postMessage( 'open' );
+      });
+    }
+  } );
+
   console.log('starting playground...')
 
   const client = await startPlaygroundWeb({
@@ -211,9 +308,6 @@ add_filter( 'wp_insert_post_data', function( $data ) {
       },
       steps: [
         {
-          step: 'login',
-        },
-        {
           step: 'writeFile',
           path: 'wordpress/wp-content/mu-plugins/test.php',
           data: plugin,
@@ -221,6 +315,9 @@ add_filter( 'wp_insert_post_data', function( $data ) {
         {
           step: 'runPHP',
           code: PHP,
+        },
+        {
+          step: 'login',
         },
       ],
     },

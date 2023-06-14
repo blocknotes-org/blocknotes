@@ -14,11 +14,13 @@
   },
   "dependencies": {
     "@capacitor/android": "^5.0.4",
+    "@capacitor/app": "^5.0.3",
     "@capacitor/core": "latest",
     "@capacitor/filesystem": "^5.0.4",
     "@capacitor/ios": "^5.0.4",
     "@capacitor/keyboard": "^5.0.4",
-    "@capacitor/splash-screen": "latest"
+    "@capacitor/splash-screen": "latest",
+    "@capacitor/status-bar": "^5.0.4"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",
