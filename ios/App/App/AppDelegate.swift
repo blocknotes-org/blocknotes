@@ -3,6 +3,93 @@ import Capacitor
 import Embassy
 import EnvoyAmbassador
 
+func createServer(loop: SelectorEventLoop) -> DefaultHTTPServer {
+    return DefaultHTTPServer(eventLoop: loop, interface: "localhost", port: 3000) {
+        (
+            environ: [String: Any],
+            startResponse: ((String, [(String, String)]) -> Void),
+            sendBody: ((Data) -> Void)
+        ) in
+        // Get the requested path
+        let pathInfo = environ["PATH_INFO"] as! String
+        let requestedFile = String(pathInfo.dropFirst()) // drop the leading "/"
+        
+        // Find the corresponding file in the bundle
+        if let filePath = Bundle.main.path(forResource: "public/" + requestedFile, ofType: nil) {
+            let url = URL(fileURLWithPath: filePath)
+
+            // Determine MIME type
+            let pathExtension = url.pathExtension
+            var mimeType: String
+            switch pathExtension {
+            case "html":
+                mimeType = "text/html"
+            case "js":
+                mimeType = "application/javascript"
+            case "css":
+                mimeType = "text/css"
+            case "png":
+                mimeType = "image/png"
+            case "gif":
+                mimeType = "image/gif"
+            case "jpg":
+                mimeType = "image/jpeg"
+            case "svg":
+                mimeType = "image/svg+xml"
+            case "json":
+                mimeType = "application/json"
+            case "woff":
+                mimeType = "font/woff"
+            case "woff2":
+                mimeType = "font/woff2"
+            case "ttf":
+                mimeType = "font/ttf"
+            case "otf":
+                mimeType = "font/otf"
+            case "eot":
+                mimeType = "font/eot"
+            case "ico":
+                mimeType = "image/x-icon"
+            case "map":
+                mimeType = "application/json"
+            case "xml":
+                mimeType = "text/xml"
+            case "webp":
+                mimeType = "image/webp"
+            case "zip":
+                mimeType = "application/zip"
+            case "gz":
+                mimeType = "application/gzip"
+            case "wasm":
+                mimeType = "application/wasm"
+
+            default:
+                mimeType = "text/plain"
+            }
+
+            // Load the file data
+            if let data = try? Data(contentsOf: url) {
+                // Start HTTP response with correct MIME type
+                startResponse("200 OK", [("Content-Type", mimeType)])
+                sendBody(data)
+            } else {
+                print("File could not be read: \(requestedFile)")
+                // Send an error response if the file couldn't be read
+                startResponse("500 Internal Server Error", [("Content-Type", "text/plain")])
+                sendBody(Data("500 Internal Server Error - File could not be read".utf8))
+            }
+        } else {
+            print("File not found: \(requestedFile)")
+            // Send a 404 response if the file couldn't be found
+            startResponse("404 Not Found", [("Content-Type", "text/plain")])
+            sendBody(Data("404 Not Found - File not found".utf8))
+        }
+
+        // send EOF
+        sendBody(Data())
+    }
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -13,96 +100,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("Launching")
-        loop = try! SelectorEventLoop(selector: try! KqueueSelector())
-        server = DefaultHTTPServer(eventLoop: loop, interface: "localhost", port: 3000) {
-            (
-                environ: [String: Any],
-                startResponse: ((String, [(String, String)]) -> Void),
-                sendBody: ((Data) -> Void)
-            ) in
-            // Get the requested path
-            let pathInfo = environ["PATH_INFO"] as! String
-            let requestedFile = String(pathInfo.dropFirst()) // drop the leading "/"
-            
-            // Find the corresponding file in the bundle
-            if let filePath = Bundle.main.path(forResource: "public/" + requestedFile, ofType: nil) {
-                let url = URL(fileURLWithPath: filePath)
-                
-                // Determine MIME type
-                let pathExtension = url.pathExtension
-                var mimeType: String
-                switch pathExtension {
-                case "html":
-                    mimeType = "text/html"
-                case "js":
-                    mimeType = "application/javascript"
-                case "css":
-                    mimeType = "text/css"
-                case "png":
-                    mimeType = "image/png"
-                case "jpg":
-                    mimeType = "image/jpeg"
-                case "svg":
-                    mimeType = "image/svg+xml"
-                case "json":
-                    mimeType = "application/json"
-                case "woff":
-                    mimeType = "font/woff"
-                case "woff2":
-                    mimeType = "font/woff2"
-                case "ttf":
-                    mimeType = "font/ttf"
-                case "otf":
-                    mimeType = "font/otf"
-                case "eot":
-                    mimeType = "font/eot"
-                case "ico":
-                    mimeType = "image/x-icon"
-                case "map":
-                    mimeType = "application/json"
-                case "xml":
-                    mimeType = "text/xml"
-                case "webp":
-                    mimeType = "image/webp"
-                case "zip":
-                    mimeType = "application/zip"
-                case "gz":
-                    mimeType = "application/gzip"
-                case "wasm":
-                    mimeType = "application/wasm"
-
-                default:
-                    mimeType = "text/plain"
-                }
-                
-                // Load the file data
-                if let data = try? Data(contentsOf: url) {
-                    // Start HTTP response with correct MIME type
-                    startResponse("200 OK", [("Content-Type", mimeType)])
-                    sendBody(data)
-                } else {
-                    print("File could not be read: \(requestedFile)")
-                    // Send an error response if the file couldn't be read
-                    startResponse("500 Internal Server Error", [("Content-Type", "text/plain")])
-                    sendBody(Data("500 Internal Server Error - File could not be read".utf8))
-                }
-            } else {
-                print("File not found: \(requestedFile)")
-                // Send a 404 response if the file couldn't be found
-                startResponse("404 Not Found", [("Content-Type", "text/plain")])
-                sendBody(Data("404 Not Found - File not found".utf8))
+        do {
+            loop = try SelectorEventLoop(selector: try KqueueSelector())
+        } catch {
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "Error", message: "Failed to create event loop: \(error)", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                self.window?.rootViewController?.present(alert, animated: true, completion: nil)
             }
-            
-            // send EOF
-            sendBody(Data())
+            return false;
         }
-        
-        DispatchQueue.global(qos: .background).async {
-            do {
-                try self.server.start()
-            } catch {
-                print("Error starting server: \(error)")
+        server = createServer(loop: loop)
+
+        do {
+            try self.server.start()
+        } catch {
+            print("Error starting server: \(error)")
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "Error", message: "Error starting server: \(error)", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                self.window?.rootViewController?.present(alert, animated: true, completion: nil)
             }
+        }
+
+        DispatchQueue.global(qos: .background).async {
             self.loop.runForever()
         }
 
@@ -127,95 +148,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(_ application: UIApplication) {
         print("Entering foreground")
 
-        server = DefaultHTTPServer(eventLoop: loop, interface: "localhost", port: 3000) {
-            (
-                environ: [String: Any],
-                startResponse: ((String, [(String, String)]) -> Void),
-                sendBody: ((Data) -> Void)
-            ) in
-            // Get the requested path
-            let pathInfo = environ["PATH_INFO"] as! String
-            let requestedFile = String(pathInfo.dropFirst()) // drop the leading "/"
-            
-            // Find the corresponding file in the bundle
-            if let filePath = Bundle.main.path(forResource: "public/" + requestedFile, ofType: nil) {
-                let url = URL(fileURLWithPath: filePath)
-                
-                // Determine MIME type
-                let pathExtension = url.pathExtension
-                var mimeType: String
-                switch pathExtension {
-                case "html":
-                    mimeType = "text/html"
-                case "js":
-                    mimeType = "application/javascript"
-                case "css":
-                    mimeType = "text/css"
-                case "png":
-                    mimeType = "image/png"
-                case "jpg":
-                    mimeType = "image/jpeg"
-                case "svg":
-                    mimeType = "image/svg+xml"
-                case "json":
-                    mimeType = "application/json"
-                case "woff":
-                    mimeType = "font/woff"
-                case "woff2":
-                    mimeType = "font/woff2"
-                case "ttf":
-                    mimeType = "font/ttf"
-                case "otf":
-                    mimeType = "font/otf"
-                case "eot":
-                    mimeType = "font/eot"
-                case "ico":
-                    mimeType = "image/x-icon"
-                case "map":
-                    mimeType = "application/json"
-                case "xml":
-                    mimeType = "text/xml"
-                case "webp":
-                    mimeType = "image/webp"
-                case "zip":
-                    mimeType = "application/zip"
-                case "gz":
-                    mimeType = "application/gzip"
-                case "wasm":
-                    mimeType = "application/wasm"
+        server = createServer(loop: loop)
 
-                default:
-                    mimeType = "text/plain"
-                }
-                
-                // Load the file data
-                if let data = try? Data(contentsOf: url) {
-                    // Start HTTP response with correct MIME type
-                    startResponse("200 OK", [("Content-Type", mimeType)])
-                    sendBody(data)
-                } else {
-                    print("File could not be read: \(requestedFile)")
-                    // Send an error response if the file couldn't be read
-                    startResponse("500 Internal Server Error", [("Content-Type", "text/plain")])
-                    sendBody(Data("500 Internal Server Error - File could not be read".utf8))
-                }
-            } else {
-                print("File not found: \(requestedFile)")
-                // Send a 404 response if the file couldn't be found
-                startResponse("404 Not Found", [("Content-Type", "text/plain")])
-                sendBody(Data("404 Not Found - File not found".utf8))
-            }
-            
-            // send EOF
-            sendBody(Data())
+        do {
+            try self.server.start()
+        } catch {
+            print("Error starting server: \(error)")
+            let alert = UIAlertController(title: "Error", message: "Error starting server: \(error)", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            self.window?.rootViewController?.present(alert, animated: true, completion: nil)
         }
-        
+
         DispatchQueue.global(qos: .background).async {
-            do {
-                try self.server.start()
-            } catch {
-                print("Error starting server: \(error)")
-            }
             self.loop.runForever()
         }
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
