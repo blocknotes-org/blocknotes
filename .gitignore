@@ -1,3 +1,13 @@
-node_modules
+dist/*
+node_modules/*
+!node_modules/@capacitor
+node_modules/@capacitor/*
+!node_modules/@capacitor/filesystem
+node_modules/@capacitor/filesystem/*
+!node_modules/@capacitor/filesystem/ios
+!node_modules/@capacitor/filesystem/dist
+node_modules/@capacitor/filesystem/dist/*
+!node_modules/@capacitor/filesystem/dist/esm
+node_modules/@capacitor/filesystem/dist/esm/*
+!node_modules/@capacitor/filesystem/dist/esm/web.js
 .DS_Store
-dist

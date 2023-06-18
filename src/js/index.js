@@ -14,6 +14,7 @@ async function onClick() {
       path: '',
       directory: 'ICLOUD',
     });
+    console.log(dir)
   } catch (e) {
     alert( 'iCloud folder not found. Please sign into iCloud.' );
     return;

@@ -67,7 +67,7 @@ func createServer(loop: SelectorEventLoop) -> DefaultHTTPServer {
                 mimeType = "text/plain"
             }
 
-            // Load the file data
+            // Load the file data    
             if let data = try? Data(contentsOf: url) {
                 // Start HTTP response with correct MIME type
                 startResponse("200 OK", [("Content-Type", mimeType)])
