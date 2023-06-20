@@ -201,10 +201,10 @@ add_action( 'admin_print_scripts', function() {
 	<script type="text/javascript">
 		const channel = new MessageChannel();
 		channel.port1.onmessage = () => {
-		document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
+			document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
 		};
 		window.top.postMessage( 'hypernotes', '*', [
-		channel.port2
+			channel.port2
 		] );
 		// listen for load
 		document.addEventListener( 'DOMContentLoaded', function() {
@@ -212,9 +212,19 @@ add_action( 'admin_print_scripts', function() {
 		document.querySelector( '#wp-admin-bar-my_button' ).style.marginLeft = '10px';
 		document.querySelector( '#wp-admin-bar-my_button a' ).addEventListener( 'click', function() {
 			document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
-			event.preventDefault();
+				event.preventDefault();
+			} );
 		} );
-		} );
+
+		const save = new MessageChannel();
+
+		save.port1.onmessage = ( event ) => {
+			document.querySelector( '.editor-post-publish-button' )?.click();
+		};
+
+		window.top.postMessage( 'blocknotes.save', '*', [
+			save.port2
+		] );
 	</script>
 	<style>
 		body {

@@ -1,8 +1,14 @@
 import { startPlaygroundWeb } from './client.js';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { App } from '@capacitor/app';
 import plugin from './plugin.php?raw';
 import actions from './actions.php?raw';
 import insert from './insert.php?raw';
+
+try {
+  StatusBar.setStyle({ style: Style.Dark });
+} catch (e) {}
 
 const platform = Capacitor.getPlatform();
 const url = new URL( window.location );
@@ -107,13 +113,23 @@ async function load() {
   const data = `<?php $data = json_decode( '${ JSON.stringify( d ).replace( "'", "\\'" ) }', true ); ?>`
 
   let messageChannel = null;
+  let save = null;
 
   window.addEventListener('statusTap', function () {
     messageChannel?.postMessage( 'open' );
   });
+
+  App.addListener('appStateChange', ({ isActive }) => {
+    if ( ! isActive ) {
+      save?.postMessage( '' );
+    }
+  });
+
   window.addEventListener( 'message', function( event ) {
     if ( event.data === 'hypernotes' ) {
       messageChannel = event.ports[0];
+    } else if ( event.data === 'blocknotes.save' ) {
+      save = event.ports[0];
     }
   } );
 

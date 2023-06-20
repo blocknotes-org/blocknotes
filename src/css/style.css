@@ -10,4 +10,5 @@ iframe {
   height: calc( 100vh - env(safe-area-inset-top) );
   margin-top: env(safe-area-inset-top);
   border: 0;
+  background-color: #fff;
 }
