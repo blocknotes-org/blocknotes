@@ -151,15 +151,19 @@ add_action( 'admin_menu', function() {
 		'echo' => false,
 	) );
 
-	add_menu_page(
-		'Manage Folders',
-		'Manage Folders',
-		'read',
-		'edit-tags.php?taxonomy=hypernote-folder&post_type=hypernote',
-		'',
-		'',
-		1
-	);
+	global $platform;
+
+	if ( $platform !== 'web' ) {
+		add_menu_page(
+			'Manage Folders',
+			'Manage Folders',
+			'read',
+			'edit-tags.php?taxonomy=hypernote-folder&post_type=hypernote',
+			'',
+			'',
+			1
+		);
+	}
 }, PHP_INT_MAX );
 
 add_action( 'wp_before_admin_bar_render', 'my_plugin_remove_all_admin_bar_items' );

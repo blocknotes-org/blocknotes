@@ -1,22 +1,63 @@
 import { startPlaygroundWeb } from './client.js';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import plugin from './plugin.php?raw';
 import actions from './actions.php?raw';
 import insert from './insert.php?raw';
 
-StatusBar.setStyle({ style: Style.Dark });
+const platform = Capacitor.getPlatform();
+const url = new URL( window.location );
 
-async function onClick() {
+let port = url.port;
+let protocol = 'http:';
+
+if ( url.protocol === 'https:' ) {
+  protocol = 'https:';
+}
+
+if ( url.hostname === 'localhost' && ! port ) {
+  port = '3000';
+}
+
+async function load() {
+  try {
+    await Filesystem.checkPermissions()
+  } catch (e) {
+    alert( e.message );
+    return;
+  }
+
+  if ( ( await Filesystem.checkPermissions() ).publicStorage === 'prompt' ) {
+    if ( ! ( 'showDirectoryPicker' in window ) ) {
+      document.body.textContent = 'Your browser does not support the File System Access API.';
+      return;
+    }
+
+    const button = document.createElement( 'button' );
+    button.textContent = 'Request File System Permission';
+    button.addEventListener( 'click', async () => {
+      await Filesystem.requestPermissions();
+      button.remove();
+      load();
+    } );
+    document.body.textContent = '';
+    document.body.appendChild( button );
+    button.focus();
+    return;
+  }
+
   let dir = null;
   try {
     dir = await Filesystem.readdir({
       path: '',
       directory: 'ICLOUD',
     });
-    console.log(dir)
   } catch (e) {
-    alert( 'iCloud folder not found. Please sign into iCloud.' );
+    if ( e.message === 'Invalid path' ) {
+      alert( 'iCloud folder not found. Please sign into iCloud.' );
+    } else {
+      alert( e.message );
+    }
+    window.location.reload();
     return;
   }
 
@@ -73,12 +114,16 @@ async function onClick() {
     }
   } );
 
-  console.log('starting playground...')
+  console.log(`Starting Playground at ${protocol}//${url.hostname}${port?':':''}${port}/remote.html...`)
+
+  const wp = document.createElement( 'iframe' );
+  document.body.textContent = '';
+  document.body.appendChild( wp );
 
   try {
     const client = await startPlaygroundWeb({
       iframe: wp,
-      remoteUrl: `http://localhost:3000/remote.html`,
+      remoteUrl: `${protocol}//${url.hostname}${port?':':''}${port}/remote.html`,
       blueprint: {
         landingPage: '/wp-admin/edit.php?post_type=hypernote',
         preferredVersions: {
@@ -89,7 +134,7 @@ async function onClick() {
           {
             step: 'writeFile',
             path: 'wordpress/wp-content/mu-plugins/hypernotes.php',
-            data: plugin,
+            data: `<?php global $platform; $platform = '${ platform }'; ?>${ plugin }`,
           },
           {
             step: 'runPHP',
@@ -150,4 +195,4 @@ async function onClick() {
   }
 }
 
-onClick();
+load();
