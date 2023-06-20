@@ -27,11 +27,6 @@ async function load() {
   }
 
   if ( ( await Filesystem.checkPermissions() ).publicStorage === 'prompt' ) {
-    if ( ! ( 'showDirectoryPicker' in window ) ) {
-      document.body.textContent = 'Your browser does not support the File System Access API.';
-      return;
-    }
-
     const button = document.createElement( 'button' );
     button.textContent = 'Request File System Permission';
     button.addEventListener( 'click', async () => {
@@ -61,6 +56,8 @@ async function load() {
     return;
   }
 
+  let dotICloud = false;
+
   // Recursively read all files in the iCloud folder
   async function readDirRecursive( dir, name, children ) {
     for ( const file of dir.files ) {
@@ -88,6 +85,8 @@ async function load() {
           content: text.data,
           title: file.name.replace( /\.block\.html$/i, '' ),
         } );
+      } else if ( file.name.endsWith( '.icloud' ) ) {
+        dotICloud = true;
       }
     }
   }
@@ -99,6 +98,10 @@ async function load() {
   } catch (e) {
     alert( e.message );
     return;
+  }
+
+  if ( dotICloud ) {
+    alert( 'There are files in your iCloud folder that are not downloaded. You might want to download them and restart the app.' );
   }
 
   const data = `<?php $data = json_decode( '${ JSON.stringify( d ).replace( "'", "\\'" ) }', true ); ?>`
