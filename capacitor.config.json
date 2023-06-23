@@ -12,6 +12,7 @@
     "androidScheme": "https"
   },
   "ios": {
-    "limitsNavigationsToAppBoundDomains": true
+    "limitsNavigationsToAppBoundDomains": true,
+    "webContentsDebuggingEnabled": true
   }
 }

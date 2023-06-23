@@ -1,130 +1,48 @@
 import UIKit
 import Capacitor
-import Embassy
-import EnvoyAmbassador
-
-func createServer(loop: SelectorEventLoop) -> DefaultHTTPServer {
-    return DefaultHTTPServer(eventLoop: loop, interface: "localhost", port: 3000) {
-        (
-            environ: [String: Any],
-            startResponse: ((String, [(String, String)]) -> Void),
-            sendBody: ((Data) -> Void)
-        ) in
-        // Get the requested path
-        let pathInfo = environ["PATH_INFO"] as! String
-        let requestedFile = String(pathInfo.dropFirst()) // drop the leading "/"
-        
-        // Find the corresponding file in the bundle
-        if let filePath = Bundle.main.path(forResource: "public/" + requestedFile, ofType: nil) {
-            let url = URL(fileURLWithPath: filePath)
-
-            // Determine MIME type
-            let pathExtension = url.pathExtension
-            var mimeType: String
-            switch pathExtension {
-            case "html":
-                mimeType = "text/html"
-            case "js":
-                mimeType = "application/javascript"
-            case "css":
-                mimeType = "text/css"
-            case "png":
-                mimeType = "image/png"
-            case "gif":
-                mimeType = "image/gif"
-            case "jpg":
-                mimeType = "image/jpeg"
-            case "svg":
-                mimeType = "image/svg+xml"
-            case "json":
-                mimeType = "application/json"
-            case "woff":
-                mimeType = "font/woff"
-            case "woff2":
-                mimeType = "font/woff2"
-            case "ttf":
-                mimeType = "font/ttf"
-            case "otf":
-                mimeType = "font/otf"
-            case "eot":
-                mimeType = "font/eot"
-            case "ico":
-                mimeType = "image/x-icon"
-            case "map":
-                mimeType = "application/json"
-            case "xml":
-                mimeType = "text/xml"
-            case "webp":
-                mimeType = "image/webp"
-            case "zip":
-                mimeType = "application/zip"
-            case "gz":
-                mimeType = "application/gzip"
-            case "wasm":
-                mimeType = "application/wasm"
-
-            default:
-                mimeType = "text/plain"
-            }
-
-            // Load the file data    
-            if let data = try? Data(contentsOf: url) {
-                // Start HTTP response with correct MIME type
-                startResponse("200 OK", [("Content-Type", mimeType)])
-                sendBody(data)
-            } else {
-                print("File could not be read: \(requestedFile)")
-                // Send an error response if the file couldn't be read
-                startResponse("500 Internal Server Error", [("Content-Type", "text/plain")])
-                sendBody(Data("500 Internal Server Error - File could not be read".utf8))
-            }
-        } else {
-            print("File not found: \(requestedFile)")
-            // Send a 404 response if the file couldn't be found
-            startResponse("404 Not Found", [("Content-Type", "text/plain")])
-            sendBody(Data("404 Not Found - File not found".utf8))
-        }
-
-        // send EOF
-        sendBody(Data())
-    }
-}
+import Vapor
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var app: Application!
+    var environment: Environment!
 
-    var server: DefaultHTTPServer!
-    var loop: SelectorEventLoop!
+    func configureMiddlewares(app: Application) {
+        // Use FileMiddleware to serve files from the app bundle
+        if let bundlePath = Bundle.main.resourcePath {
+            let publicDirectory = bundlePath + "/public/"
+            let fileMiddleware = FileMiddleware(publicDirectory: publicDirectory)
+            app.middleware.use(fileMiddleware)
+        }
+    }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("Launching")
+        
         do {
-            loop = try SelectorEventLoop(selector: try KqueueSelector())
+            self.environment = try Environment.detect()
+            try LoggingSystem.bootstrap(from: &environment)
         } catch {
-            DispatchQueue.main.async {
-                let alert = UIAlertController(title: "Error", message: "Failed to create event loop: \(error)", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-            }
-            return false;
-        }
-        server = createServer(loop: loop)
-
-        do {
-            try self.server.start()
-        } catch {
-            print("Error starting server: \(error)")
-            DispatchQueue.main.async {
-                let alert = UIAlertController(title: "Error", message: "Error starting server: \(error)", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-            }
+            print("Failed to bootstrap logging: \(error)")
         }
 
-        DispatchQueue.global(qos: .background).async {
-            self.loop.runForever()
+        self.app = Application(self.environment)
+        self.configureMiddlewares(app: app)
+        app.http.server.configuration.hostname = "localhost"
+        app.http.server.configuration.port = 3000
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try self.app.run()
+            } catch {
+                DispatchQueue.main.async {
+                    let alert = UIAlertController(title: "Error", message: "Failed to start Vapor server: \(error)", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.window?.rootViewController?.present(alert, animated: true, completion: nil)
+                }
+            }
         }
 
         // Override point for customization after application launch.
@@ -139,28 +57,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         print("Entering background")
-        self.server.stop()
-        self.loop.stop()
+        self.app.shutdown()
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         print("Entering foreground")
+        self.app = Application(self.environment)
+        self.configureMiddlewares(app: app)
+        app.http.server.configuration.hostname = "localhost"
+        app.http.server.configuration.port = 3000
 
-        server = createServer(loop: loop)
-
-        do {
-            try self.server.start()
-        } catch {
-            print("Error starting server: \(error)")
-            let alert = UIAlertController(title: "Error", message: "Error starting server: \(error)", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-        }
-
-        DispatchQueue.global(qos: .background).async {
-            self.loop.runForever()
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try self.app.run()
+            } catch {
+                DispatchQueue.main.async {
+                    let alert = UIAlertController(title: "Error", message: "Failed to start Vapor server: \(error)", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.window?.rootViewController?.present(alert, animated: true, completion: nil)
+                }
+            }
         }
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
     }
@@ -172,8 +90,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         print("Terminating")
-        self.server.stop()
-        self.loop.stop()
     }
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {

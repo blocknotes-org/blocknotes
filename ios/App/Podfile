@@ -20,8 +20,6 @@ end
 
 target 'Blocknotes' do
   capacitor_pods
-  pod 'Embassy', '~> 4.1.4'
-  pod 'EnvoyAmbassador', '~> 4.0.5'
   # Add your Pods here
 end
 

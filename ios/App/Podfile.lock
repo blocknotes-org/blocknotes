@@ -12,9 +12,6 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (5.0.4):
     - Capacitor
-  - Embassy (4.1.4)
-  - EnvoyAmbassador (4.0.5):
-    - Embassy (~> 4.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -24,13 +21,6 @@ DEPENDENCIES:
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
-  - Embassy (~> 4.1.4)
-  - EnvoyAmbassador (~> 4.0.5)
-
-SPEC REPOS:
-  trunk:
-    - Embassy
-    - EnvoyAmbassador
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -56,9 +46,7 @@ SPEC CHECKSUMS:
   CapacitorKeyboard: d1b25fde6f19744ad09c890862aefc6e2a7ded3d
   CapacitorSplashScreen: d22414cbe4bf1730e35cb06eabc4d3cc2f813148
   CapacitorStatusBar: 190e0321b8734f4244d0c81baa183a00d5806ddf
-  Embassy: d752c8de4795d6d7ec0e533cd69b9275917a5211
-  EnvoyAmbassador: 21cef10e70d003801c68ba5281948684a4e25486
 
-PODFILE CHECKSUM: 5dde9e1f9f8404f82e9188f00cceda2e2ee2d52f
+PODFILE CHECKSUM: abd01b8c901ca519a60d3e1698315f2444465d64
 
 COCOAPODS: 1.12.1
