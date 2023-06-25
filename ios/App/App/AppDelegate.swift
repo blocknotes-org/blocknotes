@@ -1,49 +1,13 @@
 import UIKit
 import Capacitor
-import Vapor
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    var app: Application!
-    var environment: Environment!
-
-    func configureMiddlewares(app: Application) {
-        // Use FileMiddleware to serve files from the app bundle
-        if let bundlePath = Bundle.main.resourcePath {
-            let publicDirectory = bundlePath + "/public/"
-            let fileMiddleware = FileMiddleware(publicDirectory: publicDirectory)
-            app.middleware.use(fileMiddleware)
-        }
-    }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("Launching")
-        
-        do {
-            self.environment = try Environment.detect()
-            try LoggingSystem.bootstrap(from: &environment)
-        } catch {
-            print("Failed to bootstrap logging: \(error)")
-        }
-
-        self.app = Application(self.environment)
-        self.configureMiddlewares(app: app)
-        app.http.server.configuration.hostname = "localhost"
-        app.http.server.configuration.port = 3000
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try self.app.run()
-            } catch {
-                DispatchQueue.main.async {
-                    let alert = UIAlertController(title: "Error", message: "Failed to start Vapor server: \(error)", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                    self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-                }
-            }
-        }
 
         // Override point for customization after application launch.
         return true
@@ -57,29 +21,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         print("Entering background")
-        self.app.shutdown()
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         print("Entering foreground")
-        self.app = Application(self.environment)
-        self.configureMiddlewares(app: app)
-        app.http.server.configuration.hostname = "localhost"
-        app.http.server.configuration.port = 3000
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try self.app.run()
-            } catch {
-                DispatchQueue.main.async {
-                    let alert = UIAlertController(title: "Error", message: "Failed to start Vapor server: \(error)", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                    self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-                }
-            }
-        }
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
     }
 

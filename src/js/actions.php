@@ -1,9 +1,11 @@
 <?php
 
-add_filter( 'wp_insert_post_data', function( $data ) {
+add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 	if ( $data['post_type'] !== 'hypernote' ) return $data;
 	if ( $data['post_status'] !== 'private' ) return $data;
-	$blocks = parse_blocks( $data['post_content'] );
+	$post_title = wp_unslash( $data['post_title'] );
+	$post_content = wp_unslash( $data['post_content'] );
+	$blocks = parse_blocks( $post_content );
 
 	$i = 0;
 	$text = '';
@@ -17,14 +19,19 @@ add_filter( 'wp_insert_post_data', function( $data ) {
 		}
 	}
 	if ( ! $text ) return $data;
+	$path = get_taxonomy_hierarchy( (int) wp_get_object_terms( (int) $postarr['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) )[0] );
+	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $postarr['ID'], $data['post_status'], $data['post_type'], (int) $data['post_parent'] );
 	post_message_to_js( json_encode( array(
-		'name' => $data['post_title'],
-		'newName' => $text,
-		'content' => $data['post_content'],
+		'name' => $post_title,
+		'newName' => $new_name,
+		'content' => $post_content,
+		'path' => $path,
+		'newPath' => $path,
 	) ) );
-	$data['post_title'] = $text;
+	$data['post_title'] = $new_name;
+	$data['post_name'] = $new_name;
 	return $data;
-} );
+}, 10, 2 );
 
 function get_taxonomy_hierarchy($term_id) {
 	$taxonomy_titles = [];

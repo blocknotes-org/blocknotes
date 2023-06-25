@@ -1,4 +1,4 @@
-import { startPlaygroundWeb } from './client.js';
+import { main } from './pg.js';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
@@ -11,18 +11,6 @@ try {
 } catch (e) {}
 
 const platform = Capacitor.getPlatform();
-const url = new URL( window.location );
-
-let port = url.port;
-let protocol = 'http:';
-
-if ( url.protocol === 'https:' ) {
-  protocol = 'https:';
-}
-
-if ( url.hostname === 'localhost' && ! port ) {
-  port = '3000';
-}
 
 async function load() {
   try {
@@ -80,7 +68,7 @@ async function load() {
           path: [ ...name, file.name ].join( '/' ),
           directory: 'ICLOUD',
         }), [ ...name, file.name ], item.children );
-      } else if ( file.name.endsWith( '.block.html' ) ) {
+      } else if ( file.name.endsWith( '.html' ) ) {
         const text = await Filesystem.readFile({
           path: [ ...name, file.name ].join( '/' ),
           directory: 'ICLOUD',
@@ -89,7 +77,7 @@ async function load() {
         children.push( {
           type: 'note',
           content: text.data,
-          title: file.name.replace( /\.block\.html$/i, '' ),
+          title: file.name.replace( /\.html$/i, '' ),
         } );
       } else if ( file.name.endsWith( '.icloud' ) ) {
         dotICloud = true;
@@ -109,8 +97,6 @@ async function load() {
   if ( dotICloud ) {
     alert( 'There are files in your iCloud folder that are not downloaded. You might want to download them and restart the app.' );
   }
-
-  const data = `<?php $data = json_decode( '${ JSON.stringify( d ).replace( "'", "\\'" ) }', true ); ?>`
 
   let messageChannel = null;
   let save = null;
@@ -133,85 +119,81 @@ async function load() {
     }
   } );
 
-  console.log(`Starting Playground at ${protocol}//${url.hostname}${port?':':''}${port}/remote.html...`)
+  const {php, request} = await main();
 
-  const wp = document.createElement( 'iframe' );
-  document.body.textContent = '';
-  document.body.appendChild( wp );
+  await php.writeFile(
+    '/wordpress/wp-content/mu-plugins/hypernotes.php',
+    `<?php global $platform; $platform = '${ platform }'; ?>${ plugin }`
+  );
 
-  try {
-    const client = await startPlaygroundWeb({
-      iframe: wp,
-      remoteUrl: `${protocol}//${url.hostname}${port?':':''}${port}/remote.html`,
-      blueprint: {
-        landingPage: '/wp-admin/edit.php?post_type=hypernote',
-        preferredVersions: {
-          php: '8.2',
-          wp: '6.2',
-        },
-        steps: [
-          {
-            step: 'writeFile',
-            path: 'wordpress/wp-content/mu-plugins/hypernotes.php',
-            data: `<?php global $platform; $platform = '${ platform }'; ?>${ plugin }`,
-          },
-          {
-            step: 'runPHP',
-            code: data + insert,
-          },
-          {
-            step: 'writeFile',
-            path: 'wordpress/wp-content/mu-plugins/actions.php',
-            data: actions,
-          },
-          {
-            step: 'login',
-          },
-        ],
-      },
-    });
-    client.onMessage( async ( data ) => {
-      const { name, content, newName, newPath, path } = JSON.parse( data );
-  
-      console.log( name, newName, newPath, path )
-  
-      try {
-        if ( newPath ) {
-          if ( path ) {
-            const file = name ? '/' + name + '.block.html' : '';
-            await Filesystem.rename({
-              from: path.join( '/' ) + file,
-              to: newPath.join( '/' ) + file,
+  await php.writeFile(
+    '/wordpress/temp.json',
+    JSON.stringify( d )
+  );
+
+  await php.run( { code: insert } );
+
+  await php.writeFile(
+    '/wordpress/wp-content/mu-plugins/actions.php',
+    actions
+  );
+
+  php.onMessage( async ( data ) => {
+    const { name, content, newName, newPath, path, debug } = JSON.parse( data );
+
+    console.log( {name, newName, newPath, path, debug} )
+
+    try {
+      if ( newPath ) {
+        if ( path ) {
+          const file = name ? '/' + name + '.html' : '';
+
+          if ( content && file ) {
+            console.log( 'writing file', path.join( '/' ) + file );
+            await Filesystem.writeFile({
+              path: path.join( '/' ) + file,
+              data: content,
               directory: 'ICLOUD',
-            });
-          } else {
-            await Filesystem.mkdir({
-              path: newPath.join( '/' ),
-              directory: 'ICLOUD',
-              recursive: true,
+              encoding: Encoding.UTF8,
             });
           }
-        } else {
-          await Filesystem.writeFile({
-            path: name + '.block.html',
-            data: content,
-            directory: 'ICLOUD',
-            encoding: Encoding.UTF8,
-          });
+
+          const newFile = newName ? '/' + newName + '.html' : file
+
+          console.log( 'renaming file', path.join( '/' ) + file, newPath.join( '/' ) + newFile );
           await Filesystem.rename({
-            from: name + '.block.html',
-            to: newName + '.block.html',
+            from: path.join( '/' ) + file,
+            to: newPath.join( '/' ) + newFile,
             directory: 'ICLOUD',
+          });
+        } else {
+          await Filesystem.mkdir({
+            path: newPath.join( '/' ),
+            directory: 'ICLOUD',
+            recursive: true,
           });
         }
-      } catch (e) {
-        alert( e.message );
+      } else {
+        await Filesystem.writeFile({
+          path: name + '.html',
+          data: content,
+          directory: 'ICLOUD',
+          encoding: Encoding.UTF8,
+        });
+        await Filesystem.rename({
+          from: name + '.html',
+          to: newName + '.html',
+          directory: 'ICLOUD',
+        });
       }
-    } );
-  } catch (e) {
-    alert( 'Failed starting Playground. ' + e.message );
-    return;
-  }
+    } catch (e) {
+      alert( e.message );
+    }
+  } );
+
+  await request( {
+    url: '/wp-admin/edit.php?post_type=hypernote'
+  } )
 }
 
 load();

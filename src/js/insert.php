@@ -2,6 +2,9 @@
 
 include 'wordpress/wp-load.php';
 
+$data = file_get_contents('wordpress/temp.json');
+$data = json_decode($data, true);
+
 function insert_items($items, $taxonomy, $parent_term_id = 0) {
     foreach ($items as $item) {
         if ($item['type'] === 'folder') {
@@ -21,8 +24,9 @@ function insert_items($items, $taxonomy, $parent_term_id = 0) {
             // Insert the note as a post and set the term as its parent
             $post_id = wp_insert_post([
 				'post_type' => 'hypernote',
-                'post_title'   => $item['title'],
-                'post_content' => $item['content'],
+                'post_title'   => wp_slash( $item['title'] ),
+                'post_name'    => wp_slash( $item['title'] ),
+                'post_content' => wp_slash( $item['content'] ),
                 'post_status'  => 'private',
                 'post_author'  => 1,
             ]);

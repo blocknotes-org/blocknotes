@@ -59,6 +59,29 @@ add_action( 'init', function() {
 	) );
 } );
 
+add_filter( 'the_title', function( $title, $id ) {
+	if ( get_post_type( $id ) !== 'hypernote' ) {
+        return $title;
+    }
+
+	$post = get_post( $id );
+	$blocks = parse_blocks( $post->post_content );
+
+	$i = 0;
+	$text = '';
+
+	while ( isset( $blocks[ $i ] ) ) {
+		$text = wp_trim_words( $blocks[ $i ]['innerHTML'], 10 );
+		$i++;
+
+		if ( $text ) {
+			break;
+		}
+	}
+ 
+    return $text;
+}, 10, 2 );
+
 add_filter( 'wp_insert_post_data', function( $post ) {
 	if ( $post['post_type'] == 'hypernote' && $post[ 'post_status' ] !== 'trash' ) {
 		$post[ 'post_status' ] = 'private';
