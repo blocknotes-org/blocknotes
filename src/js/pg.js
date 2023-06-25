@@ -157,6 +157,24 @@ add_filter( 'set_url_scheme', function( $url ) {
                 return;
             }
 
+            let returnValue;
+            const beforeUnloadEvent = new Event('beforeunload');
+            
+            Object.defineProperty(beforeUnloadEvent, 'returnValue', {
+                set( value ) {
+                    returnValue = value;
+                },
+            });
+
+            iframe.contentWindow.dispatchEvent(beforeUnloadEvent);
+
+            if ( typeof returnValue === 'string' ) {
+                const confirmResult = confirm( returnValue );
+                if ( ! confirmResult ) {
+                    return;
+                }
+            }
+
             console.log( 'clicked link', target.href )
 
             event.preventDefault();

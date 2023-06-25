@@ -3,30 +3,39 @@
 add_action( 'init', function() {
 	register_post_type( 'hypernote', array(
 		'labels' => array(
-			'name' => _x( 'Notes', 'Post type general name', 'hypernotes' ),
-			'singular_name' => _x( 'Note', 'Post type singular name', 'hypernotes' ),
-			'menu_name' => _x( 'Notes', 'Admin Menu text', 'hypernotes' ),
-			'name_admin_bar' => _x( 'Notes', 'Add New on Toolbar', 'hypernotes' ),
+			'name' => __( 'Notes', 'hypernotes' ),
+			'singular_name' => __( 'Note', 'hypernotes' ),
 			'add_new' => __( 'Add New', 'hypernotes' ),
 			'add_new_item' => __( 'Add New Note', 'hypernotes' ),
-			'new_item' => __( 'New Note', 'hypernotes' ),
 			'edit_item' => __( 'Edit Note', 'hypernotes' ),
+			'new_item' => __( 'New Note', 'hypernotes' ),
 			'view_item' => __( 'View Note', 'hypernotes' ),
-			'all_items' => __( 'All Notes', 'hypernotes' ),
+			'view_items' => __( 'View Notes', 'hypernotes' ),
 			'search_items' => __( 'Search Notes', 'hypernotes' ),
-			'parent_item_colon' => __( 'Parent Notes:', 'hypernotes' ),
 			'not_found' => __( 'No notes found.', 'hypernotes' ),
 			'not_found_in_trash' => __( 'No notes found in Trash.', 'hypernotes' ),
-			'featured_image' => _x( 'Note Cover Image', 'Overrides the â€œFeatured Imageâ€ phrase for this post type. Added in 4.3', 'hypernotes' ),
-			'set_featured_image' => _x( 'Set cover image', 'Overrides the â€œSet featured imageâ€ phrase for this post type. Added in 4.3', 'hypernotes' ),
-			'remove_featured_image' => _x( 'Remove cover image', 'Overrides the â€œRemove featured imageâ€ phrase for this post type. Added in 4.3', 'hypernotes' ),
-			'use_featured_image' => _x( 'Use as cover image', 'Overrides the â€œUse as featured imageâ€ phrase for this post type. Added in 4.3', 'hypernotes' ),
-			'archives' => _x( 'Note archives', 'The post type archive label used in nav menus. Default â€œPost Archivesâ€. Added in 4.4', 'hypernotes' ),
-			'insert_into_item' => _x( 'Insert into note', 'Overrides the â€œInsert into postâ€/â€Insert into pageâ€ phrase (used when inserting media into a post). Added in 4.4', 'hypernotes' ),
-			'uploaded_to_this_item' => _x( 'Uploaded to this note', 'Overrides the â€œUploaded to this postâ€/â€Uploaded to this pageâ€ phrase (used when viewing media attached to a post). Added in 4.4', 'hypernotes' ),
-			'filter_items_list' => _x( 'Filter notes list', 'Screen reader text for the filter links heading on the post type listing screen. Default â€œFilter posts listâ€/â€Filter pages listâ€. Added in 4.4', 'hypernotes' ),
-			'items_list_navigation' => _x( 'Notes list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default â€œPosts list navigationâ€/â€Pages list navigationâ€. Added in 4.4', 'hypernotes' ),
-			'items_list' => _x( 'Notes list', 'Screen reader text for the items list heading on the post type listing screen. Default â€œPosts listâ€/â€Pages listâ€. Added in 4.4', 'hypernotes' )
+			'parent_item_colon' => __( 'Parent Note:', 'hypernotes' ),
+			'all_items' => __( 'All Notes', 'hypernotes' ),
+			'archives' => __( 'Note Archives', 'hypernotes' ),
+			'attributes' => __( 'Note Attributes', 'hypernotes' ),
+			'insert_into_item' => __( 'Insert into note', 'hypernotes' ),
+			'uploaded_to_this_item' => __( 'Uploaded to this note', 'hypernotes' ),
+			'featured_image' => __( 'Note Cover Image', 'hypernotes' ),
+			'set_featured_image' => __( 'Set cover image', 'hypernotes' ),
+			'remove_featured_image' => __( 'Remove cover image', 'hypernotes' ),
+			'use_featured_image' => __( 'Use as cover image', 'hypernotes' ),
+			'menu_name' => __( 'Notes', 'hypernotes' ),
+			'filter_items_list' => __( 'Filter notes list', 'hypernotes' ),
+			'filter_by_date' => __( 'Filter by date', 'hypernotes' ),
+			'items_list_navigation' => __( 'Notes list navigation', 'hypernotes' ),
+			'items_list' => __( 'Notes list', 'hypernotes' ),
+			'item_published' => __( 'Note published.', 'hypernotes' ),
+			'item_published_privately' => __( 'Note published privately.', 'hypernotes' ),
+			'item_reverted_to_draft' => __( 'Note reverted to draft.', 'hypernotes' ),
+			'item_scheduled' => __( 'Note scheduled.', 'hypernotes' ),
+			'item_updated' => __( 'Note updated.', 'hypernotes' ),
+			'item_link' => __( 'Note Link', 'hypernotes' ),
+			'item_link_description' => __( 'A link to a note.', 'hypernotes' ),
 		),
 		'show_ui' => true,
 		'supports' => array( 'editor' ),
@@ -184,7 +193,7 @@ add_action( 'admin_menu', function() {
 			'edit-tags.php?taxonomy=hypernote-folder&post_type=hypernote',
 			'',
 			'',
-			1
+			999
 		);
 	}
 }, PHP_INT_MAX );
@@ -204,8 +213,8 @@ function my_plugin_remove_all_admin_bar_items() {
 	}
 
 	$args = array(
-		'id'    => 'my_button',
-		'title' => '◀ Back',
+		'id'    => 'menu-toggle',
+		'title' => '',
 		'href'  => '#',
 		'meta'  => array( 'class' => 'my-toolbar-page' )
 	);
@@ -224,19 +233,15 @@ add_action( 'admin_print_scripts', function() {
 	<script type="text/javascript">
 		const channel = new MessageChannel();
 		channel.port1.onmessage = () => {
-			document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
+			document.getElementById( 'wp-admin-bar-menu-toggle' )?.click();
+			document.getElementById( 'wp-admin-bar-menu-toggle' )?.focus();
 		};
 		window.top.postMessage( 'hypernotes', '*', [
 			channel.port2
 		] );
-		// listen for load
 		document.addEventListener( 'DOMContentLoaded', function() {
-		document.querySelector( '#wp-admin-bar-my_button' ).style.display = 'block';
-		document.querySelector( '#wp-admin-bar-my_button' ).style.marginLeft = '10px';
-		document.querySelector( '#wp-admin-bar-my_button a' ).addEventListener( 'click', function() {
-			document.getElementById( 'wpwrap' ).classList.toggle( 'wp-responsive-open' );
-				event.preventDefault();
-			} );
+			// Fixes issue where clicking the menu button won't collapse the menu.
+			document.getElementById( 'wp-admin-bar-menu-toggle' ).addEventListener( 'click', ( event ) => event.target.focus(), true );
 		} );
 
 		const save = new MessageChannel();
@@ -257,9 +262,22 @@ add_action( 'admin_print_scripts', function() {
 			margin-left: env(safe-area-inset-left);
 			margin-right: env(safe-area-inset-right);
 		}
+
+		#wp-admin-bar-menu-toggle [aria-expanded="false"]:after {
+			content: '◀ Folders';
+		}
+
+		#wp-admin-bar-menu-toggle [aria-expanded="true"]:after {
+			content: '▶ Back';
+		}
+
 		#wpadminbar li#wp-admin-bar-new-note {
 			display: block;
-			margin-right: 10px;
+		}
+
+		#wpadminbar li#wp-admin-bar-menu-toggle a,
+		#wpadminbar li#wp-admin-bar-new-note a {
+			padding: 0 10px;
 		}
 
 		#adminmenu div.wp-menu-name {

@@ -19,7 +19,13 @@ add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 		}
 	}
 	if ( ! $text ) return $data;
-	$path = get_taxonomy_hierarchy( (int) wp_get_object_terms( (int) $postarr['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) )[0] );
+	$terms = wp_get_object_terms( (int) $postarr['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
+
+	if ( is_wp_error( $terms ) ) {
+		$terms = [];
+	}
+
+	$path = get_taxonomy_hierarchy( (int) $terms[0] );
 	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $postarr['ID'], $data['post_status'], $data['post_type'], (int) $data['post_parent'] );
 	post_message_to_js( json_encode( array(
 		'name' => $post_title,
