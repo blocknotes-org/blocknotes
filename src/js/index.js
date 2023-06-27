@@ -1,10 +1,12 @@
 import { main } from './pg.js';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem } from '@capacitor/filesystem';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
 import plugin from './plugin.php?raw';
 import actions from './actions.php?raw';
 import insert from './insert.php?raw';
+import { getData } from './get-data.js';
+import { saveData } from './save-data.js';
 
 try {
   StatusBar.setStyle({ style: Style.Dark });
@@ -34,12 +36,9 @@ async function load() {
     return;
   }
 
-  let dir = null;
+  let d;
   try {
-    dir = await Filesystem.readdir({
-      path: '',
-      directory: 'ICLOUD',
-    });
+    d = await getData();
   } catch (e) {
     if ( e.message === 'Invalid path' ) {
       alert( 'iCloud folder not found. Please sign into iCloud.' );
@@ -48,54 +47,6 @@ async function load() {
     }
     window.location.reload();
     return;
-  }
-
-  let dotICloud = false;
-
-  // Recursively read all files in the iCloud folder
-  async function readDirRecursive( dir, name, children ) {
-    for ( const file of dir.files ) {
-      console.log(file, name)
-      if ( file.type === 'directory' ) {
-        if ( file.name.startsWith( '.' ) ) continue;
-        const item = {
-          type: 'folder',
-          name: file.name,
-          children: [],
-        };
-        children.push( item );
-        await readDirRecursive( await Filesystem.readdir({
-          path: [ ...name, file.name ].join( '/' ),
-          directory: 'ICLOUD',
-        }), [ ...name, file.name ], item.children );
-      } else if ( file.name.endsWith( '.html' ) ) {
-        const text = await Filesystem.readFile({
-          path: [ ...name, file.name ].join( '/' ),
-          directory: 'ICLOUD',
-          encoding: Encoding.UTF8,
-        });
-        children.push( {
-          type: 'note',
-          content: text.data,
-          title: file.name.replace( /\.html$/i, '' ),
-        } );
-      } else if ( file.name.endsWith( '.icloud' ) ) {
-        dotICloud = true;
-      }
-    }
-  }
-
-  const d = [];
-
-  try {
-    await readDirRecursive( dir, [], d );
-  } catch (e) {
-    alert( e.message );
-    return;
-  }
-
-  if ( dotICloud ) {
-    alert( 'There are files in your iCloud folder that are not downloaded. You might want to download them and restart the app.' );
   }
 
   let messageChannel = null;
@@ -144,48 +95,7 @@ async function load() {
     console.log( {name, newName, newPath, path, debug} )
 
     try {
-      if ( newPath ) {
-        if ( path ) {
-          const file = name ? '/' + name + '.html' : '';
-
-          if ( content && file ) {
-            console.log( 'writing file', path.join( '/' ) + file );
-            await Filesystem.writeFile({
-              path: path.join( '/' ) + file,
-              data: content,
-              directory: 'ICLOUD',
-              encoding: Encoding.UTF8,
-            });
-          }
-
-          const newFile = newName ? '/' + newName + '.html' : file
-
-          console.log( 'renaming file', path.join( '/' ) + file, newPath.join( '/' ) + newFile );
-          await Filesystem.rename({
-            from: path.join( '/' ) + file,
-            to: newPath.join( '/' ) + newFile,
-            directory: 'ICLOUD',
-          });
-        } else {
-          await Filesystem.mkdir({
-            path: newPath.join( '/' ),
-            directory: 'ICLOUD',
-            recursive: true,
-          });
-        }
-      } else {
-        await Filesystem.writeFile({
-          path: name + '.html',
-          data: content,
-          directory: 'ICLOUD',
-          encoding: Encoding.UTF8,
-        });
-        await Filesystem.rename({
-          from: name + '.html',
-          to: newName + '.html',
-          directory: 'ICLOUD',
-        });
-      }
+      await saveData( { name, content, newName, newPath, path } );
     } catch (e) {
       alert( e.message );
     }

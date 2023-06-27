@@ -137,7 +137,7 @@ class Walker_Add_Submenu_Page extends Walker_Category {
 				'read',
 				'edit.php?post_type=hypernote&hypernote-folder=' . $category->slug,
 				'',
-				'',
+				'dashicons-category',
 				1
 			);
 		} else {
@@ -170,7 +170,7 @@ add_action( 'admin_menu', function() {
 		'read',
 		'edit.php?post_type=hypernote',
 		'',
-		'',
+		'dashicons-format-aside',
 		1
 	);
 
@@ -196,6 +196,16 @@ add_action( 'admin_menu', function() {
 			999
 		);
 	}
+
+	add_menu_page(
+		'Refresh',
+		'Refresh',
+		'read',
+		'#',
+		'',
+		'dashicons-image-rotate',
+		1000
+	);
 }, PHP_INT_MAX );
 
 add_action( 'wp_before_admin_bar_render', 'my_plugin_remove_all_admin_bar_items' );
@@ -212,13 +222,11 @@ function my_plugin_remove_all_admin_bar_items() {
 		$wp_admin_bar->remove_node( $node->id );
 	}
 
-	$args = array(
+	$wp_admin_bar->add_node( array(
 		'id'    => 'menu-toggle',
 		'title' => '',
 		'href'  => '#',
-		'meta'  => array( 'class' => 'my-toolbar-page' )
-	);
-	$wp_admin_bar->add_node( $args );
+	) );
 
 	$wp_admin_bar->add_node( array(
 		'id'    => 'new-note',
@@ -242,6 +250,10 @@ add_action( 'admin_print_scripts', function() {
 		document.addEventListener( 'DOMContentLoaded', function() {
 			// Fixes issue where clicking the menu button won't collapse the menu.
 			document.getElementById( 'wp-admin-bar-menu-toggle' ).addEventListener( 'click', ( event ) => event.target.focus(), true );
+			document.getElementById( 'toplevel_page_-' ).addEventListener( 'click', ( event ) => {
+				event.preventDefault();
+				window.location.reload();
+			} );
 		} );
 
 		const save = new MessageChannel();
@@ -280,12 +292,8 @@ add_action( 'admin_print_scripts', function() {
 			padding: 0 10px;
 		}
 
-		#adminmenu div.wp-menu-name {
-			padding-left: 14px;
-		}
-
-		.wp-menu-image {
-			display: none;
+		#toplevel_page_- .dashicons-image-rotate {
+			transform: scale(-1, 1);
 		}
 	</style>
 	<?php

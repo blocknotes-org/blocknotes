@@ -69,52 +69,34 @@ add_filter( 'set_url_scheme', function( $url ) {
         return response;
     }
 
-    let currentUrl;
-    let currentBlobUrl;
-
-    function replaceIframe( response ) {
-        currentUrl = response.url;
-        const blob = new Blob([`<base href="${currentUrl}">`, response.bytes], { type: 'text/html' });
-        const blobUrl = URL.createObjectURL(blob);
-        const iframe = document.createElement('iframe');
-        iframe.dataset.url = response.url;
-        iframe.id = 'wp';
-        iframe.src = blobUrl;
-        document.body.textContent = '';
-        document.body.appendChild(iframe);
-
-        if ( currentBlobUrl ) {
-            URL.revokeObjectURL( currentBlobUrl );
-        }
-        currentBlobUrl = blobUrl;
-
-        iframe.contentWindow.history.pushState = (state, title, url) => {
+    function intercept( window ) {
+        window.history.pushState = (state, title, url) => {
             console.log('pushing state', state, title, url);
         }
-
-        iframe.contentWindow.history.replaceState = (state, title, url) => {
+    
+        window.history.replaceState = (state, title, url) => {
             console.log('replacing state', state, title, url);
         }
-
-        iframe.contentWindow.history.back = () => {
+    
+        window.history.back = () => {
             console.log('back');
         }
-
-        iframe.contentWindow.history.forward = () => {
+    
+        window.history.forward = () => {
             console.log('forward');
         }
-
-        iframe.contentWindow.history.go = (delta) => {
+    
+        window.history.go = (delta) => {
             console.log('go', delta);
         }
-
-        iframe.contentWindow.open = (url, name, features) => {
+    
+        window.open = (url, name, features) => {
             console.log('open', url, name, features);
         }
-
-        iframe.contentWindow.fetch = async (url, options) => {
+    
+        window.fetch = async (url, options) => {
             console.log(options)
-            const isFormData = options.body instanceof iframe.contentWindow.FormData;
+            const isFormData = options.body instanceof window.FormData;
             console.log( {isFormData})
             let response = await request({
                 method: options.method || 'GET',
@@ -128,7 +110,7 @@ add_filter( 'set_url_scheme', function( $url ) {
                 headers: response.headers,
             });
         }
-
+    
         const xhrMock = newMockXhr();    
         xhrMock.onSend = async (_request) => { 
             let response = await request({
@@ -139,24 +121,24 @@ add_filter( 'set_url_scheme', function( $url ) {
             });
             _request.respond( response.httpStatusCode, response.headers, response.text );
         };
-        iframe.contentWindow.XMLHttpRequest = xhrMock;
-
-        iframe.contentWindow.addEventListener('click', async ( event ) => {
-            console.log( 'click', event.target )
+        window.XMLHttpRequest = xhrMock;
+    
+        window.addEventListener('click', async ( event ) => {
             if (event.defaultPrevented) {
                 return;
             }
-
+    
             const target = event.target.closest('a');
-
+    
             if ( ! target ) {
                 return;
             }
             
+            // To do: compare with current url.
             if (target.href.startsWith('#')) {
                 return;
             }
-
+    
             let returnValue;
             const beforeUnloadEvent = new Event('beforeunload');
             
@@ -165,18 +147,18 @@ add_filter( 'set_url_scheme', function( $url ) {
                     returnValue = value;
                 },
             });
-
-            iframe.contentWindow.dispatchEvent(beforeUnloadEvent);
-
+    
+            window.dispatchEvent(beforeUnloadEvent);
+    
             if ( typeof returnValue === 'string' ) {
                 const confirmResult = confirm( returnValue );
                 if ( ! confirmResult ) {
                     return;
                 }
             }
-
+    
             console.log( 'clicked link', target.href )
-
+    
             event.preventDefault();
             let response = await request({
                 method: 'GET',
@@ -184,36 +166,37 @@ add_filter( 'set_url_scheme', function( $url ) {
             });
             replaceIframe(response);
         });
-
+    
         // Forbid stopping propagation to the window. This is bad practice and
         // should be fixed in the WordPress codebase.
-        iframe.contentWindow.addEventListener('click', async ( event ) => {
+        window.addEventListener('click', async ( event ) => {
             const target = event.target.closest('a');
-
+    
             if ( ! target ) {
                 return;
             }
-
+    
+            // Consider preventing default behaviour at this point.
             event.stopPropagation = () => {
                 console.log( 'stopPropagation' );
             }
-
+    
             event.stopImmediatePropagation = () => {
                 console.log( 'stopImmediatePropagation' );
             }
         }, true);
-
-        iframe.contentWindow.addEventListener('submit', async ( event ) => {
+    
+        window.addEventListener('submit', async ( event ) => {
             if (event.defaultPrevented) {
                 return;
             }
-
+    
             const target = event.target.closest('form');
-
+    
             if ( ! target ) {
                 return;
             }
-
+    
             event.preventDefault();
             const formData = new FormData(target);
             const data = {};
@@ -227,6 +210,37 @@ add_filter( 'set_url_scheme', function( $url ) {
             });
             replaceIframe(response);
         });
+    }
+
+    let currentUrl;
+    let currentBlobUrl;
+
+    function replaceIframe( response ) {
+        currentUrl = response.url;
+        const blob = new Blob(
+            [
+                `<base href="${currentUrl}">`,
+                // Ensures that listeners are added before the iframe is loaded,
+                // and ensures that they are re-added when the window is
+                // reloaded.
+                `<script>window.frameElement._init(window)</script>`,
+                response.bytes
+            ],
+            { type: 'text/html' }
+        );
+        const blobUrl = URL.createObjectURL(blob);
+        const iframe = document.createElement('iframe');
+        iframe._init = intercept
+        iframe.dataset.url = response.url;
+        iframe.id = 'wp';
+        iframe.src = blobUrl;
+        document.body.textContent = '';
+        document.body.appendChild(iframe);
+
+        if ( currentBlobUrl ) {
+            URL.revokeObjectURL( currentBlobUrl );
+        }
+        currentBlobUrl = blobUrl;
     }
 
     await request({

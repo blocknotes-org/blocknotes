@@ -1,12 +1,26 @@
-## Created with Capacitor Create App
+# Blocknotes
 
-This app was created using [`@capacitor/create-app`](https://github.com/ionic-team/create-capacitor-app),
-and comes with a very minimal shell for building an app.
+Uses [Capacitor](https://capacitorjs.com) to create the native apps from a PWA.
+A modified version of `@capacitor/filesystem` is used to save files to your
+iCloud folder and the file system for web (PWA). By default
+`@capacitor/filesystem` saves to indexDB on the web, and a _local_ folder on
+iOS, so this package is heavily adjusted and should probably be rewritten as a
+custom Capacitor plugin.
 
-### Running this example
+Builds into the `dist` directory:
 
-To run the provided example, you can use `npm start` command.
+```
+npm run build
+```
 
-```bash
-npm start
+Syncs the the build to `ios`:
+
+```
+npx cap sync
+```
+
+Open Xcode:
+
+```
+npx cap open ios
 ```
