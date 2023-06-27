@@ -199,15 +199,27 @@ add_filter( 'set_url_scheme', function( $url ) {
     
             event.preventDefault();
             const formData = new FormData(target);
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
+            const method = ( target.getAttribute( 'method' ) || 'GET' ).toUpperCase();
+            const url = ( new URL( target.getAttribute( 'action' ) || '', currentUrl ) ).href;
+            let response;
+
+            if ( method === 'GET' ) {
+                const queryString = new URLSearchParams( formData ).toString();
+                response = await request({
+                    method,
+                    url: url + ( queryString ? '?' + queryString : '' ),
+                });
+            } else {
+                const data = {};
+                for (const [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                response = await request({
+                    method,
+                    url,
+                    formData: data,
+                });
             }
-            let response = await request({
-                method: target.getAttribute( 'method' )?.toUpperCase(),
-                url: ( new URL( target.getAttribute( 'action' ) || '', currentUrl ) ).href,
-                formData: data,
-            });
             replaceIframe(response);
         });
     }

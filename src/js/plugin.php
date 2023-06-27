@@ -91,14 +91,6 @@ add_filter( 'the_title', function( $title, $id ) {
     return $text;
 }, 10, 2 );
 
-add_filter( 'wp_insert_post_data', function( $post ) {
-	if ( $post['post_type'] == 'hypernote' && $post[ 'post_status' ] !== 'trash' ) {
-		$post[ 'post_status' ] = 'private';
-	};
-
-	return $post;
-} );
-
 foreach ( array(
 	'load-post.php',
 	'load-post-new.php',

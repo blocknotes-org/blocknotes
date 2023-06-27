@@ -1,6 +1,6 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 
-export async function saveData( { name, content, newName, newPath, path } ) {
+export async function saveData( { name, content, newName, newPath, path, trash } ) {
     if ( newPath ) {
         if ( path ) {
             const file = name ? '/' + name + '.html' : '';
@@ -30,16 +30,10 @@ export async function saveData( { name, content, newName, newPath, path } ) {
                 recursive: true,
             });
         }
-    } else {
-        await Filesystem.writeFile({
-            path: name + '.html',
-            data: content,
-            directory: 'ICLOUD',
-            encoding: Encoding.UTF8,
-        });
+    } else if ( trash ) {
         await Filesystem.rename({
-            from: name + '.html',
-            to: newName + '.html',
+            from: path.join( '/' ) + '/' + name + '.html',
+            to: path.join( '/' ) + '/.Trash/' + name + '.html',
             directory: 'ICLOUD',
         });
     }

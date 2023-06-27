@@ -1,5 +1,10 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 
+function isoToTime( iso ) {
+    // Convert iso string to Y-m-d H:i:s
+    return iso.split( 'T' ).join( ' ' ).split( '.' )[0];
+}
+
 export async function getData() {
     const dir = await Filesystem.readdir({
         path: '',
@@ -13,7 +18,9 @@ export async function getData() {
         for ( const file of dir.files ) {
             console.log(file, name)
             if ( file.type === 'directory' ) {
-                if ( file.name.startsWith( '.' ) ) continue;
+                if ( file.name.startsWith( '.' ) && file.name !== '.Trash' ) {
+                    continue;
+                }
                 const item = {
                     type: 'folder',
                     name: file.name,
@@ -34,6 +41,8 @@ export async function getData() {
                     type: 'note',
                     content: text.data,
                     title: file.name.replace( /\.html$/i, '' ),
+                    ctime: isoToTime( ( new Date( parseInt( file.ctime, 10 ) ) ).toISOString() ),
+                    mtime: isoToTime( ( new Date( parseInt( file.mtime, 10 ) ) ).toISOString() ),
                 } );
             } else if ( file.name.endsWith( '.icloud' ) ) {
                 dotICloud = true;

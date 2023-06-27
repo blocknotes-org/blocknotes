@@ -2,7 +2,6 @@
 
 add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 	if ( $data['post_type'] !== 'hypernote' ) return $data;
-	if ( $data['post_status'] !== 'private' ) return $data;
 	$post_title = wp_unslash( $data['post_title'] );
 	$post_content = wp_unslash( $data['post_content'] );
 	$blocks = parse_blocks( $post_content );
@@ -19,13 +18,14 @@ add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 		}
 	}
 	if ( ! $text ) return $data;
+
 	$terms = wp_get_object_terms( (int) $postarr['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
 
 	if ( is_wp_error( $terms ) ) {
 		$terms = [];
 	}
 
-	$path = get_taxonomy_hierarchy( (int) $terms[0] );
+	$path = count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
 	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $postarr['ID'], $data['post_status'], $data['post_type'], (int) $data['post_parent'] );
 	post_message_to_js( json_encode( array(
 		'name' => $post_title,
@@ -34,6 +34,16 @@ add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 		'path' => $path,
 		'newPath' => $path,
 	) ) );
+
+	// When trashing, first update the file, then trash it.
+	if ( $data[ 'post_status' ] === 'trash' ) {
+		post_message_to_js( json_encode( array(
+			'trash' => true,
+			'name' => $new_name,
+			'path' => $path,
+		) ) );
+	}
+
 	$data['post_title'] = $new_name;
 	$data['post_name'] = $new_name;
 	return $data;

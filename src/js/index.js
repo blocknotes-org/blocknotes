@@ -79,7 +79,11 @@ async function load() {
 
   await php.writeFile(
     '/wordpress/temp.json',
-    JSON.stringify( d )
+    JSON.stringify( {
+      data: d,
+      platform,
+      gmt_offset: - new Date().getTimezoneOffset() / 60,
+    } )
   );
 
   await php.run( { code: insert } );
@@ -90,12 +94,12 @@ async function load() {
   );
 
   php.onMessage( async ( data ) => {
-    const { name, content, newName, newPath, path, debug } = JSON.parse( data );
+    const { name, content, newName, newPath, path, trash } = JSON.parse( data );
 
-    console.log( {name, newName, newPath, path, debug} )
+    console.log( {name, newName, newPath, path, trash} )
 
     try {
-      await saveData( { name, content, newName, newPath, path } );
+      await saveData( { name, content, newName, newPath, path, trash } );
     } catch (e) {
       alert( e.message );
     }
