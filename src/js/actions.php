@@ -2,6 +2,11 @@
 
 add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 	if ( $data['post_type'] !== 'hypernote' ) return $data;
+
+	if ( $data['post_status'] !== 'trash' ) {
+		$data['post_status'] = 'private';
+	}
+
 	$post_title = wp_unslash( $data['post_title'] );
 	$post_content = wp_unslash( $data['post_content'] );
 	$blocks = parse_blocks( $post_content );
