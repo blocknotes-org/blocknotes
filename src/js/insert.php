@@ -42,7 +42,9 @@ function insert_items($items, $taxonomy, $parent_term_id = 0, $status = 'private
             ]);
 
             if (!is_wp_error($post_id)) {
-                wp_set_object_terms($post_id, $parent_term_id, $taxonomy);
+                if ( $parent_term_id ) {
+                    wp_set_object_terms($post_id, $parent_term_id, $taxonomy);
+                }
 			} else {
 				echo $post_id->get_error_message();
 			}
@@ -52,4 +54,8 @@ function insert_items($items, $taxonomy, $parent_term_id = 0, $status = 'private
 
 update_user_option( 1, 'admin_color', 'modern' );
 update_option( 'gmt_offset', $data['gmt_offset'] );
+wp_defer_term_counting( true );
+wp_defer_comment_counting( true );
 insert_items($data['data'], 'hypernote-folder');
+wp_defer_term_counting( false );
+wp_defer_comment_counting( false );
