@@ -1,15 +1,12 @@
 {
-  "name": "capacitor-app",
+  "name": "blocknotes",
   "version": "1.0.0",
-  "description": "An Amazing Capacitor App",
+  "description": "Blocknotes",
   "main": "index.js",
-  "keywords": [
-    "capacitor",
-    "mobile"
-  ],
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && node post-build.js",
+    "sync": "vite build && node post-build.js && cap sync",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -27,7 +24,5 @@
   "devDependencies": {
     "@capacitor/cli": "latest",
     "vite": "^4.3.9"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }

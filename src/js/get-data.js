@@ -10,11 +10,9 @@ export async function getData() {
         path: '',
         directory: 'ICLOUD',
     });
-
-    let dotICloud = false;
     
     // Recursively read all files in the iCloud folder
-    async function readDirRecursive( dir, name, children ) {
+    async function readDirRecursive( dir, name, children, icloud ) {
         for ( const file of dir.files ) {
             console.log(file, name)
             if ( file.type === 'directory' ) {
@@ -30,7 +28,7 @@ export async function getData() {
                 await readDirRecursive( await Filesystem.readdir({
                     path: [ ...name, file.name ].join( '/' ),
                     directory: 'ICLOUD',
-                }), [ ...name, file.name ], item.children );
+                }), [ ...name, file.name ], item.children, file.name === '.Trash' ? [] : icloud );
             } else if ( file.name.endsWith( '.html' ) ) {
                 const text = await Filesystem.readFile({
                     path: [ ...name, file.name ].join( '/' ),
@@ -45,18 +43,13 @@ export async function getData() {
                     mtime: isoToTime( ( new Date( parseInt( file.mtime, 10 ) ) ).toISOString() ),
                 } );
             } else if ( file.name.endsWith( '.icloud' ) ) {
-                dotICloud = true;
+                icloud.push( [ ...name, file.name ].join( '/' ) );
             }
         }
     }
     
     const d = [];
-    
-    await readDirRecursive( dir, [], d );
-    
-    if ( dotICloud ) {
-        alert( 'There are files in your iCloud folder that are not downloaded. You might want to download them and restart the app.' );
-    } 
-    
-    return d;
+    const icloud = [];
+    await readDirRecursive( dir, [], d, icloud );
+    return [ d, icloud ];
 }

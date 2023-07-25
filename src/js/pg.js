@@ -17,6 +17,7 @@ function randomString(length) {
 }
 
 export async function main() {
+    const startTime = Date.now();
     const worker = await spawnPHPWorkerThread(moduleWorkerUrl, {
         wpVersion: '6.2',
         phpVersion: '8.2',
@@ -255,10 +256,6 @@ add_filter( 'set_url_scheme', function( $url ) {
         currentBlobUrl = blobUrl;
     }
 
-    await request({
-		url: '/wp-login.php',
-	});
-
 	await request({
 		url: '/wp-login.php',
 		method: 'POST',
@@ -269,11 +266,13 @@ add_filter( 'set_url_scheme', function( $url ) {
 		},
 	});
 
+    console.log( 'PHP done in ' + ( Date.now() - startTime ) + 'ms' );
+
     return {
         php,
         request: async ( args ) => {
             const response = await request(args);
             replaceIframe(response);
-        },
+        }
     };
 }

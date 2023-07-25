@@ -14,6 +14,26 @@ try {
 
 const platform = Capacitor.getPlatform();
 
+async function getDataWithICloudWarning() {
+  const startTime = Date.now();
+  let d;
+  try {
+    d = await getData();
+  } catch (e) {
+    if ( e.message === 'Invalid path' ) {
+      alert( 'iCloud folder not found. Please sign into iCloud.' );
+    } else {
+      alert( e.message );
+    }
+    window.location.reload();
+    return;
+  }
+
+  console.log( 'Data done in ' + ( Date.now() - startTime ) + 'ms' );
+
+  return d;
+}
+
 async function load() {
   try {
     await Filesystem.checkPermissions()
@@ -36,17 +56,13 @@ async function load() {
     return;
   }
 
-  let d;
-  try {
-    d = await getData();
-  } catch (e) {
-    if ( e.message === 'Invalid path' ) {
-      alert( 'iCloud folder not found. Please sign into iCloud.' );
-    } else {
-      alert( e.message );
-    }
-    window.location.reload();
-    return;
+  const [ [ d, icloud ], { php, request } ] = await Promise.all( [
+    getDataWithICloudWarning(),
+    main(),
+  ] );
+
+  if ( icloud.length ) {
+    alert( 'The following files are not downloaded:\n' + icloud.join( '\n' ) );
   }
 
   let messageChannel = null;
@@ -70,8 +86,6 @@ async function load() {
     }
   } );
 
-  const {php, request} = await main();
-
   await php.writeFile(
     '/wordpress/wp-content/mu-plugins/hypernotes.php',
     `<?php global $platform; $platform = '${ platform }'; ?>${ plugin }`
@@ -86,7 +100,11 @@ async function load() {
     } )
   );
 
+  const startTime = Date.now();
+
   await php.run( { code: insert } );
+
+  console.log( 'Insert done in ' + ( Date.now() - startTime ) + 'ms' );
 
   await php.writeFile(
     '/wordpress/wp-content/mu-plugins/actions.php',
@@ -105,7 +123,7 @@ async function load() {
     }
   } );
 
-  await request( {
+  request( {
     url: '/wp-admin/edit.php?post_type=hypernote'
   } )
 }
