@@ -125,6 +125,11 @@ add_filter( 'set_url_scheme', function( $url ) {
         window.XMLHttpRequest = xhrMock;
     
         window.addEventListener('click', async ( event ) => {
+            // Content editable links are by default non interactive.
+            if ( event.target.isContentEditable ) {
+                return;
+            }
+
             if (event.defaultPrevented) {
                 return;
             }
@@ -134,9 +139,14 @@ add_filter( 'set_url_scheme', function( $url ) {
             if ( ! target ) {
                 return;
             }
+
+            // External URL: allow navigation.
+            if ( target.href.startsWith('http') ) {
+                target.target = '_blank';
+                return;
+            }
             
-            // To do: compare with current url.
-            if (target.href.startsWith('#')) {
+            if (target.href.replace( currentUrl, '' ).startsWith('#')) {
                 return;
             }
     
