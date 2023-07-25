@@ -6,8 +6,10 @@
   "scripts": {
     "start": "vite",
     "build": "vite build && node post-build.js",
-    "sync": "vite build && node post-build.js && cap sync",
-    "preview": "vite preview"
+    "sync": "build && cap sync",
+    "preview": "vite preview",
+    "test": "standard --fix",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@capacitor/android": "^5.0.4",
@@ -23,6 +25,16 @@
   },
   "devDependencies": {
     "@capacitor/cli": "latest",
+    "husky": "^8.0.3",
+    "standard": "^17.1.0",
     "vite": "^4.3.9"
+  },
+  "standard": {
+    "globals": [ "self" ],
+    "ignore": [
+      "/node_modules/@capacitor/filesystem/dist/esm/web.js",
+      "/src/js/wp-*",
+      "public"
+    ]
   }
 }
