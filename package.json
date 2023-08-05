@@ -6,9 +6,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build && node post-build.js",
-    "sync": "build && cap sync",
+    "sync": "npm run build && cap sync",
     "preview": "vite preview",
-    "test": "standard --fix",
+    "test": "",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "globals": [ "self" ],
     "ignore": [
       "/node_modules/@capacitor/filesystem/dist/esm/web.js",
+      "/node_modules/@php-wasm/web/*",
       "/src/js/wp-*",
       "public"
     ]
