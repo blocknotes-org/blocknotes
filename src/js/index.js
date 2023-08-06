@@ -152,7 +152,9 @@ async function load () {
 
   const startTime = Date.now()
 
-  await php.run({ code: insert })
+  const result = await php.run({ code: insert })
+
+  console.log('result', result.text);
 
   console.log('Insert done in ' + (Date.now() - startTime) + 'ms')
 
@@ -162,7 +164,35 @@ async function load () {
   )
 
   php.onMessage(async (data) => {
-    const { name, content, newName, newPath, path, trash, statement, cache } = JSON.parse(data)
+    const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query } = JSON.parse(data)
+
+    if ( terms_pre_query ) {
+      console.log('terms_pre_query', paths)
+      const terms = paths.map((path,index) => {
+        if (!path.endsWith('.html')) {
+          return null;
+        }
+        if (!path.includes('/')) {
+          return null;
+        }
+        const directories = path.split('/');
+        const fileName = directories.pop();
+        const termId = - paths.indexOf(directories.join('/')) - 1;
+        return {
+          object_id: - index - 1,
+          term_id: termId,
+          name: directories[directories.length - 1],
+          slug: directories[directories.length - 1],
+          term_group: 0,
+          term_taxonomy_id: termId,
+          taxonomy: 'hypernote-folder',
+          description: '',
+          parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+        }
+      }).filter((term) => term !== null);
+      console.log('terms_pre_query', terms)
+      return JSON.stringify( terms );
+    }
 
     if ( cache ) {
       return JSON.stringify( await getPostByID(cache) );
@@ -187,17 +217,18 @@ async function load () {
           });
         }
 
-        data.forEach((item) => {
-          if (item.type === 'folder') {
-              item.children.forEach((child) => {
-                  if (child.type === 'note') {
-                    addItem(child);
-                  }
-              })
-          } else if (item.type === 'note') {
-              addItem(item);
-          }
-        })
+        function addItems(items) {
+          items.forEach((item) => {
+            if (item.type === 'folder') {
+                getID(item.path);
+                addItems(item.children);
+            } else if (item.type === 'note') {
+                addItem(item);
+            }
+          })
+        }
+
+        addItems(data);
         return JSON.stringify(result);
       }
       return '[]'

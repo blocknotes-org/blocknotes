@@ -19,14 +19,16 @@ export async function getData () {
         if (file.name.startsWith('.') && file.name !== '.Trash') {
           continue
         }
+        const path = [...name, file.name].join('/')
         const item = {
           type: 'folder',
           name: file.name,
-          children: []
+          children: [],
+          path,
         }
         children.push(item)
         await readDirRecursive(await Filesystem.readdir({
-          path: [...name, file.name].join('/'),
+          path,
           directory: 'ICLOUD'
         }), [...name, file.name], item.children, file.name === '.Trash' ? [] : icloud)
       } else if (file.name.endsWith('.html')) {

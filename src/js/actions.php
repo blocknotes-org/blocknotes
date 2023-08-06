@@ -135,6 +135,20 @@ add_filter( 'posts_pre_query', function( $return, $query ) {
 	}, $data );
 }, 10, 2 );
 
+add_filter( 'terms_pre_query', function ( $return, $query ) {
+	if ( ! in_array( 'hypernote-folder', $query->query_vars['taxonomy'] ) ) return $return;
+	if ( $query->query_vars['fields'] !== 'all_with_object_id' ) return $return;
+	var_dump( $query->query_vars );
+	$return = post_message_to_js( json_encode( array(
+		'terms_pre_query' => $query->query_vars,
+	) ) );
+	$data = json_decode( $return );
+	return array_map( function( $term ) {
+		wp_cache_add( $term->term_id, $term, 'terms' );
+		return new WP_Term( (object) $term );
+	}, $data );
+}, 10, 2 );
+
 class Blocknotes_Object_Cache extends WP_Object_Cache {
     public function get( $key, $group = 'default', $force = false, &$found = null ) {
 		$cache = parent::get( $key, $group, $force, $found );
