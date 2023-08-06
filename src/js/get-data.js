@@ -5,6 +5,30 @@ function isoToTime (iso) {
   return iso.split('T').join(' ').split('.')[0]
 }
 
+export async function getPaths( path = '' ) {
+    const paths = [];
+    const dir = await Filesystem.readdir({
+        path,
+        directory: 'ICLOUD'
+    })
+
+    // Recursively read all files in the iCloud folder
+    for (const file of dir.files) {
+        const nestedPath = path ? [path, file.name].join('/') : file.name
+        if (file.type === 'directory') {
+            if (file.name.startsWith('.') && file.name !== '.Trash') {
+                continue
+            }
+            paths.push(nestedPath)
+            paths.push( ...await getPaths( nestedPath ) )
+        } else if (file.name.endsWith('.html')) {
+            paths.push(nestedPath)
+        }
+    }
+
+    return paths;
+}
+
 export async function getData () {
   const dir = await Filesystem.readdir({
     path: '',

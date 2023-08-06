@@ -5,10 +5,22 @@ import { App } from '@capacitor/app'
 import plugin from './plugin.php?raw'
 import actions from './actions.php?raw'
 import insert from './insert.php?raw'
-import { getData } from './get-data.js'
+import { getData, getPaths } from './get-data.js'
 import { saveData } from './save-data.js'
 
 const paths = [];
+
+async function getIndexedPaths () {
+  const freshPaths = await getPaths();
+  for (const freshpath of freshPaths) {
+    const index = paths.indexOf(freshpath);
+    if (index === -1) {
+      paths.push(freshpath)
+    }
+  }
+
+  return paths;
+}
 
 function isoToTime (iso) {
   // Convert iso string to Y-m-d H:i:s
@@ -168,7 +180,7 @@ async function load () {
 
     if ( terms_pre_query ) {
       if (terms_pre_query['fields'] === 'all_with_object_id') {
-        const terms = paths.map((path,index) => {
+        const terms = ( await getIndexedPaths() ).map((path,index) => {
           if (!path.endsWith('.html')) {
             return null;
           }
@@ -190,39 +202,9 @@ async function load () {
             parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
           }
         }).filter((term) => term !== null);
-        console.log('terms_pre_query', terms)
         return JSON.stringify( terms );
       } else if (terms_pre_query['fields'] === 'all') {
-        const result = [];
-        const [ data ] = await getData();
-
-        function addItem(item) {
-          result.push({
-            ID: getID(item.path),
-            post_type: 'hypernote',
-            post_content: item.content,
-            post_title: item.title,
-            post_name: item.title,
-            post_status: 'private',
-            post_author: 1,
-            post_date_gmt: item.ctime,
-            post_modified_gmt: item.mtime,
-          });
-        }
-
-        function addItems(items) {
-          items.forEach((item) => {
-            if (item.type === 'folder') {
-                getID(item.path);
-                addItems(item.children);
-            } else if (item.type === 'note') {
-                addItem(item);
-            }
-          })
-        }
-
-        addItems(data);
-        const terms = paths.map((path,index) => {
+        const terms = ( await getIndexedPaths() ).map((path,index) => {
           if (path.endsWith('.html')) {
             return null;
           }
@@ -239,7 +221,6 @@ async function load () {
             parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
           }
         }).filter((term) => term !== null);
-        console.log('terms_pre_query', terms)
         return JSON.stringify( terms );
       }
     }
@@ -250,36 +231,16 @@ async function load () {
 
     if (statement) {
       if (statement.post_type === 'hypernote') {
-        const result = [];
-        const [ data ] = await getData();
+        const posts = ( await Promise.all( ( await getIndexedPaths() ).map(async (path,index) => {
+          if (!path.endsWith('.html')) {
+            return null;
+          }
+          return await getPostByID( - index - 1 );
+        }) ) ).filter((term) => term !== null);
 
-        function addItem(item) {
-          result.push({
-            ID: getID(item.path),
-            post_type: 'hypernote',
-            post_content: item.content,
-            post_title: item.title,
-            post_name: item.title,
-            post_status: 'private',
-            post_author: 1,
-            post_date_gmt: item.ctime,
-            post_modified_gmt: item.mtime,
-          });
-        }
+        console.log('posts',posts);
 
-        function addItems(items) {
-          items.forEach((item) => {
-            if (item.type === 'folder') {
-                getID(item.path);
-                addItems(item.children);
-            } else if (item.type === 'note') {
-                addItem(item);
-            }
-          })
-        }
-
-        addItems(data);
-        return JSON.stringify(result);
+        return JSON.stringify(posts);
       }
       return '[]'
     }
