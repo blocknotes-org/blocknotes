@@ -59,3 +59,9 @@ wp_defer_comment_counting( true );
 insert_items($data['data'], 'hypernote-folder');
 wp_defer_term_counting( false );
 wp_defer_comment_counting( false );
+
+// var_dump( get_terms( array(
+// 	'taxonomy' => 'hypernote-folder',
+// 	'fields' => 'all',
+// 	'hide_empty' => false,
+// ) ) );

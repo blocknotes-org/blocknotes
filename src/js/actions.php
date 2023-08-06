@@ -137,8 +137,6 @@ add_filter( 'posts_pre_query', function( $return, $query ) {
 
 add_filter( 'terms_pre_query', function ( $return, $query ) {
 	if ( ! in_array( 'hypernote-folder', $query->query_vars['taxonomy'] ) ) return $return;
-	if ( $query->query_vars['fields'] !== 'all_with_object_id' ) return $return;
-	var_dump( $query->query_vars );
 	$return = post_message_to_js( json_encode( array(
 		'terms_pre_query' => $query->query_vars,
 	) ) );

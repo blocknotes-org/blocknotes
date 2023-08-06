@@ -167,31 +167,81 @@ async function load () {
     const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query } = JSON.parse(data)
 
     if ( terms_pre_query ) {
-      console.log('terms_pre_query', paths)
-      const terms = paths.map((path,index) => {
-        if (!path.endsWith('.html')) {
-          return null;
+      if (terms_pre_query['fields'] === 'all_with_object_id') {
+        const terms = paths.map((path,index) => {
+          if (!path.endsWith('.html')) {
+            return null;
+          }
+          if (!path.includes('/')) {
+            return null;
+          }
+          const directories = path.split('/');
+          const fileName = directories.pop();
+          const termId = - paths.indexOf(directories.join('/')) - 1;
+          return {
+            object_id: - index - 1,
+            term_id: termId,
+            name: directories[directories.length - 1],
+            slug: directories[directories.length - 1],
+            term_group: 0,
+            term_taxonomy_id: termId,
+            taxonomy: 'hypernote-folder',
+            description: '',
+            parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+          }
+        }).filter((term) => term !== null);
+        console.log('terms_pre_query', terms)
+        return JSON.stringify( terms );
+      } else if (terms_pre_query['fields'] === 'all') {
+        const result = [];
+        const [ data ] = await getData();
+
+        function addItem(item) {
+          result.push({
+            ID: getID(item.path),
+            post_type: 'hypernote',
+            post_content: item.content,
+            post_title: item.title,
+            post_name: item.title,
+            post_status: 'private',
+            post_author: 1,
+            post_date_gmt: item.ctime,
+            post_modified_gmt: item.mtime,
+          });
         }
-        if (!path.includes('/')) {
-          return null;
+
+        function addItems(items) {
+          items.forEach((item) => {
+            if (item.type === 'folder') {
+                getID(item.path);
+                addItems(item.children);
+            } else if (item.type === 'note') {
+                addItem(item);
+            }
+          })
         }
-        const directories = path.split('/');
-        const fileName = directories.pop();
-        const termId = - paths.indexOf(directories.join('/')) - 1;
-        return {
-          object_id: - index - 1,
-          term_id: termId,
-          name: directories[directories.length - 1],
-          slug: directories[directories.length - 1],
-          term_group: 0,
-          term_taxonomy_id: termId,
-          taxonomy: 'hypernote-folder',
-          description: '',
-          parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
-        }
-      }).filter((term) => term !== null);
-      console.log('terms_pre_query', terms)
-      return JSON.stringify( terms );
+
+        addItems(data);
+        const terms = paths.map((path,index) => {
+          if (path.endsWith('.html')) {
+            return null;
+          }
+          const directories = path.split('/');
+          const termId = - index - 1;
+          return {
+            term_id: termId,
+            name: directories[directories.length - 1],
+            slug: directories[directories.length - 1],
+            term_group: 0,
+            term_taxonomy_id: termId,
+            taxonomy: 'hypernote-folder',
+            description: '',
+            parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+          }
+        }).filter((term) => term !== null);
+        console.log('terms_pre_query', terms)
+        return JSON.stringify( terms );
+      }
     }
 
     if ( cache ) {
