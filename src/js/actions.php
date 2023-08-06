@@ -122,3 +122,43 @@ add_action( 'edited_term', function( $term_id, $tt_id, $taxonomy ) {
 		'path' => $_hypernotes_path,
 	) ) );
 }, 10, 3 );
+
+add_filter( 'posts_pre_query', function( $return, $query ) {
+	if ( $query->query_vars['post_type'] !== 'hypernote' ) return $return;
+	$return = post_message_to_js( json_encode( array(
+		'statement' => $query->query_vars,
+	) ) );
+	$data = json_decode( $return );
+	return array_map( function( $post ) {
+		wp_cache_add( $post->ID, $post, 'posts' );
+		return new WP_Post( (object) $post );
+	}, $data );
+}, 10, 2 );
+
+class Blocknotes_Object_Cache extends WP_Object_Cache {
+    public function get( $key, $group = 'default', $force = false, &$found = null ) {
+		$cache = parent::get( $key, $group, $force, $found );
+		if ( $cache ) return $cache;
+		if ( $group !== 'posts' || $key >= 0 ) return $cache;
+		$return = post_message_to_js( json_encode( array(
+			'cache' => $key
+		) ) );
+		$post = json_decode( $return );
+		wp_cache_add( $post->ID, $post, 'posts' );
+        return $post;
+    }
+}
+
+add_action( 'plugins_loaded', function() {
+	global $wp_object_cache;
+	$wp_object_cache = new Blocknotes_Object_Cache();
+} );
+
+add_filter( 'rest_endpoints', function( $endpoints ) {
+    if (isset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'])) {
+        $endpoints['/wp/v2/hypernote/(?P<id>-?[\d]+)'] = $endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'];
+        unset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)']);
+    }
+    
+    return $endpoints;
+}, 10, 1);

@@ -1,5 +1,20 @@
 <?php
 
+class WP_REST_Hypernotes_Controller extends WP_REST_Posts_Controller {
+	protected function get_post( $id ) {
+		$post = get_post( (int) $id );
+		if ( empty( $post ) || empty( $post->ID ) || $this->post_type !== $post->post_type ) {
+			return new WP_Error(
+				'rest_post_invalid_id',
+				__( 'Invalid post ID.' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		return $post;
+	}
+}
+
 add_action( 'init', function() {
 	register_post_type( 'hypernote', array(
 		'labels' => array(
@@ -40,6 +55,7 @@ add_action( 'init', function() {
 		'show_ui' => true,
 		'supports' => array( 'editor' ),
 		'show_in_rest' => true,
+		'rest_controller_class' => 'WP_REST_Hypernotes_Controller',
 		'rewrite' => array( 'slug' => 'hypernote' ),
 		'menu_icon' => 'dashicons-format-aside',
 	) );

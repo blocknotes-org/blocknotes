@@ -5,7 +5,7 @@ include 'wordpress/wp-load.php';
 $data = file_get_contents('wordpress/temp.json');
 $data = json_decode($data, true);
 
-function insert_items($items, $taxonomy, $parent_term_id = 0, $status = 'private') {
+function insert_items($items, $taxonomy, $parent_term_id = 0, $status = 'publish') {
     foreach ($items as $item) {
         if ($item['type'] === 'folder') {
             // Ignore folders within the trash folder for now

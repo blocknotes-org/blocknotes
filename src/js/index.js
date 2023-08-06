@@ -8,6 +8,22 @@ import insert from './insert.php?raw'
 import { getData } from './get-data.js'
 import { saveData } from './save-data.js'
 
+const posts = [];
+
+// Revert to storing an array of titles, or paths rather. Read from the
+// filesystem when getting from object cache so posts are fresh with each
+// pageload.
+function getID(post) {
+  const index = posts.findIndex((item) => item.post_name === post.post_name);
+  if (index === -1) {
+    posts.push(post)
+    return - posts.length;
+  }
+
+  return - ( index + 1 );
+}
+
+
 try {
   StatusBar.setStyle({ style: Style.Dark })
 } catch (e) {}
@@ -116,7 +132,50 @@ async function load () {
   )
 
   php.onMessage(async (data) => {
-    const { name, content, newName, newPath, path, trash } = JSON.parse(data)
+    const { name, content, newName, newPath, path, trash, statement, cache } = JSON.parse(data)
+
+    if ( cache ) {
+      const index = - cache - 1;
+      const post = posts[index];
+      post.ID = cache
+      return JSON.stringify( post );
+    }
+
+    if (statement) {
+      if (statement.post_type === 'hypernote') {
+        const result = [];
+        const [ data ] = await getData();
+
+        function addItem(item) {
+          item = {
+            post_type: 'hypernote',
+            post_content: item.content,
+            post_title: item.title,
+            post_name: item.title,
+            post_status: 'private',
+            post_author: 1,
+            post_date_gmt: item.ctime,
+            post_modified_gmt: item.mtime,
+          }
+          item.ID = getID(item);
+          result.push(item);
+        }
+
+        data.forEach((item) => {
+          if (item.type === 'folder') {
+              item.children.forEach((child) => {
+                  if (child.type === 'note') {
+                    addItem(child);
+                  }
+              })
+          } else if (item.type === 'note') {
+              addItem(item);
+          }
+        })
+        return JSON.stringify(result);
+      }
+      return '[]'
+    }
 
     console.log({ name, newName, newPath, path, trash })
 
