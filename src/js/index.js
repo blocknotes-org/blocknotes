@@ -1,5 +1,5 @@
 import { main } from './pg.js'
-import { Filesystem } from '@capacitor/filesystem'
+import { Filesystem, Encoding } from '@capacitor/filesystem'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { App } from '@capacitor/app'
 import plugin from './plugin.php?raw'
@@ -8,19 +8,49 @@ import insert from './insert.php?raw'
 import { getData } from './get-data.js'
 import { saveData } from './save-data.js'
 
-const posts = [];
+const paths = [];
+
+function isoToTime (iso) {
+  // Convert iso string to Y-m-d H:i:s
+  return iso.split('T').join(' ').split('.')[0]
+}
 
 // Revert to storing an array of titles, or paths rather. Read from the
 // filesystem when getting from object cache so posts are fresh with each
 // pageload.
-function getID(post) {
-  const index = posts.findIndex((item) => item.post_name === post.post_name);
+function getID(path) {
+  const index = paths.indexOf(path);
   if (index === -1) {
-    posts.push(post)
-    return - posts.length;
+    paths.push(path)
+    return - paths.length;
   }
 
   return - ( index + 1 );
+}
+
+async function getPostByID(id) {
+  const path = paths[-id - 1];
+  const text = await Filesystem.readFile({
+    path: path,
+    directory: 'ICLOUD',
+    encoding: Encoding.UTF8
+  });
+  const name = path.replace(/\.html$/i, '');
+  const file = await Filesystem.stat({
+    path: path,
+    directory: 'ICLOUD',
+  });
+  return {
+    ID: id,
+    post_type: 'hypernote',
+    post_content: text.data,
+    post_title: name,
+    post_name: name,
+    post_status: 'private',
+    post_author: 1,
+    post_date_gmt: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
+    post_modified_gmt: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
+  }
 }
 
 
@@ -135,10 +165,7 @@ async function load () {
     const { name, content, newName, newPath, path, trash, statement, cache } = JSON.parse(data)
 
     if ( cache ) {
-      const index = - cache - 1;
-      const post = posts[index];
-      post.ID = cache
-      return JSON.stringify( post );
+      return JSON.stringify( await getPostByID(cache) );
     }
 
     if (statement) {
@@ -147,7 +174,8 @@ async function load () {
         const [ data ] = await getData();
 
         function addItem(item) {
-          item = {
+          result.push({
+            ID: getID(item.path),
             post_type: 'hypernote',
             post_content: item.content,
             post_title: item.title,
@@ -156,9 +184,7 @@ async function load () {
             post_author: 1,
             post_date_gmt: item.ctime,
             post_modified_gmt: item.mtime,
-          }
-          item.ID = getID(item);
-          result.push(item);
+          });
         }
 
         data.forEach((item) => {

@@ -30,8 +30,9 @@ export async function getData () {
           directory: 'ICLOUD'
         }), [...name, file.name], item.children, file.name === '.Trash' ? [] : icloud)
       } else if (file.name.endsWith('.html')) {
+        const path = [...name, file.name].join('/');
         const text = await Filesystem.readFile({
-          path: [...name, file.name].join('/'),
+          path,
           directory: 'ICLOUD',
           encoding: Encoding.UTF8
         })
@@ -40,7 +41,8 @@ export async function getData () {
           content: text.data,
           title: file.name.replace(/\.html$/i, ''),
           ctime: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
-          mtime: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
+          mtime: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString()),
+          path,
         })
       } else if (file.name.endsWith('.icloud')) {
         icloud.push([...name, file.name].join('/'))
