@@ -65,6 +65,21 @@ async function getPostByID(id) {
   }
 }
 
+function getTermByID (id) {
+  const path = paths[-id - 1];
+  const directories = path.split('/');
+  return {
+    term_id: id,
+    name: directories[directories.length - 1],
+    slug: directories[directories.length - 1],
+    term_group: 0,
+    term_taxonomy_id: id,
+    taxonomy: 'hypernote-folder',
+    description: '',
+    parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+  }
+}
+
 
 try {
   StatusBar.setStyle({ style: Style.Dark })
@@ -179,6 +194,7 @@ async function load () {
     const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query } = JSON.parse(data)
 
     if ( terms_pre_query ) {
+      console.log('terms_pre_query',terms_pre_query);
       if (terms_pre_query['fields'] === 'all_with_object_id') {
         const terms = ( await getIndexedPaths() ).map((path,index) => {
           if (!path.endsWith('.html')) {
@@ -203,30 +219,66 @@ async function load () {
           }
         }).filter((term) => term !== null);
         return JSON.stringify( terms );
-      } else if (terms_pre_query['fields'] === 'all') {
-        const terms = ( await getIndexedPaths() ).map((path,index) => {
+      } else {
+        const object_ids = terms_pre_query['object_ids'];
+        const _paths = ( await getIndexedPaths() );
+        const terms = ( !object_ids.length ) ? _paths.map((path,index) => {
           if (path.endsWith('.html')) {
             return null;
           }
-          const directories = path.split('/');
           const termId = - index - 1;
-          return {
-            term_id: termId,
-            name: directories[directories.length - 1],
-            slug: directories[directories.length - 1],
-            term_group: 0,
-            term_taxonomy_id: termId,
-            taxonomy: 'hypernote-folder',
-            description: '',
-            parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+          return getTermByID( termId );
+        }).filter((term) => term !== null) : object_ids.map((object_id) => {
+          const path = _paths[- object_id - 1];
+          if (!path.endsWith('.html')) {
+            return null;
           }
+          if (!path.includes('/')) {
+            return null;
+          }
+          const directories = path.split('/');
+          const fileName = directories.pop();
+          const termId = - paths.indexOf(directories.join('/')) - 1;
+          return getTermByID( termId );
         }).filter((term) => term !== null);
-        return JSON.stringify( terms );
+
+
+        if ( terms_pre_query['fields'] === 'all' ) {
+          return JSON.stringify( terms );
+        } else if ( terms_pre_query['fields'] === 'ids' || terms_pre_query['fields'] === 'tt_ids' ) {
+          return JSON.stringify( terms.map((term) => term.term_id) );
+        } else if ( terms_pre_query['fields'] === 'names' ) {
+          return JSON.stringify( terms.map((term) => term.name) );
+        } else if ( terms_pre_query['fields'] === 'count' ) {
+          return JSON.stringify( terms.length );
+        } else if ( terms_pre_query['fields'] === 'slugs' ) {
+          return JSON.stringify( terms.map((term) => term.slug) );
+        } else if ( terms_pre_query['fields'] === 'id=>parent' ) {
+          return JSON.stringify( terms.reduce((acc,term) => {
+            acc[term.term_id] = term.parent;
+            return acc;
+          }, {}) );
+        } else if ( terms_pre_query['fields'] === 'id=>name' ) {
+          return JSON.stringify( terms.reduce((acc,term) => {
+            acc[term.term_id] = term.name;
+            return acc;
+          }, {}) );
+        } else if ( terms_pre_query['fields'] === 'id=>slug' ) {
+          return JSON.stringify( terms.reduce((acc,term) => {
+            acc[term.term_id] = term.slug;
+            return acc;
+          }, {}) );
+        }
       }
     }
 
     if ( cache ) {
-      return JSON.stringify( await getPostByID(cache) );
+      const path = ( await getIndexedPaths() )[ -cache - 1 ];
+      if ( path.endsWith('.html') ) {
+        return JSON.stringify( await getPostByID(cache) );
+      } else {
+        return JSON.stringify( getTermByID(cache) );
+      }
     }
 
     if (statement) {

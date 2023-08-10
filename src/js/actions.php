@@ -136,11 +136,13 @@ add_filter( 'posts_pre_query', function( $return, $query ) {
 }, 10, 2 );
 
 add_filter( 'terms_pre_query', function ( $return, $query ) {
+	if ( empty( $query->query_vars['taxonomy'] ) ) return $return;
 	if ( ! in_array( 'hypernote-folder', $query->query_vars['taxonomy'] ) ) return $return;
 	$return = post_message_to_js( json_encode( array(
 		'terms_pre_query' => $query->query_vars,
 	) ) );
 	$data = json_decode( $return );
+	if ( ! is_array( $data ) ) return $return;
 	return array_map( function( $term ) {
 		wp_cache_add( $term->term_id, $term, 'terms' );
 		return new WP_Term( (object) $term );
@@ -151,13 +153,13 @@ class Blocknotes_Object_Cache extends WP_Object_Cache {
     public function get( $key, $group = 'default', $force = false, &$found = null ) {
 		$cache = parent::get( $key, $group, $force, $found );
 		if ( $cache ) return $cache;
-		if ( $group !== 'posts' || $key >= 0 ) return $cache;
+		if ( ( $group !== 'posts' && $group !== 'terms' ) || $key >= 0 ) return $cache;
 		$return = post_message_to_js( json_encode( array(
 			'cache' => $key
 		) ) );
-		$post = json_decode( $return );
-		wp_cache_add( $post->ID, $post, 'posts' );
-        return $post;
+		$object = json_decode( $return );
+		wp_cache_add( $group === 'posts' ? $object->ID : $object->term_id, $object, $group );
+        return $object;
     }
 }
 
