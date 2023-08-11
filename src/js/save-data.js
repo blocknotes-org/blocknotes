@@ -7,7 +7,7 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
     if (path) {
       const file = name ? name + '.html' : ''
 
-      if (content && file) {
+      if (typeof content === 'string' && file) {
         console.log('writing file', [ ...path, file ].join('/'))
         await Filesystem.writeFile({
           path: [ ...path, file ].join('/'),
@@ -31,8 +31,15 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
         if (index !== -1) {
             paths[index] = to
 
-            if ( content && file ) {
+            if ( typeof content === 'string' && file ) {
                 return await getPostByID( - index - 1 );
+            }
+        } else {
+            // New note.
+            paths.push(to)
+
+            if ( typeof content === 'string' && file ) {
+                return await getPostByID( - paths.length );
             }
         }
     } else {

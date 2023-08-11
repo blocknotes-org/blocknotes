@@ -13,14 +13,15 @@ function wp_insert_post( $data, $wp_error = false ) {
 		return _wp_insert_post( $data, $wp_error );
 	}
 
-	$post_title = 'untitled';
+	$post_title = 'new';
 
-	if ( $data['ID'] ) {
+	if ( ! empty( $data['ID'] ) ) {
 		$current_post = get_post( $data['ID'] );
 		$post_title = $current_post->post_title;
 	}
 
-	$post_content = wp_unslash( $data['post_content'] );
+	$post_content = empty( $data['post_content'] ) ? '' : $data['post_content'];
+	$post_content = wp_unslash( $post_content );
 	$blocks = parse_blocks( $post_content );
 
 	$i = 0;
@@ -36,18 +37,25 @@ function wp_insert_post( $data, $wp_error = false ) {
 	}
 
 	if ( ! $text ) {
-		if ( ! $wp_error ) return 0;
-		return new WP_Error( 'hypernote_error', 'The note must contain some text.' );
+		$text = wp_trim_words( $post_content, 10, '' );
 	}
 
-	$terms = wp_get_object_terms( (int) $data['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
+	if ( ! $text ) {
+		// To do, try to get a description of the (first) block.
+		$text = 'untitled';
+	}
 
-	if ( is_wp_error( $terms ) ) {
-		$terms = [];
+	$terms = [];
+
+	if ( ! empty( $data['ID'] ) ) {
+		$terms = wp_get_object_terms( (int) $data['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
+		if ( is_wp_error( $terms ) ) {
+			$terms = [];
+		}
 	}
 
 	$path = count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
-	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $data['ID'], 'private', $data['post_type'], 0 );
+	$new_name = $text;
 	$return = post_message_to_js( json_encode( array(
 		'name' => $post_title,
 		'newName' => $new_name,
