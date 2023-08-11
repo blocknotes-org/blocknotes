@@ -54,11 +54,11 @@ function insert_items($items, $taxonomy, $parent_term_id = 0, $status = 'publish
 
 update_user_option( 1, 'admin_color', 'modern' );
 update_option( 'gmt_offset', $data['gmt_offset'] );
-wp_defer_term_counting( true );
-wp_defer_comment_counting( true );
-insert_items($data['data'], 'hypernote-folder');
-wp_defer_term_counting( false );
-wp_defer_comment_counting( false );
+// wp_defer_term_counting( true );
+// wp_defer_comment_counting( true );
+// insert_items($data['data'], 'hypernote-folder');
+// wp_defer_term_counting( false );
+// wp_defer_comment_counting( false );
 
 // var_dump( get_terms( array(
 // 	'taxonomy' => 'hypernote-folder',

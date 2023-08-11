@@ -71,7 +71,7 @@ function getTermByID (id) {
   return {
     term_id: id,
     name: directories[directories.length - 1],
-    slug: directories[directories.length - 1],
+    slug: id + '',
     term_group: 0,
     term_taxonomy_id: id,
     taxonomy: 'hypernote-folder',
@@ -191,13 +191,25 @@ async function load () {
   )
 
   php.onMessage(async (data) => {
-    const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query } = JSON.parse(data)
+    const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query, counts } = JSON.parse(data)
+
+    if (counts) {
+      // Get the number of posts
+      const posts = ( await getIndexedPaths() ).filter((path) => path.endsWith('.html'));
+      const trashed = posts.filter((path) => path.split('/').includes('.Trash'));
+      return JSON.stringify({
+        private: posts.length - trashed.length,
+        trash: trashed.length,
+      });
+    }
 
     if ( terms_pre_query ) {
-      console.log('terms_pre_query',terms_pre_query);
       if (terms_pre_query['fields'] === 'all_with_object_id') {
         const terms = ( await getIndexedPaths() ).map((path,index) => {
           if (!path.endsWith('.html')) {
+            return null;
+          }
+          if (path.split('/').includes('.Trash')) {
             return null;
           }
           if (!path.includes('/')) {
@@ -226,6 +238,9 @@ async function load () {
           if (path.endsWith('.html')) {
             return null;
           }
+          if (path.split('/').includes('.Trash')) {
+            return null;
+          }
           const termId = - index - 1;
           return getTermByID( termId );
         }).filter((term) => term !== null) : object_ids.map((object_id) => {
@@ -236,7 +251,7 @@ async function load () {
           if (!path.includes('/')) {
             return null;
           }
-          const directories = path.split('/');
+          const directories = path.split('/').filter((folder) => folder !== '.Trash');
           const fileName = directories.pop();
           const termId = - paths.indexOf(directories.join('/')) - 1;
           return getTermByID( termId );
@@ -283,14 +298,29 @@ async function load () {
 
     if (statement) {
       if (statement.post_type === 'hypernote') {
-        const posts = ( await Promise.all( ( await getIndexedPaths() ).map(async (path,index) => {
+        const trash = statement['post_status'] === 'trash';
+        const _paths = await getIndexedPaths();
+        let folderPath = null;
+
+        if ( statement['hypernote-folder'] ) {
+          const folderId = - parseInt( statement['hypernote-folder'], 10 ) - 1;
+          folderPath = _paths[folderId];
+        }
+
+        console.log('statement',statement);
+        const posts = ( await Promise.all( _paths.map(async (path,index) => {
           if (!path.endsWith('.html')) {
+            return null;
+          }
+          if (folderPath && !path.startsWith(folderPath)) {
+            return null;
+          }
+          const isInTrash = path.split('/').includes('.Trash');
+          if ( trash !== isInTrash ) {
             return null;
           }
           return await getPostByID( - index - 1 );
         }) ) ).filter((term) => term !== null);
-
-        console.log('posts',posts);
 
         return JSON.stringify(posts);
       }

@@ -99,7 +99,7 @@ function get_taxonomy_hierarchy($term_id) {
 	$taxonomy_titles = [];
 
 	// Get the term by its ID.
-	$term = get_term($term_id);
+	$term = get_term($term_id, 'hypernote-folder');
 
 	if ($term && !is_wp_error($term)) {
 		// Add the term's name to the beginning of the array.
@@ -194,6 +194,17 @@ class Blocknotes_Object_Cache extends WP_Object_Cache {
     public function get( $key, $group = 'default', $force = false, &$found = null ) {
 		$cache = parent::get( $key, $group, $force, $found );
 		if ( $cache ) return $cache;
+		if ( $group === 'counts' ) {
+			if ( $key !== _count_posts_cache_key( 'hypernote', '' ) ) {
+				return $cache;
+			}
+			$return = post_message_to_js( json_encode( array(
+				'counts' => 'notes'
+			) ) );
+			$object = json_decode( $return );
+			wp_cache_add( $key, $object, $group );
+			return $object;
+		}
 		if ( ( $group !== 'posts' && $group !== 'terms' ) || $key >= 0 ) return $cache;
 		$return = post_message_to_js( json_encode( array(
 			'cache' => $key
