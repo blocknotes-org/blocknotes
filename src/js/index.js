@@ -40,7 +40,7 @@ function getID(path) {
   return - ( index + 1 );
 }
 
-async function getPostByID(id) {
+export async function getPostByID(id) {
   const path = paths[-id - 1];
   const text = await Filesystem.readFile({
     path: path,
@@ -300,9 +300,12 @@ async function load () {
     console.log({ name, newName, newPath, path, trash })
 
     try {
-      await saveData({ name, content, newName, newPath, path, trash })
+      const saved = await saveData({ name, content, newName, newPath, path, trash, paths });
+      console.log('updating post', saved);
+      return JSON.stringify( saved );
     } catch (e) {
       window.alert(e.message)
+      return JSON.stringify(e);
     }
   })
 

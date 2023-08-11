@@ -36,6 +36,12 @@ define('WP_SITEURL', '${base}');
     return randomString(40)
 })}`)
 
+let post = await php.readFileAsText('/wordpress/wp-includes/post.php')
+post = post.replace('function wp_insert_post', 'function _wp_insert_post' )
+post = post.replace('function wp_update_post', 'function _wp_update_post' )
+
+await php.writeFile('/wordpress/wp-includes/post.php', post)
+
   await php.writeFile('/wordpress/wp-content/mu-plugins/login.php', `<?php
 include 'wordpress/wp-load.php';
 add_action( 'user_can_richedit', function() {
@@ -56,7 +62,7 @@ add_filter( 'set_url_scheme', function( $url ) {
     console.log({
       ...args,
       url
-    })
+    }, response)
     response.url = url
     if (location) {
       console.log('redirecting to', location)

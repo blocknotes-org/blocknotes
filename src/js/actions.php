@@ -1,13 +1,25 @@
 <?php
 
-add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
-	if ( $data['post_type'] !== 'hypernote' ) return $data;
-
-	if ( $data['post_status'] !== 'trash' ) {
-		$data['post_status'] = 'private';
+function wp_update_post( $data, $wp_error = false ) {
+	if ( $data['post_type'] !== 'hypernote' ) {
+		return _wp_update_post( $data, $wp_error );
 	}
 
-	$post_title = wp_unslash( $data['post_title'] );
+	return wp_insert_post( $data, $wp_error );
+}
+
+function wp_insert_post( $data, $wp_error = false ) {
+	if ( $data['post_type'] !== 'hypernote' ) {
+		return _wp_insert_post( $data, $wp_error );
+	}
+
+	$post_title = 'untitled';
+
+	if ( $data['ID'] ) {
+		$current_post = get_post( $data['ID'] );
+		$post_title = $current_post->post_title;
+	}
+
 	$post_content = wp_unslash( $data['post_content'] );
 	$blocks = parse_blocks( $post_content );
 
@@ -22,17 +34,21 @@ add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 			break;
 		}
 	}
-	if ( ! $text ) return $data;
 
-	$terms = wp_get_object_terms( (int) $postarr['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
+	if ( ! $text ) {
+		if ( ! $wp_error ) return 0;
+		return new WP_Error( 'hypernote_error', 'The note must contain some text.' );
+	}
+
+	$terms = wp_get_object_terms( (int) $data['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
 
 	if ( is_wp_error( $terms ) ) {
 		$terms = [];
 	}
 
 	$path = count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
-	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $postarr['ID'], $data['post_status'], $data['post_type'], (int) $data['post_parent'] );
-	post_message_to_js( json_encode( array(
+	$new_name = wp_unique_post_slug( sanitize_title( $text ), (int) $data['ID'], 'private', $data['post_type'], 0 );
+	$return = post_message_to_js( json_encode( array(
 		'name' => $post_title,
 		'newName' => $new_name,
 		'content' => $post_content,
@@ -40,19 +56,36 @@ add_filter( 'wp_insert_post_data', function( $data, $postarr ) {
 		'newPath' => $path,
 	) ) );
 
-	// When trashing, first update the file, then trash it.
-	if ( $data[ 'post_status' ] === 'trash' ) {
-		post_message_to_js( json_encode( array(
-			'trash' => true,
-			'name' => $new_name,
-			'path' => $path,
-		) ) );
+	$response = json_decode( $return );
+
+	if ( ! $response ) {
+		if ( ! $wp_error ) return 0;
+		return new WP_Error( 'hypernote_error', 'No response from JS.' );
 	}
 
-	$data['post_title'] = $new_name;
-	$data['post_name'] = $new_name;
-	return $data;
-}, 10, 2 );
+	if ( isset( $response->message ) ) {
+		if ( ! $wp_error ) return 0;
+		return new WP_Error( 'hypernote_error', $response->message );
+	}
+
+	if ( empty( $response->ID ) ) {
+		if ( ! $wp_error ) return 0;
+		return new WP_Error( 'hypernote_error', 'No ID returned.' );
+	}
+
+	wp_cache_set( $response->ID, $response, 'posts' );
+
+	// When trashing, first update the file, then trash it.
+	// if ( $data[ 'post_status' ] === 'trash' ) {
+	// 	post_message_to_js( json_encode( array(
+	// 		'trash' => true,
+	// 		'name' => $new_name,
+	// 		'path' => $path,
+	// 	) ) );
+	// }
+
+	return $response->ID;
+}
 
 function get_taxonomy_hierarchy($term_id) {
 	$taxonomy_titles = [];
