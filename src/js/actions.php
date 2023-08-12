@@ -1,16 +1,29 @@
 <?php
 
-function wp_update_post( $data, $wp_error = false ) {
+function get_note_path( $post_id ) {
+	$terms = [];
+
+	if ( ! empty( $post_id ) ) {
+		$terms = wp_get_object_terms( (int) $post_id, 'hypernote-folder', array( 'fields' => 'ids' ) );
+		if ( is_wp_error( $terms ) ) {
+			$terms = [];
+		}
+	}
+
+	return count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
+}
+
+function wp_update_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 	if ( $data['post_type'] !== 'hypernote' ) {
-		return _wp_update_post( $data, $wp_error );
+		return _wp_update_post( $data, $wp_error, $fire_after_hooks );
 	}
 
 	return wp_insert_post( $data, $wp_error );
 }
 
-function wp_insert_post( $data, $wp_error = false ) {
+function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 	if ( $data['post_type'] !== 'hypernote' ) {
-		return _wp_insert_post( $data, $wp_error );
+		return _wp_insert_post( $data, $wp_error, $fire_after_hooks );
 	}
 
 	$post_title = 'new';
@@ -45,17 +58,8 @@ function wp_insert_post( $data, $wp_error = false ) {
 		$text = 'untitled';
 	}
 
-	$terms = [];
-
-	if ( ! empty( $data['ID'] ) ) {
-		$terms = wp_get_object_terms( (int) $data['ID'], 'hypernote-folder', array( 'fields' => 'ids' ) );
-		if ( is_wp_error( $terms ) ) {
-			$terms = [];
-		}
-	}
-
-	$path = count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
-	$new_name = $text;
+	$path = get_note_path( $data['ID'] );
+	$new_name = sanitize_title( $text );
 	$return = post_message_to_js( json_encode( array(
 		'name' => $post_title,
 		'newName' => $new_name,
@@ -95,6 +99,85 @@ function wp_insert_post( $data, $wp_error = false ) {
 	return $response->ID;
 }
 
+function wp_insert_term( $term, $taxonomy, $args = array() ) {
+	if ( $taxonomy !== 'hypernote-folder' ) {
+		return _wp_insert_term( $term, $taxonomy, $args );
+	}
+
+	$newPath = [];
+
+	if ( ! empty( $args['parent'] ) ) {
+		$newPath = get_taxonomy_hierarchy( (int) $args['parent'] );
+	}
+
+	$newPath[] = $term;
+
+	$return = post_message_to_js( json_encode( array(
+		'newPath' => $newPath,
+	) ) );
+	$response = json_decode( $return );
+
+	return array(
+		'term_id' => $response->term_id,
+		'term_taxonomy_id' => $response->term_taxonomy_id,
+	);
+}
+
+function wp_update_term( $term_id, $taxonomy, $args = array() ) {
+	if ( $taxonomy !== 'hypernote-folder' ) {
+		return _wp_update_term( $term_id, $taxonomy, $args );
+	}
+
+	$newPath = [];
+
+	if ( ! empty( $args['parent'] ) ) {
+		$newPath = get_taxonomy_hierarchy( (int) $args['parent'] );
+	}
+
+	$current_term = get_term( $term_id, $taxonomy );
+
+	$path = $newPath;
+	$path[] = $current_term->name;
+	$newPath[] = $args['name'];
+
+	$return = post_message_to_js( json_encode( array(
+		'path' => $path,
+		'newPath' => $newPath,
+	) ) );
+	$response = json_decode( $return );
+
+	return array(
+		'term_id' => $response->term_id,
+		'term_taxonomy_id' => $response->term_taxonomy_id,
+	);
+}
+
+function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
+	if ( $taxonomy !== 'hypernote-folder' ) {
+		return _wp_set_object_terms( $object_id, $terms, $taxonomy, $append );
+	}
+
+	$object_id = (int) $object_id;
+	$current_post = get_post( $object_id );
+	$post_title = $current_post->post_title;
+	$path = get_note_path( $object_id );
+	$new_term = (int) is_array( $terms ) ? $terms[0] : $terms;
+	$newPath = [];
+
+	if ( ! empty( $new_term  ) ) {
+		$newPath = get_taxonomy_hierarchy( $new_term );
+	}
+
+	$return = post_message_to_js( json_encode( array(
+		'name' => $post_title,
+		'path' => $path,
+		'newPath' => $newPath,
+	) ) );
+	$response = json_decode( $return );
+
+	return [ $response->term_id ];
+}
+
 function get_taxonomy_hierarchy($term_id) {
 	$taxonomy_titles = [];
 
@@ -120,49 +203,6 @@ function get_taxonomy_hierarchy($term_id) {
 
 	return $taxonomy_titles;
 }
-
-function hypernotes_set_object_terms( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids ) {
-	if ( $taxonomy !== 'hypernote-folder' ) return;
-	$post = get_post( $object_id );
-
-	if ( count( $tt_ids ) > 1 ) {
-		remove_action( 'set_object_terms', 'hypernotes_set_object_terms', 10, 6 );
-		wp_set_object_terms( $object_id, (int) $tt_ids[0], $taxonomy );
-		add_action( 'set_object_terms', 'hypernotes_set_object_terms', 10, 6 );
-	}
-
-	post_message_to_js( json_encode( array(
-		'name' => $post->post_title,
-		'newPath' => get_taxonomy_hierarchy( (int) $tt_ids[0] ),
-		'path' => get_taxonomy_hierarchy( (int) $old_tt_ids[0] ),
-	) ) );
-}
-
-add_action( 'set_object_terms', 'hypernotes_set_object_terms', 10, 6 );
-
-add_action( 'created_term', function( $term_id, $tt_id, $taxonomy ) {
-	if ( $taxonomy !== 'hypernote-folder' ) return;
-	post_message_to_js( json_encode( array(
-		'newPath' => get_taxonomy_hierarchy( (int) $term_id ),
-	) ) );
-}, 10, 3 );
-
-global $_hypernotes_path;
-
-add_action( 'edited_terms', function( $term_id, $taxonomy ) {
-	if ( $taxonomy !== 'hypernote-folder' ) return;
-	global $_hypernotes_path;
-	$_hypernotes_path = get_taxonomy_hierarchy( (int) $term_id );
-}, 10, 3 );
-
-add_action( 'edited_term', function( $term_id, $tt_id, $taxonomy ) {
-	if ( $taxonomy !== 'hypernote-folder' ) return;
-	global $_hypernotes_path;
-	post_message_to_js( json_encode( array(
-		'newPath' => get_taxonomy_hierarchy( (int) $term_id ),
-		'path' => $_hypernotes_path,
-	) ) );
-}, 10, 3 );
 
 add_filter( 'posts_pre_query', function( $return, $query ) {
 	if ( $query->query_vars['post_type'] !== 'hypernote' ) return $return;
@@ -230,12 +270,3 @@ add_action( 'plugins_loaded', function() {
 	global $wp_object_cache;
 	$wp_object_cache = new Blocknotes_Object_Cache();
 } );
-
-// add_filter( 'rest_endpoints', function( $endpoints ) {
-//     if (isset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'])) {
-//         $endpoints['/wp/v2/hypernote/(?P<id>-?[\d]+)'] = $endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'];
-//         unset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)']);
-//     }
-    
-//     return $endpoints;
-// }, 10, 1);

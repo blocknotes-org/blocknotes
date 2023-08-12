@@ -40,6 +40,11 @@ let post = await php.readFileAsText('/wordpress/wp-includes/post.php')
 post = post.replace('function wp_insert_post', 'function _wp_insert_post' )
 post = post.replace('function wp_update_post', 'function _wp_update_post' )
 await php.writeFile('/wordpress/wp-includes/post.php', post)
+let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
+taxonomy = taxonomy.replace('function wp_insert_term', 'function _wp_insert_term' )
+taxonomy = taxonomy.replace('function wp_update_term', 'function _wp_update_term' )
+taxonomy = taxonomy.replace('function wp_set_object_terms', 'function _wp_set_object_terms' )
+await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
 
 // let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
 // taxonomy = taxonomy.replace('if ( $value < 0 ) { $value = 0; }', '' )
@@ -65,7 +70,7 @@ add_filter( 'set_url_scheme', function( $url ) {
     console.log({
       ...args,
       url
-    })
+    }, response)
     response.url = url
     if (location) {
       console.log('redirecting to', location)

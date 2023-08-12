@@ -1,6 +1,6 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem'
 
-import { getPostByID, convertID } from './index'
+import { getPostByID, getTermByID, convertID } from './index'
 
 export async function saveData ({ name, content, newName, newPath, path, trash, paths }) {
   if (newPath) {
@@ -18,8 +18,8 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
       }
 
       const newFile = newName ? newName + '.html' : file
-      const from = [ ...path, file ].join('/')
-      const to = [ ...newPath, newFile ].join('/')
+      const from = ( file ? [ ...path, file ] : path ).join('/')
+      const to = ( newFile ? [ ...newPath, newFile ] : newPath ).join('/')
 
       console.log('renaming file', from, to)
       await Filesystem.rename({
@@ -33,6 +33,8 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
 
             if ( typeof content === 'string' && file ) {
                 return await getPostByID( convertID( index ) );
+            } else {
+                return getTermByID( convertID( index ) )
             }
         } else {
             // New note.
@@ -48,6 +50,8 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
         directory: 'ICLOUD',
         recursive: true
       })
+      paths.push(newPath.join('/'))
+      return getTermByID( convertID( paths.length - 1 ) )
     }
   } else if (trash) {
     const from = [ ...path, name + '.html' ].join('/')

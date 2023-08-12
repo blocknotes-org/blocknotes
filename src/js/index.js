@@ -39,7 +39,8 @@ export async function getPostByID(id) {
     directory: 'ICLOUD',
     encoding: Encoding.UTF8
   });
-  const name = path.replace(/\.html$/i, '');
+  const _path = path.split('/');
+  const name = _path[_path.length - 1].replace('.html', '');
   const file = await Filesystem.stat({
     path: path,
     directory: 'ICLOUD',
@@ -57,7 +58,7 @@ export async function getPostByID(id) {
   }
 }
 
-function getTermByID (id) {
+export function getTermByID (id) {
   const path = paths[convertID(id)];
   const directories = path.split('/');
   const parentIndex = paths.indexOf(directories.slice(0, directories.length - 1).join('/'))
