@@ -1,6 +1,6 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem'
 
-import { getPostByID } from './index'
+import { getPostByID, convertID } from './index'
 
 export async function saveData ({ name, content, newName, newPath, path, trash, paths }) {
   if (newPath) {
@@ -32,14 +32,14 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
             paths[index] = to
 
             if ( typeof content === 'string' && file ) {
-                return await getPostByID( - index - 1 );
+                return await getPostByID( convertID( index ) );
             }
         } else {
             // New note.
             paths.push(to)
 
             if ( typeof content === 'string' && file ) {
-                return await getPostByID( - paths.length );
+                return await getPostByID( convertID( paths.length - 1 ) );
             }
         }
     } else {

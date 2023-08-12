@@ -39,8 +39,11 @@ define('WP_SITEURL', '${base}');
 let post = await php.readFileAsText('/wordpress/wp-includes/post.php')
 post = post.replace('function wp_insert_post', 'function _wp_insert_post' )
 post = post.replace('function wp_update_post', 'function _wp_update_post' )
-
 await php.writeFile('/wordpress/wp-includes/post.php', post)
+
+// let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
+// taxonomy = taxonomy.replace('if ( $value < 0 ) { $value = 0; }', '' )
+// await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
 
   await php.writeFile('/wordpress/wp-content/mu-plugins/login.php', `<?php
 include 'wordpress/wp-load.php';
@@ -62,7 +65,7 @@ add_filter( 'set_url_scheme', function( $url ) {
     console.log({
       ...args,
       url
-    }, response)
+    })
     response.url = url
     if (location) {
       console.log('redirecting to', location)

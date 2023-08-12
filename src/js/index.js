@@ -8,7 +8,12 @@ import insert from './insert.php?raw'
 import { getData, getPaths } from './get-data.js'
 import { saveData } from './save-data.js'
 
+const PHP_MAX_INT = 2147483647;
 const paths = [];
+
+export function convertID(id) {
+  return PHP_MAX_INT - id - 1;
+}
 
 async function getIndexedPaths () {
   const freshPaths = await getPaths();
@@ -27,21 +32,8 @@ function isoToTime (iso) {
   return iso.split('T').join(' ').split('.')[0]
 }
 
-// Revert to storing an array of titles, or paths rather. Read from the
-// filesystem when getting from object cache so posts are fresh with each
-// pageload.
-function getID(path) {
-  const index = paths.indexOf(path);
-  if (index === -1) {
-    paths.push(path)
-    return - paths.length;
-  }
-
-  return - ( index + 1 );
-}
-
 export async function getPostByID(id) {
-  const path = paths[-id - 1];
+  const path = paths[convertID(id)];
   const text = await Filesystem.readFile({
     path: path,
     directory: 'ICLOUD',
@@ -66,8 +58,9 @@ export async function getPostByID(id) {
 }
 
 function getTermByID (id) {
-  const path = paths[-id - 1];
+  const path = paths[convertID(id)];
   const directories = path.split('/');
+  const parentIndex = paths.indexOf(directories.slice(0, directories.length - 1).join('/'))
   return {
     term_id: id,
     name: directories[directories.length - 1],
@@ -76,7 +69,7 @@ function getTermByID (id) {
     term_taxonomy_id: id,
     taxonomy: 'hypernote-folder',
     description: '',
-    parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+    parent: parentIndex === -1 ? 0 : convertID( parentIndex ),
   }
 }
 
@@ -130,7 +123,7 @@ async function load () {
   }
 
   const [[d, icloud], { php, request }] = await Promise.all([
-    getDataWithICloudWarning(),
+    [[], []],
     main()
   ])
 
@@ -204,6 +197,7 @@ async function load () {
     }
 
     if ( terms_pre_query ) {
+      console.log('terms_pre_query', terms_pre_query);
       if (terms_pre_query['fields'] === 'all_with_object_id') {
         const terms = ( await getIndexedPaths() ).map((path,index) => {
           if (!path.endsWith('.html')) {
@@ -217,17 +211,10 @@ async function load () {
           }
           const directories = path.split('/');
           const fileName = directories.pop();
-          const termId = - paths.indexOf(directories.join('/')) - 1;
+          const termId = convertID( paths.indexOf(directories.join('/')) );
           return {
-            object_id: - index - 1,
-            term_id: termId,
-            name: directories[directories.length - 1],
-            slug: directories[directories.length - 1],
-            term_group: 0,
-            term_taxonomy_id: termId,
-            taxonomy: 'hypernote-folder',
-            description: '',
-            parent: - paths.indexOf(directories.slice(0, directories.length - 1).join('/')) - 1,
+            object_id: convertID(index),
+            ...getTermByID( termId ),
           }
         }).filter((term) => term !== null);
         return JSON.stringify( terms );
@@ -241,10 +228,10 @@ async function load () {
           if (path.split('/').includes('.Trash')) {
             return null;
           }
-          const termId = - index - 1;
+          const termId = convertID(index);
           return getTermByID( termId );
         }).filter((term) => term !== null) : object_ids.map((object_id) => {
-          const path = _paths[- object_id - 1];
+          const path = _paths[convertID(object_id)];
           if (!path.endsWith('.html')) {
             return null;
           }
@@ -253,7 +240,7 @@ async function load () {
           }
           const directories = path.split('/').filter((folder) => folder !== '.Trash');
           const fileName = directories.pop();
-          const termId = - paths.indexOf(directories.join('/')) - 1;
+          const termId = convertID( paths.indexOf(directories.join('/')) );
           return getTermByID( termId );
         }).filter((term) => term !== null);
 
@@ -288,7 +275,9 @@ async function load () {
     }
 
     if ( cache ) {
-      const path = ( await getIndexedPaths() )[ -cache - 1 ];
+      const path = ( await getIndexedPaths() )[ convertID(cache) ];
+      console.log('cache_id', cache, path);
+      if (!path) return;
       if ( path.endsWith('.html') ) {
         return JSON.stringify( await getPostByID(cache) );
       } else {
@@ -303,7 +292,7 @@ async function load () {
         let folderPath = null;
 
         if ( statement['hypernote-folder'] ) {
-          const folderId = - parseInt( statement['hypernote-folder'], 10 ) - 1;
+          const folderId = convertID( parseInt( statement['hypernote-folder'], 10 ) );
           folderPath = _paths[folderId];
         }
 
@@ -319,7 +308,7 @@ async function load () {
           if ( trash !== isInTrash ) {
             return null;
           }
-          return await getPostByID( - index - 1 );
+          return await getPostByID( convertID(index) );
         }) ) ).filter((term) => term !== null);
 
         return JSON.stringify(posts);

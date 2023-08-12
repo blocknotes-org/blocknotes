@@ -182,9 +182,19 @@ add_filter( 'terms_pre_query', function ( $return, $query ) {
 	$return = post_message_to_js( json_encode( array(
 		'terms_pre_query' => $query->query_vars,
 	) ) );
+	if ( $query->query_vars['fields'] === 'count' ) return (int) $return;
+	// Map keys to integers when the field starts with "id=>".
+	if ( strpos( $query->query_vars['fields'], 'id=>' ) === 0 ) {
+		$data = json_decode( $return, true );
+		$intKeyArray = array();
+		foreach ($data as $key => $value) {
+			$intKeyArray[(int)$key] = $value;
+		}
+		return $intKeyArray;
+	}
 	$data = json_decode( $return );
-	if ( ! is_array( $data ) ) return $return;
 	return array_map( function( $term ) {
+		if ( ! isset( $term->term_id ) ) return $term;
 		wp_cache_add( $term->term_id, $term, 'terms' );
 		return new WP_Term( (object) $term );
 	}, $data );
@@ -205,10 +215,11 @@ class Blocknotes_Object_Cache extends WP_Object_Cache {
 			wp_cache_add( $key, $object, $group );
 			return $object;
 		}
-		if ( ( $group !== 'posts' && $group !== 'terms' ) || $key >= 0 ) return $cache;
+		if ( ( $group !== 'posts' && $group !== 'terms' ) || ! is_int( $key ) ) return $cache;
 		$return = post_message_to_js( json_encode( array(
 			'cache' => $key
 		) ) );
+		if ( ! $return ) return $cache;
 		$object = json_decode( $return );
 		wp_cache_add( $group === 'posts' ? $object->ID : $object->term_id, $object, $group );
         return $object;
@@ -220,11 +231,11 @@ add_action( 'plugins_loaded', function() {
 	$wp_object_cache = new Blocknotes_Object_Cache();
 } );
 
-add_filter( 'rest_endpoints', function( $endpoints ) {
-    if (isset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'])) {
-        $endpoints['/wp/v2/hypernote/(?P<id>-?[\d]+)'] = $endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'];
-        unset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)']);
-    }
+// add_filter( 'rest_endpoints', function( $endpoints ) {
+//     if (isset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'])) {
+//         $endpoints['/wp/v2/hypernote/(?P<id>-?[\d]+)'] = $endpoints['/wp/v2/hypernote/(?P<id>[\d]+)'];
+//         unset($endpoints['/wp/v2/hypernote/(?P<id>[\d]+)']);
+//     }
     
-    return $endpoints;
-}, 10, 1);
+//     return $endpoints;
+// }, 10, 1);

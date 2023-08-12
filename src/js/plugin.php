@@ -1,5 +1,11 @@
 <?php
 
+// set_error_handler(function($severity, $message, $file, $line) {
+//     if (error_reporting() & $severity) {
+//         throw new ErrorException($message, 0, $severity, $file, $line);
+//     }
+// });
+
 class WP_REST_Hypernotes_Controller extends WP_REST_Posts_Controller {
 	protected function get_post( $id ) {
 		$post = get_post( (int) $id );
