@@ -60,12 +60,19 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 
 	$path = get_note_path( $data['ID'] );
 	$new_name = sanitize_title( $text );
+	$newPath = $path;
+
+	if ( isset( $data['tax_input']['hypernote-folder'] ) ) {
+		$last_tag = end( $data['tax_input']['hypernote-folder'] );
+		$newPath = get_taxonomy_hierarchy( (int) $last_tag );
+	}
+
 	$return = post_message_to_js( json_encode( array(
 		'name' => $post_title,
 		'newName' => $new_name,
 		'content' => $post_content,
 		'path' => $path,
-		'newPath' => $path,
+		'newPath' => $newPath,
 	) ) );
 
 	$response = json_decode( $return );
