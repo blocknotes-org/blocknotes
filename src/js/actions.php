@@ -1,5 +1,9 @@
 <?php
 
+function wp_check_post_lock() {
+	return false;
+}
+
 function get_note_path( $post_id ) {
 	$terms = [];
 
@@ -13,8 +17,15 @@ function get_note_path( $post_id ) {
 	return count( $terms ) ? get_taxonomy_hierarchy( (int) $terms[0] ) : [];
 }
 
+function is_hypernote( $data ) {
+	if ( empty( $data['ID'] ) ) {
+		return $data['post_type'] === 'hypernote';
+	}
+	return get_post_type( $data['ID'] ) === 'hypernote';
+}
+
 function wp_update_post( $data, $wp_error = false, $fire_after_hooks = true ) {
-	if ( $data['post_type'] !== 'hypernote' ) {
+	if ( ! is_hypernote( $data ) ) {
 		return _wp_update_post( $data, $wp_error, $fire_after_hooks );
 	}
 
@@ -22,7 +33,7 @@ function wp_update_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 }
 
 function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
-	if ( $data['post_type'] !== 'hypernote' ) {
+	if ( ! is_hypernote( $data ) ) {
 		return _wp_insert_post( $data, $wp_error, $fire_after_hooks );
 	}
 
@@ -33,7 +44,14 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 		$post_title = $current_post->post_title;
 	}
 
-	$post_content = empty( $data['post_content'] ) ? '' : $data['post_content'];
+	if ( ! empty( $data['post_content'] ) ) {
+		$post_content = $data['post_content'];
+	} else if ( ! empty( $current_post ) ) {
+		$post_content = $current_post->post_content;
+	} else {
+		$post_content = '';
+	}
+
 	$post_content = wp_unslash( $post_content );
 	$blocks = parse_blocks( $post_content );
 
@@ -58,7 +76,7 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 		$text = 'untitled';
 	}
 
-	$path = get_note_path( $data['ID'] );
+	$path = empty( $data['ID'] ) ? [] : get_note_path( $data['ID'] );
 	$new_name = sanitize_title( $text );
 	$newPath = $path;
 
@@ -67,11 +85,16 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 		$newPath = get_taxonomy_hierarchy( (int) $last_tag );
 	}
 
+	if ( isset( $data[ 'post_status' ] ) && $data[ 'post_status' ] === 'trash' ) {
+		$newPath[] = '.Trash';
+	}
+
 	$return = post_message_to_js( json_encode( array(
 		'name' => $post_title,
 		'newName' => $new_name,
 		'content' => $post_content,
 		'path' => $path,
+		'id' => empty( $data['ID'] ) ? 0 : (int) $data['ID'],
 		'newPath' => $newPath,
 	) ) );
 
@@ -93,15 +116,6 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 	}
 
 	wp_cache_set( $response->ID, $response, 'posts' );
-
-	// When trashing, first update the file, then trash it.
-	// if ( $data[ 'post_status' ] === 'trash' ) {
-	// 	post_message_to_js( json_encode( array(
-	// 		'trash' => true,
-	// 		'name' => $new_name,
-	// 		'path' => $path,
-	// 	) ) );
-	// }
 
 	return $response->ID;
 }
@@ -148,6 +162,7 @@ function wp_update_term( $term_id, $taxonomy, $args = array() ) {
 	$newPath[] = $args['name'];
 
 	$return = post_message_to_js( json_encode( array(
+		'id' => $current_term->term_id,
 		'path' => $path,
 		'newPath' => $newPath,
 	) ) );
@@ -176,7 +191,9 @@ function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
 	}
 
 	$return = post_message_to_js( json_encode( array(
+		'id' => $object_id,
 		'name' => $post_title,
+		'newName' => $post_title,
 		'path' => $path,
 		'newPath' => $newPath,
 	) ) );
@@ -268,7 +285,7 @@ class Blocknotes_Object_Cache extends WP_Object_Cache {
 		) ) );
 		if ( ! $return ) return $cache;
 		$object = json_decode( $return );
-		wp_cache_add( $group === 'posts' ? $object->ID : $object->term_id, $object, $group );
+		wp_cache_add( $key, $object, $group );
         return $object;
     }
 }

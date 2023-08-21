@@ -9,13 +9,14 @@ import { getData, getPaths } from './get-data.js'
 import { saveData } from './save-data.js'
 
 const PHP_MAX_INT = 2147483647;
-const paths = [];
+let paths = [];
 
 export function convertID(id) {
   return PHP_MAX_INT - id - 1;
 }
 
 async function getIndexedPaths () {
+  if ( paths.fresh === false ) return paths;
   const freshPaths = await getPaths();
   for (const freshpath of freshPaths) {
     const index = paths.indexOf(freshpath);
@@ -23,6 +24,8 @@ async function getIndexedPaths () {
       paths.push(freshpath)
     }
   }
+
+  paths.fresh = false;
 
   return paths;
 }
@@ -32,7 +35,7 @@ function isoToTime (iso) {
   return iso.split('T').join(' ').split('.')[0]
 }
 
-export async function getPostByID(id) {
+export async function getPostByID(id, query) {
   const path = paths[convertID(id)];
   const text = await Filesystem.readFile({
     path: path,
@@ -45,16 +48,17 @@ export async function getPostByID(id) {
     path: path,
     directory: 'ICLOUD',
   });
+  console.log(id,path)
   return {
     ID: id,
     post_type: 'hypernote',
     post_content: text.data,
     post_title: name,
     post_name: name,
-    post_status: 'private',
+    post_status: _path.includes('.Trash') ? 'trash' : 'private',
     post_author: 1,
-    post_date_gmt: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
-    post_modified_gmt: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
+    post_date: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
+    post_modified: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
   }
 }
 
@@ -125,7 +129,11 @@ async function load () {
 
   const [[d, icloud], { php, request }] = await Promise.all([
     [[], []],
-    main()
+    main({
+      beforeLoad: () => {
+        paths.fresh = true
+      }
+    })
   ])
 
   if (icloud.length) {
@@ -185,7 +193,7 @@ async function load () {
   )
 
   php.onMessage(async (data) => {
-    const { name, content, newName, newPath, path, trash, statement, cache, terms_pre_query, counts } = JSON.parse(data)
+    const { id, name, content, newName, newPath, path, trash, statement, cache, terms_pre_query, counts } = JSON.parse(data)
 
     if (counts) {
       // Get the number of posts
@@ -222,6 +230,7 @@ async function load () {
       } else {
         const object_ids = terms_pre_query['object_ids'];
         const _paths = ( await getIndexedPaths() );
+        console.log('_paths', _paths);
         const terms = ( !object_ids.length ) ? _paths.map((path,index) => {
           if (path.endsWith('.html')) {
             return null;
@@ -241,10 +250,12 @@ async function load () {
           }
           const directories = path.split('/').filter((folder) => folder !== '.Trash');
           const fileName = directories.pop();
+          if (!directories.join('/')) return null;
           const termId = convertID( paths.indexOf(directories.join('/')) );
           return getTermByID( termId );
         }).filter((term) => term !== null);
 
+        console.log('terms', terms);
 
         if ( terms_pre_query['fields'] === 'all' ) {
           return JSON.stringify( terms );
@@ -309,7 +320,7 @@ async function load () {
           if ( trash !== isInTrash ) {
             return null;
           }
-          return await getPostByID( convertID(index) );
+          return await getPostByID( convertID(index), true );
         }) ) ).filter((term) => term !== null);
 
         return JSON.stringify(posts);
@@ -317,10 +328,10 @@ async function load () {
       return '[]'
     }
 
-    console.log({ name, newName, newPath, path, trash })
+    console.log({ id, name, newName, newPath, path, trash })
 
     try {
-      const saved = await saveData({ name, content, newName, newPath, path, trash, paths });
+      const saved = await saveData({ id, name, content, newName, newPath, path, trash, paths });
       console.log('updating post', saved);
       return JSON.stringify( saved );
     } catch (e) {

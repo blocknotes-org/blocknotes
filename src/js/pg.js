@@ -14,7 +14,9 @@ function randomString (length) {
   return result
 }
 
-export async function main () {
+export async function main ( {
+    beforeLoad = () => {}
+}) {
   const startTime = Date.now()
   const worker = await spawnPHPWorkerThread(moduleWorkerUrl, {
     wpVersion: '6.2',
@@ -45,10 +47,9 @@ taxonomy = taxonomy.replace('function wp_insert_term', 'function _wp_insert_term
 taxonomy = taxonomy.replace('function wp_update_term', 'function _wp_update_term' )
 taxonomy = taxonomy.replace('function wp_set_object_terms', 'function _wp_set_object_terms' )
 await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
-
-// let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
-// taxonomy = taxonomy.replace('if ( $value < 0 ) { $value = 0; }', '' )
-// await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
+let adminPost = await php.readFileAsText('/wordpress/wp-admin/includes/post.php')
+adminPost = adminPost.replace('function wp_check_post_lock', 'function _wp_check_post_lock' )
+await php.writeFile('/wordpress/wp-admin/includes/post.php', adminPost)
 
   await php.writeFile('/wordpress/wp-content/mu-plugins/login.php', `<?php
 include 'wordpress/wp-load.php';
@@ -186,6 +187,7 @@ add_filter( 'set_url_scheme', function( $url ) {
       console.log('clicked link', target.href)
 
       event.preventDefault()
+      beforeLoad();
       const response = await request({
         method: 'GET',
         url: (new URL(target.href, currentUrl)).href
@@ -229,6 +231,7 @@ add_filter( 'set_url_scheme', function( $url ) {
       const url = (new URL(target.getAttribute('action') || '', currentUrl)).href
       let response
 
+      beforeLoad();
       if (method === 'GET') {
         const queryString = new URLSearchParams(formData).toString()
         response = await request({

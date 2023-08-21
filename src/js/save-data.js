@@ -2,15 +2,21 @@ import { Filesystem, Encoding } from '@capacitor/filesystem'
 
 import { getPostByID, getTermByID, convertID } from './index'
 
-export async function saveData ({ name, content, newName, newPath, path, trash, paths }) {
+export async function saveData ({ id, name, content, newName, newPath, path, paths }) {
   if (newPath) {
     if (path) {
-      const file = name ? name + '.html' : ''
+      let file = ''
 
-      if (typeof content === 'string' && file) {
-        console.log('writing file', [ ...path, file ].join('/'))
+      if ( id === 0 ) {
+        file = 'new.html';
+      } else if ( id ) {
+        file = paths[ convertID( id ) ];
+      }
+
+      if (typeof content === 'string' && file.endsWith('.html')) {
+        console.log('writing file', file)
         await Filesystem.writeFile({
-          path: [ ...path, file ].join('/'),
+          path: file,
           data: content,
           directory: 'ICLOUD',
           encoding: Encoding.UTF8
@@ -18,8 +24,17 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
       }
 
       const newFile = newName ? newName + '.html' : file
-      const from = ( file ? [ ...path, file ] : path ).join('/')
+      const from = file
       const to = ( newFile ? [ ...newPath, newFile ] : newPath ).join('/')
+
+      if ( newPath.includes('.Trash') ) {
+        try {
+          await Filesystem.mkdir({
+            path: newPath.join('/'),
+            directory: 'ICLOUD',
+          })
+        } catch (e) {}
+      }
 
       console.log('renaming file', from, to)
       await Filesystem.rename({
@@ -31,7 +46,7 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
         if (index !== -1) {
             paths[index] = to
 
-            if ( typeof content === 'string' && file ) {
+            if ( typeof content === 'string' && file.endsWith('.html') ) {
                 return await getPostByID( convertID( index ) );
             } else {
                 return getTermByID( convertID( index ) )
@@ -41,7 +56,9 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
             paths.push(to)
 
             if ( typeof content === 'string' && file ) {
-                return await getPostByID( convertID( paths.length - 1 ) );
+                const post = await getPostByID( convertID( paths.length - 1 ) );
+                console.log(post)
+                return post;
             }
         }
     } else {
@@ -52,18 +69,6 @@ export async function saveData ({ name, content, newName, newPath, path, trash, 
       })
       paths.push(newPath.join('/'))
       return getTermByID( convertID( paths.length - 1 ) )
-    }
-  } else if (trash) {
-    const from = [ ...path, name + '.html' ].join('/')
-    const to = [ ...path, '.Trash', name + '.html' ].join('/')
-    await Filesystem.rename({
-      from,
-      to,
-      directory: 'ICLOUD'
-    })
-    const index = paths.indexOf(from)
-    if (index !== -1) {
-        paths[index] = to
     }
   }
 }
