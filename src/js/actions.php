@@ -90,7 +90,6 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 	}
 
 	$return = post_message_to_js( json_encode( array(
-		'name' => $post_title,
 		'newName' => $new_name,
 		'content' => $post_content,
 		'path' => $path,
@@ -110,14 +109,11 @@ function wp_insert_post( $data, $wp_error = false, $fire_after_hooks = true ) {
 		return new WP_Error( 'hypernote_error', $response->message );
 	}
 
-	if ( empty( $response->ID ) ) {
-		if ( ! $wp_error ) return 0;
-		return new WP_Error( 'hypernote_error', 'No ID returned.' );
-	}
+	$id = (int) $response;
 
-	wp_cache_set( $response->ID, $response, 'posts' );
+	wp_cache_delete( $id, 'posts' );
 
-	return $response->ID;
+	return $id;
 }
 
 function wp_insert_term( $term, $taxonomy, $args = array() ) {
@@ -137,10 +133,11 @@ function wp_insert_term( $term, $taxonomy, $args = array() ) {
 		'newPath' => $newPath,
 	) ) );
 	$response = json_decode( $return );
+	$id = (int) $response;
 
 	return array(
-		'term_id' => $response->term_id,
-		'term_taxonomy_id' => $response->term_taxonomy_id,
+		'term_id' => $id,
+		'term_taxonomy_id' => $id,
 	);
 }
 
@@ -167,10 +164,13 @@ function wp_update_term( $term_id, $taxonomy, $args = array() ) {
 		'newPath' => $newPath,
 	) ) );
 	$response = json_decode( $return );
+	$id = (int) $response;
+
+	wp_cache_remove( $id, 'terms' );
 
 	return array(
-		'term_id' => $response->term_id,
-		'term_taxonomy_id' => $response->term_taxonomy_id,
+		'term_id' => $id,
+		'term_taxonomy_id' => $id,
 	);
 }
 
@@ -192,14 +192,14 @@ function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
 
 	$return = post_message_to_js( json_encode( array(
 		'id' => $object_id,
-		'name' => $post_title,
 		'newName' => $post_title,
 		'path' => $path,
 		'newPath' => $newPath,
 	) ) );
 	$response = json_decode( $return );
+	$id = (int) $response;
 
-	return [ $response->term_id ];
+	return [ $id ];
 }
 
 function get_taxonomy_hierarchy($term_id) {

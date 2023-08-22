@@ -1,8 +1,8 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem'
 
-import { getPostByID, getTermByID, convertID } from './index'
+import { convertID } from './index'
 
-export async function saveData ({ id, name, content, newName, newPath, path, paths }) {
+export async function saveData ({ id, content, newName, newPath, path, paths }) {
   if (newPath) {
     if (path) {
       let file = ''
@@ -25,7 +25,20 @@ export async function saveData ({ id, name, content, newName, newPath, path, pat
 
       const newFile = newName ? newName + '.html' : file
       const from = file
-      const to = ( newFile ? [ ...newPath, newFile ] : newPath ).join('/')
+      let to = ( newFile ? [ ...newPath, newFile ] : newPath ).join('/')
+
+      if ( to !== from ) {
+        try {
+          const exists = await Filesystem.stat({
+            path: to,
+            directory: 'ICLOUD',
+          });
+
+          if ( exists ) {
+            to = to.replace('.html', `.${Date.now()}.html`)
+          }
+        } catch (e) {}
+      }
 
       if ( newPath.includes('.Trash') ) {
         try {
@@ -37,6 +50,7 @@ export async function saveData ({ id, name, content, newName, newPath, path, pat
       }
 
       console.log('renaming file', from, to)
+
       await Filesystem.rename({
         from,
         to,
@@ -45,20 +59,13 @@ export async function saveData ({ id, name, content, newName, newPath, path, pat
         const index = paths.indexOf(from)
         if (index !== -1) {
             paths[index] = to
-
-            if ( typeof content === 'string' && file.endsWith('.html') ) {
-                return await getPostByID( convertID( index ) );
-            } else {
-                return getTermByID( convertID( index ) )
-            }
+            return convertID( index )
         } else {
             // New note.
             paths.push(to)
 
             if ( typeof content === 'string' && file ) {
-                const post = await getPostByID( convertID( paths.length - 1 ) );
-                console.log(post)
-                return post;
+                return convertID( paths.length - 1 );
             }
         }
     } else {
@@ -68,7 +75,7 @@ export async function saveData ({ id, name, content, newName, newPath, path, pat
         recursive: true
       })
       paths.push(newPath.join('/'))
-      return getTermByID( convertID( paths.length - 1 ) )
+      return convertID( paths.length - 1 )
     }
   }
 }
