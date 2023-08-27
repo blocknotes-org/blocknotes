@@ -71,7 +71,7 @@ add_filter( 'set_url_scheme', function( $url ) {
     console.log({
       ...args,
       url
-    }, response)
+    })
     response.url = url
     if (location) {
       console.log('redirecting to', location)

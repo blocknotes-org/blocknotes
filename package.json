@@ -18,6 +18,7 @@
     "@capacitor/filesystem": "^5.0.4",
     "@capacitor/ios": "^5.0.4",
     "@capacitor/keyboard": "^5.0.4",
+    "@capacitor/preferences": "^5.0.6",
     "@capacitor/splash-screen": "latest",
     "@capacitor/status-bar": "^5.0.4",
     "@php-wasm/web": "^0.2.0",
@@ -30,7 +31,9 @@
     "vite": "^4.3.9"
   },
   "standard": {
-    "globals": [ "self" ],
+    "globals": [
+      "self"
+    ],
     "ignore": [
       "/node_modules/@capacitor/filesystem/dist/esm/web.js",
       "/node_modules/@php-wasm/web/*",

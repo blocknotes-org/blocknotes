@@ -2,6 +2,7 @@ import { main } from './pg.js'
 import { Filesystem, Encoding } from '@capacitor/filesystem'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { App } from '@capacitor/app'
+import { Preferences } from '@capacitor/preferences';
 import plugin from './plugin.php?raw'
 import actions from './actions.php?raw'
 import insert from './insert.php?raw'
@@ -130,8 +131,25 @@ async function load () {
   const [[d, icloud], { php, request }] = await Promise.all([
     [[], []],
     main({
-      beforeLoad: () => {
+      beforeLoad: (path) => {
         paths.fresh = true
+
+        if (path) {
+          const url = new URL( path );
+          const params = new URLSearchParams( url.search );
+          const id = params.get('post');
+
+          if (id) {
+            const int = parseInt( id, 10 );
+            if (int) {
+              const _path = paths[convertID(int)];
+              if (_path) {
+                console.log('id', _path);
+                Preferences.set({ key: 'path', value: _path });
+              }
+            }
+          }
+        }
       }
     })
   ])
@@ -340,8 +358,18 @@ async function load () {
     }
   })
 
+  let url = '/wp-admin/edit.php?post_type=hypernote';
+  const preferencePath = await Preferences.get({ key: 'path' });
+
+  console.log('preferencePath', preferencePath);
+
+  if ( preferencePath.value ) {
+    paths.push(preferencePath.value);
+    url = `/wp-admin/post.php?&post=${convertID(0)}&action=edit`;
+  }
+
   request({
-    url: '/wp-admin/edit.php?post_type=hypernote'
+    url,
   })
 }
 
