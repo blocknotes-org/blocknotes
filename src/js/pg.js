@@ -15,58 +15,41 @@ function randomString (length) {
 }
 
 export async function main ( {
-    beforeLoad = () => {}
+    beforeLoad = () => {},
+    url,
+    html,
+    ready,
 }) {
-  const startTime = Date.now()
-  const worker = await spawnPHPWorkerThread(moduleWorkerUrl, {
-    wpVersion: '6.2',
-    phpVersion: '8.2',
-    storage: '',
-    documentRoot: DOCROOT,
-    absoluteUrl: base
-  })
-  const php = consumeAPI(worker)
+  const promises = []
 
-  await php.isReady()
+  let _ready = false;
 
-  const config = await php.readFileAsText('/wordpress/wp-config.php')
+  function setReady() {
+    _ready = true;
+    while (promises.length) {
+      promises.shift()()
+    }
+  }
 
-  await php.writeFile('/wordpress/wp-config.php', `<?php
-define('WP_HOME', '${base}');
-define('WP_SITEURL', '${base}');
-?>${config.replace(/put your unique phrase here/g, () => {
-    return randomString(40)
-})}`)
-
-let post = await php.readFileAsText('/wordpress/wp-includes/post.php')
-post = post.replace('function wp_insert_post', 'function _wp_insert_post' )
-post = post.replace('function wp_update_post', 'function _wp_update_post' )
-await php.writeFile('/wordpress/wp-includes/post.php', post)
-let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
-taxonomy = taxonomy.replace('function wp_insert_term', 'function _wp_insert_term' )
-taxonomy = taxonomy.replace('function wp_update_term', 'function _wp_update_term' )
-taxonomy = taxonomy.replace('function wp_set_object_terms', 'function _wp_set_object_terms' )
-await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
-let adminPost = await php.readFileAsText('/wordpress/wp-admin/includes/post.php')
-adminPost = adminPost.replace('function wp_check_post_lock', 'function _wp_check_post_lock' )
-await php.writeFile('/wordpress/wp-admin/includes/post.php', adminPost)
-
-  await php.writeFile('/wordpress/wp-content/mu-plugins/login.php', `<?php
-include 'wordpress/wp-load.php';
-add_action( 'user_can_richedit', function() {
-    return true;
-}, 100 );
-add_filter( 'set_url_scheme', function( $url ) {
-    return str_replace( 'http://', '//', $url );
-} );
-`)
+  async function isReady() {
+    return new Promise((resolve) => {
+      if (_ready) {
+        return resolve()
+      } else {
+        promises.push(resolve)
+      }
+    } );
+  }
 
   async function request (args) {
+    console.log('request', args.url)
+    await isReady();
     const url = new URL(args.url, base).href
     let response = await php.request({
       ...args,
       url
     })
+    console.log('request ready', args.url, response.httpStatusCode, response.text)
     const location = response.headers.location?.[0]
     console.log({
       ...args,
@@ -187,7 +170,6 @@ add_filter( 'set_url_scheme', function( $url ) {
       console.log('clicked link', target.href)
 
       event.preventDefault()
-      beforeLoad();
       const response = await request({
         method: 'GET',
         url: (new URL(target.href, currentUrl)).href
@@ -231,7 +213,6 @@ add_filter( 'set_url_scheme', function( $url ) {
       const url = (new URL(target.getAttribute('action') || '', currentUrl)).href
       let response
 
-      beforeLoad();
       if (method === 'GET') {
         const queryString = new URLSearchParams(formData).toString()
         response = await request({
@@ -258,6 +239,7 @@ add_filter( 'set_url_scheme', function( $url ) {
 
   function replaceIframe (response) {
     currentUrl = response.url
+    beforeLoad( response );
     const blob = new window.Blob(
       [
                 `<base href="${currentUrl}">`,
@@ -265,7 +247,7 @@ add_filter( 'set_url_scheme', function( $url ) {
                 // and ensures that they are re-added when the window is
                 // reloaded.
                 '<script>window.frameElement._init(window)</script>',
-                response.bytes
+                response.bytes || response.text
       ],
       { type: 'text/html' }
     )
@@ -284,7 +266,57 @@ add_filter( 'set_url_scheme', function( $url ) {
     currentBlobUrl = blobUrl
   }
 
-  await request({
+  if ( html ) {
+    replaceIframe({
+      url,
+      text: html,
+    });
+  }
+
+  const worker = await spawnPHPWorkerThread(moduleWorkerUrl, {
+    wpVersion: '6.2',
+    phpVersion: '8.2',
+    storage: '',
+    documentRoot: DOCROOT,
+    absoluteUrl: base
+  })
+  const php = consumeAPI(worker)
+
+  await php.isReady()
+
+  const config = await php.readFileAsText('/wordpress/wp-config.php')
+
+  await php.writeFile('/wordpress/wp-config.php', `<?php
+define('WP_HOME', '${base}');
+define('WP_SITEURL', '${base}');
+?>${config}`)
+
+let post = await php.readFileAsText('/wordpress/wp-includes/post.php')
+post = post.replace('function wp_insert_post', 'function _wp_insert_post' )
+post = post.replace('function wp_update_post', 'function _wp_update_post' )
+await php.writeFile('/wordpress/wp-includes/post.php', post)
+let taxonomy = await php.readFileAsText('/wordpress/wp-includes/taxonomy.php')
+taxonomy = taxonomy.replace('function wp_insert_term', 'function _wp_insert_term' )
+taxonomy = taxonomy.replace('function wp_update_term', 'function _wp_update_term' )
+taxonomy = taxonomy.replace('function wp_set_object_terms', 'function _wp_set_object_terms' )
+await php.writeFile('/wordpress/wp-includes/taxonomy.php', taxonomy)
+let adminPost = await php.readFileAsText('/wordpress/wp-admin/includes/post.php')
+adminPost = adminPost.replace('function wp_check_post_lock', 'function _wp_check_post_lock' )
+await php.writeFile('/wordpress/wp-admin/includes/post.php', adminPost)
+
+  await php.writeFile('/wordpress/wp-content/mu-plugins/login.php', `<?php
+include 'wordpress/wp-load.php';
+add_action( 'user_can_richedit', function() {
+    return true;
+}, 100 );
+add_filter( 'set_url_scheme', function( $url ) {
+    return str_replace( 'http://', '//', $url );
+} );
+`)
+
+  await ready( php );
+
+  await php.request({
     url: '/wp-login.php',
     method: 'POST',
     formData: {
@@ -294,13 +326,10 @@ add_filter( 'set_url_scheme', function( $url ) {
     }
   })
 
-  console.log('PHP done in ' + (Date.now() - startTime) + 'ms')
+  setReady()
 
-  return {
-    php,
-    request: async (args) => {
-      const response = await request(args)
-      replaceIframe(response)
-    }
+  if (url && ! html) {
+    const response = await request({url})
+    replaceIframe(response)
   }
 }

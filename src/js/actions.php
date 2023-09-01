@@ -1,5 +1,9 @@
 <?php
 
+function wp_verify_nonce() {
+	return true;
+}
+
 function wp_check_post_lock() {
 	return false;
 }
