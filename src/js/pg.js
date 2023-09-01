@@ -170,6 +170,7 @@ export async function main ( {
       console.log('clicked link', target.href)
 
       event.preventDefault()
+      document.body.classList.add('loading')
       const response = await request({
         method: 'GET',
         url: (new URL(target.href, currentUrl)).href
@@ -213,6 +214,7 @@ export async function main ( {
       const url = (new URL(target.getAttribute('action') || '', currentUrl)).href
       let response
 
+      document.body.classList.add('loading')
       if (method === 'GET') {
         const queryString = new URLSearchParams(formData).toString()
         response = await request({
@@ -257,7 +259,8 @@ export async function main ( {
     iframe.dataset.url = response.url
     iframe.id = 'wp'
     iframe.src = blobUrl
-    document.body.textContent = ''
+    document.body.classList.remove('loading')
+    document.getElementById('wp')?.remove()
     document.body.appendChild(iframe)
 
     if (currentBlobUrl) {
