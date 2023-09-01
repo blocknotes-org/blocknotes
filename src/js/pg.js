@@ -240,6 +240,17 @@ export async function main ( {
   let currentBlobUrl
 
   function replaceIframe (response) {
+    if (response.httpStatusCode >= 500) {
+      document.body.classList.remove('loading')
+      const doc = document.implementation.createHTMLDocument('')
+      doc.open()
+      doc.write(response.text)
+      doc.close()
+      const error = doc.body.textContent.trim();
+      alert(error);
+      return
+    }
+
     currentUrl = response.url
     beforeLoad( response );
     const blob = new window.Blob(
