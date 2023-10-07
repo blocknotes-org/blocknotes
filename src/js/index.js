@@ -91,11 +91,12 @@ try {
 
 const platform = window.Capacitor.getPlatform()
 
-async function getDataWithICloudWarning () {
-  const startTime = Date.now()
-  let d
+async function iCloudWarning () {
   try {
-    d = await getData()
+    await Filesystem.readdir({
+      path: '',
+      directory: 'ICLOUD'
+    })
   } catch (e) {
     if (e.message === 'Invalid path') {
       window.alert('iCloud folder not found. Please sign into iCloud.')
@@ -105,10 +106,6 @@ async function getDataWithICloudWarning () {
     window.location.reload()
     return
   }
-
-  console.log('Data done in ' + (Date.now() - startTime) + 'ms')
-
-  return d
 }
 
 async function load () {
@@ -132,6 +129,8 @@ async function load () {
     button.focus()
     return
   }
+
+  await iCloudWarning();
 
   const persist = await Preferences.get({ key: 'persist' });
   const last = persist?.value ? JSON.parse( persist.value ) : null;
