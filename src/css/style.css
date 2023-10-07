@@ -6,6 +6,10 @@ body {
 }
 
 iframe {
+  display: none;
+}
+
+iframe#wp {
   display: block;
   width: 100vw;
   height: calc( 100vh - env(safe-area-inset-top) );

@@ -239,7 +239,7 @@ export async function main ( {
   let currentUrl
   let currentBlobUrl
 
-  function replaceIframe (response) {
+  function replaceIframe (response, disabled = false) {
     if (response.httpStatusCode >= 500) {
       document.body.classList.remove('loading')
       const doc = document.implementation.createHTMLDocument('')
@@ -255,6 +255,7 @@ export async function main ( {
     beforeLoad( response );
     const blob = new window.Blob(
       [
+                disabled ? '<html style="pointer-events: none">' : '',
                 `<base href="${currentUrl}">`,
                 // Ensures that listeners are added before the iframe is loaded,
                 // and ensures that they are re-added when the window is
@@ -268,11 +269,16 @@ export async function main ( {
     const iframe = document.createElement('iframe')
     iframe._init = intercept
     iframe.dataset.url = response.url
-    iframe.id = 'wp'
     iframe.src = blobUrl
-    document.body.classList.remove('loading')
-    document.getElementById('wp')?.remove()
+    if (!disabled) {
+      document.body.classList.remove('loading')
+    }
     document.body.appendChild(iframe)
+
+    iframe.onload = () => {
+      document.getElementById('wp')?.remove()
+      iframe.id = 'wp'
+    }
 
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl)
@@ -284,7 +290,7 @@ export async function main ( {
     replaceIframe({
       url,
       text: html,
-    });
+    }, true);
   }
 
   const worker = await spawnPHPWorkerThread(moduleWorkerUrl, {
@@ -342,7 +348,7 @@ add_filter( 'set_url_scheme', function( $url ) {
 
   setReady()
 
-  if (url && ! html) {
+  if (url) {
     const response = await request({url})
     replaceIframe(response)
   }

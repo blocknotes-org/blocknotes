@@ -338,3 +338,28 @@ add_filter( 'parent_file', function( $parent_file ) {
 
 	return $parent_file;
 }, PHP_INT_MAX, 2 );
+
+/**
+ * Custom wp_die handler to modify the arguments for _default_wp_die_handler.
+ *
+ * @param string $message Error message.
+ * @param string $title   Error title (optional).
+ * @param array  $args    Optional arguments to control behavior.
+ */
+function custom_wp_die_handler( $message, $title = '', $args = array() ) {
+    // Ensure the admin bar is displayed
+    add_filter( 'show_admin_bar', '__return_true' );
+
+	list( $message, $title, $args ) = _wp_die_process_input( $message, $title, $args );
+
+    $admin_url = admin_url( 'edit.php?post_type=hypernote' );
+    $message .= sprintf( '<br><a href="%s">Return to Admin</a>', esc_url( $admin_url ) );
+
+    // Call the default handler with the modified arguments
+    _default_wp_die_handler( $message, $title, $args );
+}
+
+// Replace the default wp_die handler with our custom function
+add_filter( 'wp_die_handler', function( $handler ) {
+    return 'custom_wp_die_handler';
+});

@@ -38,28 +38,33 @@ function isoToTime (iso) {
 
 export async function getPostByID(id, query) {
   const path = paths[convertID(id)];
-  const text = await Filesystem.readFile({
-    path: path,
-    directory: 'ICLOUD',
-    encoding: Encoding.UTF8
-  });
-  const _path = path.split('/');
-  const name = _path[_path.length - 1].replace('.html', '');
-  const file = await Filesystem.stat({
-    path: path,
-    directory: 'ICLOUD',
-  });
-  console.log(id,path)
-  return {
-    ID: id,
-    post_type: 'hypernote',
-    post_content: text.data,
-    post_title: name,
-    post_name: name,
-    post_status: _path.includes('.Trash') ? 'trash' : 'private',
-    post_author: 1,
-    post_date: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
-    post_modified: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
+  try {
+    const text = await Filesystem.readFile({
+      path: path,
+      directory: 'ICLOUD',
+      encoding: Encoding.UTF8
+    });
+    const _path = path.split('/');
+    const name = _path[_path.length - 1].replace('.html', '');
+    const file = await Filesystem.stat({
+      path: path,
+      directory: 'ICLOUD',
+    });
+    console.log(id,path)
+    return {
+      ID: id,
+      post_type: 'hypernote',
+      post_content: text.data,
+      post_title: name,
+      post_name: name,
+      post_status: _path.includes('.Trash') ? 'trash' : 'private',
+      post_author: 1,
+      post_date: isoToTime((new Date(parseInt(file.ctime, 10))).toISOString()),
+      post_modified: isoToTime((new Date(parseInt(file.mtime, 10))).toISOString())
+    }
+  } catch (e) {
+    console.log(e)
+    return null;
   }
 }
 
