@@ -6,7 +6,7 @@ import { Preferences } from '@capacitor/preferences';
 import plugin from './plugin.php?raw'
 import actions from './actions.php?raw'
 import insert from './insert.php?raw'
-import { getData, getPaths, lastModified } from './get-data.js'
+import { getPaths } from './get-data.js'
 import { saveData } from './save-data.js'
 
 const PHP_MAX_INT = 2147483647;
@@ -38,17 +38,18 @@ function isoToTime (iso) {
 
 export async function getPostByID(id, query) {
   const path = paths[convertID(id)];
+  const selectedFolderURL = await getSelectedFolderURL();
   try {
     const text = await Filesystem.readFile({
       path: path,
-      directory: 'ICLOUD',
+      directory: selectedFolderURL,
       encoding: Encoding.UTF8
     });
     const _path = path.split('/');
     const name = _path[_path.length - 1].replace('.html', '');
     const file = await Filesystem.stat({
       path: path,
-      directory: 'ICLOUD',
+      directory: selectedFolderURL,
     });
     console.log(id,path)
     return {
@@ -84,6 +85,11 @@ export function getTermByID (id) {
   }
 }
 
+export async function getSelectedFolderURL() {
+  const selectedFolderURL = await Preferences.get({ key: 'selectedFolderURL' });
+  return selectedFolderURL?.value;
+}
+
 
 try {
   StatusBar.setStyle({ style: Style.Dark })
@@ -91,21 +97,15 @@ try {
 
 const platform = window.Capacitor.getPlatform()
 
-async function iCloudWarning () {
+window.pick = async function () {
   try {
-    await Filesystem.readdir({
-      path: '',
-      directory: 'ICLOUD'
-    })
+    const { url } = await Filesystem.pickDirectory();
+    await Preferences.set({ key: 'selectedFolderURL', value: url });
+    window.location.reload();
   } catch (e) {
-    if (e.message === 'Invalid path') {
-      window.alert('iCloud folder not found. Please sign into iCloud.')
-    } else {
-      window.alert(e.message)
-    }
-    window.location.reload()
-    return
+    throw e;
   }
+  load ()
 }
 
 async function load () {
@@ -116,43 +116,45 @@ async function load () {
     return
   }
 
-  if ((await Filesystem.checkPermissions()).publicStorage === 'prompt') {
+  let selectedFolderURL = await getSelectedFolderURL();
+
+  if ( selectedFolderURL ) {
+    try {
+      await Filesystem.readdir({ directory: selectedFolderURL, path: '' });
+    } catch (e) {
+      window.alert(e.message + ` [${selectedFolderURL}]` )
+      selectedFolderURL = null;
+    }
+  }
+
+  if (!selectedFolderURL) {
+    document.body.classList.remove('loading')
     const button = document.createElement('button')
-    button.textContent = 'Request File System Permission'
+    button.textContent = 'Pick Folder'
     button.addEventListener('click', async () => {
-      await Filesystem.requestPermissions()
-      button.remove()
-      load()
+      try {
+        await window.pick();
+      } catch (e) {
+        window.alert(e.message)
+        return;
+      }
+
+      button.remove();
     })
-    document.body.textContent = ''
+    button.style = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);'
     document.body.appendChild(button)
     button.focus()
     return
   }
 
-  await iCloudWarning();
-
   const persist = await Preferences.get({ key: 'persist' });
   const last = persist?.value ? JSON.parse( persist.value ) : null;
-  const inactiveTime = await Preferences.get({ key: 'inactiveTime' });
-  const lastInactiveTime = inactiveTime?.value ? parseInt( inactiveTime.value, 10 ) : 0;
-  const lastModifiedTime = await lastModified();
-
-  console.log( {
-    lastInactiveTime,
-    lastModifiedTime,
-    diff: lastModifiedTime - lastInactiveTime,
-  } )
-
-  paths = last?.paths || [];
 
   await main({
     url: last?.url || '/wp-admin/edit.php?post_type=hypernote',
-    html: ( last?.text && ( lastInactiveTime >= lastModifiedTime ) ) ? last?.text : null,
     beforeLoad: ({url, text}) => {
       paths.fresh = true
-      Preferences.set({ key: 'inactiveTime', value: Date.now().toString() });
-      Preferences.set({ key: 'persist', value: JSON.stringify({ paths, url, text }) });
+      Preferences.set({ key: 'persist', value: JSON.stringify({ url }) });
     },
     async ready( php ) {
       await php.writeFile(

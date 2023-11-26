@@ -212,8 +212,8 @@ add_action( 'admin_menu', function() {
 	}
 
 	add_menu_page(
-		'Refresh',
-		'Refresh',
+		'Pick Folder',
+		'Pick Folder',
 		'read',
 		'#',
 		'',
@@ -266,7 +266,7 @@ add_action( 'admin_print_scripts', function() {
 			document.getElementById( 'wp-admin-bar-menu-toggle' ).addEventListener( 'click', ( event ) => event.target.focus(), true );
 			document.getElementById( 'toplevel_page_-' ).addEventListener( 'click', ( event ) => {
 				event.preventDefault();
-				window.location.reload();
+				window.top.pick();
 			} );
 		} );
 

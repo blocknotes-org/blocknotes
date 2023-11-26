@@ -1,8 +1,8 @@
-import { Filesystem, Encoding } from '@capacitor/filesystem'
-
-import { convertID } from './index'
+import { Filesystem, Encoding } from '@capacitor/filesystem';
+import { convertID, getSelectedFolderURL } from './index'
 
 export async function saveData ({ id, content, newName, newPath, path, paths }) {
+  const selectedFolderURL = await getSelectedFolderURL();
   if (newPath) {
     if (path) {
       let file = ''
@@ -18,7 +18,7 @@ export async function saveData ({ id, content, newName, newPath, path, paths }) 
         await Filesystem.writeFile({
           path: file,
           data: content,
-          directory: 'ICLOUD',
+          directory: selectedFolderURL,
           encoding: Encoding.UTF8
         })
       }
@@ -31,7 +31,7 @@ export async function saveData ({ id, content, newName, newPath, path, paths }) 
         try {
           const exists = await Filesystem.stat({
             path: to,
-            directory: 'ICLOUD',
+            directory: selectedFolderURL,
           });
 
           if ( exists ) {
@@ -44,7 +44,7 @@ export async function saveData ({ id, content, newName, newPath, path, paths }) 
         try {
           await Filesystem.mkdir({
             path: newPath.join('/'),
-            directory: 'ICLOUD',
+            directory: selectedFolderURL,
           })
         } catch (e) {}
       }
@@ -54,7 +54,7 @@ export async function saveData ({ id, content, newName, newPath, path, paths }) 
       await Filesystem.rename({
         from,
         to,
-        directory: 'ICLOUD'
+        directory: selectedFolderURL,
       })
         const index = paths.indexOf(from)
         if (index !== -1) {
@@ -71,7 +71,7 @@ export async function saveData ({ id, content, newName, newPath, path, paths }) 
     } else {
       await Filesystem.mkdir({
         path: newPath.join('/'),
-        directory: 'ICLOUD',
+        directory: selectedFolderURL,
         recursive: true
       })
       paths.push(newPath.join('/'))
