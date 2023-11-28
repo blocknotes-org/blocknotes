@@ -11,12 +11,13 @@ import {
 	BlockEditorProvider,
 	BlockCanvas,
 	BlockTools,
-  store as blockEditorStore,
+  BlockContextualToolbar,
 } from '@wordpress/block-editor';
-import { Button } from '@wordpress/components';
-import { undo as undoIcon, redo as redoIcon } from '@wordpress/icons';
+import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components';
+import { chevronDown } from '@wordpress/icons';
 import { parse } from '@wordpress/blocks'
-import { select } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
+import '@wordpress/format-library';
 
 import '@wordpress/block-editor/build-style/style.css';
 import '@wordpress/block-library/build-style/style.css';
@@ -101,10 +102,9 @@ async function load () {
 
   const freshPaths = await getIndexedPaths();
 
-  function Editor( { blocks } ) {
+  function Editor( { blocks, index, setIndex, freshPaths } ) {
     const { value, setValue, hasUndo, hasRedo, undo, redo } =
 		  useStateWithHistory( { blocks } );
-    console.log( select( blockEditorStore ) )
     const ref = useRef();
     return (
       <BlockEditorProvider
@@ -117,9 +117,42 @@ async function load () {
           setValue( { blocks, selection }, false )
         } }
         settings={ {
-          // hasFixedToolbar: true,
+          hasFixedToolbar: true,
         } }
       >
+        <div id="select" class="components-accessible-toolbar">
+          <DropdownMenu
+            className="blocknotes-select"
+            icon={ chevronDown }
+            label={ __( 'Notes' ) }
+            toggleProps={ {
+              children: __( 'Notes' ),
+            } }
+          >
+            { ( { onClose } ) => (
+              <>
+                <MenuGroup>
+                  <MenuItem onClick={ () => { setIndex(paths.length); onClose(); } }>
+                    New Note
+                  </MenuItem>
+                </MenuGroup>
+                <MenuGroup>
+                  {freshPaths.map((path, index) => (
+                    <MenuItem key={index} onClick={() => { setIndex(index); onClose(); }}>
+                      {path}
+                    </MenuItem>
+                  ))}
+                </MenuGroup>
+                <MenuGroup>
+                  <MenuItem onClick={ () => { window.pick(); onClose(); } }>
+                    Pick Folder
+                  </MenuItem>
+                </MenuGroup>
+              </>
+            ) }
+          </DropdownMenu>
+          <BlockContextualToolbar isFixed />
+        </div>
         <div style={ {
           position: 'relative',
           overflow: 'auto',
@@ -127,7 +160,6 @@ async function load () {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          borderTop: '1px solid #e0e0e0'
         } }>
           <BlockTools
             __unstableContentRef={ ref }
@@ -137,10 +169,10 @@ async function load () {
               {
                 'css': `
 body {
-  max-width: 600px;
-  margin: 50px auto;
-  font-family: Hoefler Text;
-  font-size: 20px;
+max-width: 600px;
+margin: 100px auto;
+font-family: Hoefler Text;
+font-size: 20px;
 }
 `,
               }
@@ -151,7 +183,7 @@ body {
     );
   }
 
-  function Note( { index } ) {
+  function Note( { index, setIndex, freshPaths } ) {
     const [note, setNote] = useState(null)
     useEffect(() => {
       setNote(null)
@@ -166,7 +198,7 @@ body {
     }, [index])
     if ( ! note ) return null;
     return (
-      <Editor blocks={ note } />
+      <Editor blocks={ note } index={ index } setIndex={setIndex} freshPaths={ freshPaths } />
     )
   }
 
@@ -176,19 +208,9 @@ body {
       registerCoreBlocks()
     }, [])
     return (
-      <div style={ { height: '100%', display: 'flex', flexDirection: 'column' } }>
-        <div id="select">
-          <select value={index} onChange={e => setIndex(e.target.value)}>
-            {freshPaths.map((path, index) => (
-              <option key={index} value={index}>
-                {path}
-              </option>
-            ))}
-            <option value="">Pick a different folder</option>
-          </select>
-        </div>
-        <Note index={index} />
-      </div>
+      <>
+        <Note index={index} setIndex={setIndex} freshPaths={ freshPaths } />
+      </>
     )
   }
 

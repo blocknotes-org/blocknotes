@@ -28,6 +28,8 @@
     "@wordpress/components": "^25.12.0",
     "@wordpress/compose": "^6.23.0",
     "@wordpress/data": "^9.16.0",
+    "@wordpress/format-library": "^4.23.0",
+    "@wordpress/i18n": "^4.46.0",
     "@wordpress/icons": "^9.37.0",
     "mock-xmlhttprequest": "^8.2.0",
     "react": "^18.2.0",

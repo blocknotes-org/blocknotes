@@ -3,6 +3,8 @@ body {
   padding: 0;
   margin: 0;
   overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif
 }
 
 * {
@@ -10,8 +12,8 @@ body {
 }
 
 html {
-  margin-top: env(safe-area-inset-top);
-  height: calc(100% - env(safe-area-inset-top));
+  /* margin-top: env(safe-area-inset-top); */
+  height: 100%;
 }
 
 body,
@@ -23,9 +25,48 @@ body,
   position: absolute;
   top: 0;
   width: 100%;
-  height: env(safe-area-inset-top);
+  height: calc( env(safe-area-inset-top) + 46px );
   display: flex;
-  justify-content: end;
-  align-items: center;
-  padding: 4px;
+  justify-content: start;
+  align-items: end;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 1;
+}
+
+#select .blocknotes-select button {
+  border-right: 1px solid #e0e0e0;
+}
+
+#select button.components-button {
+  font-size: 16px;
+  height: 46px;
+}
+
+#select .components-toolbar-group {
+  min-height: auto;
+}
+
+#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container {
+  flex-direction: unset;
+}
+
+#select .block-editor-block-contextual-toolbar {
+  border: none;
+  background: none;
+}
+
+#select .block-editor-block-contextual-toolbar .block-editor-block-toolbar .components-toolbar-group {
+  border-color: #e0e0e0;
+}
+
+#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-down-button svg {
+  bottom: unset;
+}
+
+#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-up-button svg {
+  top: unset;
 }
