@@ -29,12 +29,31 @@ body,
   display: flex;
   justify-content: start;
   align-items: end;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  background-color: rgba(255, 255, 255, 0.8);
   border: none;
   border-bottom: 1px solid #e0e0e0;
   z-index: 1;
+  overflow-x: auto;
+}
+
+iframe[name="editor-canvas"] {
+  display: block;
+}
+
+.components-button.components-menu-item__button.is-active {
+  background: var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9));
+  color: white;
+}
+
+#select,
+div.components-popover__content {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+div.components-popover__content {
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
 }
 
 #select .blocknotes-select button {
