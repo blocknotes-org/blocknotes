@@ -18,14 +18,21 @@ import { createBlock, getBlockContent, parse, serialize } from '@wordpress/block
 import { __ } from '@wordpress/i18n'
 import '@wordpress/format-library'
 
+// It is needed for the appenders, this should be fixed in GB.
+import '@wordpress/block-editor/build-style/content.css'
+
 import '@wordpress/block-editor/build-style/style.css'
 import '@wordpress/block-library/build-style/style.css'
 import '@wordpress/components/build-style/style.css'
-// This shouldn't be needed.
-import '@wordpress/block-editor/build-style/content.css'
 
 import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/content.css?url'
 import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url'
+import componentsStyleUrl from '@wordpress/components/build-style/style.css?url'
+
+function sanitizeFileName (name) {
+  // Replace invalid characters with their percent-encoded equivalents
+  return name.replace(/[\\/:*?"<>|]/g, char => '%' + char.charCodeAt(0).toString(16).toUpperCase())
+}
 
 export async function getSelectedFolderURL () {
   const directoryHandle = await getDirectoryHandle()
@@ -54,6 +61,7 @@ window.pick = async function () {
   if (typeof url === 'string') {
     await Preferences.set({ key: 'selectedFolderURL', value: url })
   } else {
+    await Preferences.remove({ key: 'selectedFolderURL' })
     await saveDirectoryHandle(url)
   }
   window.location.reload()
@@ -143,7 +151,7 @@ async function load () {
 
       for (const block of blocks) {
         const html = getBlockContent(block)
-        const textContent = html.replace(/<[^>]+>/g, '').replaceAll('/', ' ').replaceAll('.', '').trim().slice(0, 100)
+        const textContent = sanitizeFileName(html.replace(/<[^>]+>/g, '').trim()).slice(0, 50)
         if (textContent) {
           newPath = base ? base + '/' + textContent + '.html' : textContent + '.html'
           break
@@ -197,6 +205,7 @@ async function load () {
           hasFixedToolbar: true,
           __unstableResolvedAssets: {
             styles: `
+<link rel="stylesheet" href="${componentsStyleUrl}">
 <link rel="stylesheet" href="${blockEditorContentStyleUrl}">
 <link rel="stylesheet" href="${blockLibraryContentStyleUrl}">`
           }
@@ -216,7 +225,7 @@ async function load () {
                 <MenuGroup>
                   <MenuItem onClick={() => {
                     const newPath = {}
-                    setPaths([...paths, newPath])
+                    setPaths([newPath, ...paths])
                     setCurrentPath(newPath)
                     onClose()
                   }}
@@ -231,7 +240,7 @@ async function load () {
                       onClick={() => { setCurrentPath(path); onClose() }}
                       className={path === currentPath ? 'is-active' : ''}
                     >
-                      {path.path?.replace(/(?:\.?[0-9]+)?\.html$/, '') || __('New note')}
+                      {decodeURIComponent(path.path?.replace(/(?:\.?[0-9]+)?\.html$/, '') || __('New note'))}
                     </MenuItem>
                   ))}
                 </MenuGroup>
@@ -243,7 +252,7 @@ async function load () {
               </>
             )}
           </DropdownMenu>
-          <BlockToolbar isFixed />
+          <BlockToolbar hideDragHandle />
         </div>
         <div
           id='editor'
@@ -319,7 +328,7 @@ body {
       getPaths().then((paths) => {
         const pathObjects = paths.map(path => ({ path }))
         setPaths(pathObjects)
-        setCurrentPath(pathObjects[0])
+        setCurrentPath(pathObjects[0] ?? {})
       })
     }, [])
     if (!currentPath) return null

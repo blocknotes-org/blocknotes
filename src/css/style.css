@@ -68,6 +68,7 @@ iframe[name="editor-canvas"] {
 
 #select .blocknotes-select button {
   border-right: 1px solid #e0e0e0;
+  padding-right: 1em;
 }
 
 #select button.components-button {
