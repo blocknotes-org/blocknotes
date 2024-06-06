@@ -1,6 +1,7 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem'
 import { App as NativeApp } from '@capacitor/app'
 import { Preferences } from '@capacitor/preferences'
+import { set, get } from 'idb-keyval'
 import { getPaths } from './get-data.js'
 import React, { useState, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -23,13 +24,34 @@ import '@wordpress/block-library/build-style/style.css'
 import '@wordpress/components/build-style/style.css'
 
 export async function getSelectedFolderURL () {
+  const directoryHandle = await getDirectoryHandle()
+  if (directoryHandle) return directoryHandle
   const selectedFolderURL = await Preferences.get({ key: 'selectedFolderURL' })
   return selectedFolderURL?.value
 }
 
+async function saveDirectoryHandle (directoryHandle) {
+  await set('directoryHandle', directoryHandle)
+}
+
+async function getDirectoryHandle () {
+  const directoryHandle = await get('directoryHandle')
+  if (directoryHandle) {
+    const permissionStatus = await directoryHandle.queryPermission()
+    if (permissionStatus === 'granted') {
+      return directoryHandle
+    }
+  }
+  return null
+}
+
 window.pick = async function () {
   const { url } = await Filesystem.pickDirectory()
-  await Preferences.set({ key: 'selectedFolderURL', value: url })
+  if (typeof url === 'string') {
+    await Preferences.set({ key: 'selectedFolderURL', value: url })
+  } else {
+    await saveDirectoryHandle(url)
+  }
   window.location.reload()
   load()
 }
