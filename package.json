@@ -4,11 +4,13 @@
   "description": "Blocknotes",
   "main": "index.js",
   "scripts": {
+    "server": "http-server ./dist -p 3000",
     "start": "vite build --watch",
     "build": "vite build",
     "sync": "npm run build && cap sync",
     "preview": "vite preview",
-    "test": "standard",
+    "test": "playwright test",
+    "lint": "standard",
     "prepare": "husky install"
   },
   "dependencies": {
