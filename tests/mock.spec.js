@@ -6,7 +6,7 @@ test('has title', async ({ page }) => {
   await page.goto('/')
 
   // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Blockntes/)
+  await expect(page).toHaveTitle(/Blocknotes/)
 })
 
 test('open file picker', async ({ page }) => {
