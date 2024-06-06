@@ -34,37 +34,25 @@ function sanitizeFileName (name) {
   return name.replace(/[\\/:*?"<>|]/g, char => '%' + char.charCodeAt(0).toString(16).toUpperCase())
 }
 
+let __handle
+
 export async function getSelectedFolderURL () {
-  const directoryHandle = await getDirectoryHandle()
+  if (__handle) return __handle
+  const directoryHandle = await get('directoryHandle')
   if (directoryHandle) return directoryHandle
   const selectedFolderURL = await Preferences.get({ key: 'selectedFolderURL' })
   return selectedFolderURL?.value
 }
 
-async function saveDirectoryHandle (directoryHandle) {
-  await set('directoryHandle', directoryHandle)
-}
-
-async function getDirectoryHandle () {
-  const directoryHandle = await get('directoryHandle')
-  if (directoryHandle) {
-    const permissionStatus = await directoryHandle.queryPermission()
-    if (permissionStatus === 'granted') {
-      return directoryHandle
-    }
-  }
-  return null
-}
-
 window.pick = async function () {
   const { url } = await Filesystem.pickDirectory()
+  __handle = url
   if (typeof url === 'string') {
     await Preferences.set({ key: 'selectedFolderURL', value: url })
   } else {
     await Preferences.remove({ key: 'selectedFolderURL' })
-    await saveDirectoryHandle(url)
+    await set('directoryHandle', url)
   }
-  window.location.reload()
   load()
 }
 
