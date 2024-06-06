@@ -10,8 +10,7 @@ import { useStateWithHistory } from '@wordpress/compose'
 import {
   BlockEditorProvider,
   BlockCanvas,
-  BlockTools,
-  BlockContextualToolbar
+  BlockToolbar
 } from '@wordpress/block-editor'
 import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components'
 import { chevronDown } from '@wordpress/icons'
@@ -22,6 +21,11 @@ import '@wordpress/format-library'
 import '@wordpress/block-editor/build-style/style.css'
 import '@wordpress/block-library/build-style/style.css'
 import '@wordpress/components/build-style/style.css'
+// This shouldn't be needed.
+import '@wordpress/block-editor/build-style/content.css'
+
+import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/content.css?url'
+import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url'
 
 export async function getSelectedFolderURL () {
   const directoryHandle = await getDirectoryHandle()
@@ -117,7 +121,6 @@ async function load () {
     }
 
     const { value, setValue } = useStateWithHistory({ blocks, selection })
-    const ref = useRef()
     useDelayedEffect(async () => {
       function flattenBlocks (blocks) {
         return blocks.reduce((acc, block) => {
@@ -191,7 +194,12 @@ async function load () {
           setValue({ blocks, selection }, false)
         }}
         settings={{
-          hasFixedToolbar: true
+          hasFixedToolbar: true,
+          __unstableResolvedAssets: {
+            styles: `
+<link rel="stylesheet" href="${blockEditorContentStyleUrl}">
+<link rel="stylesheet" href="${blockLibraryContentStyleUrl}">`
+          }
         }}
       >
         <div id='select' class='components-accessible-toolbar'>
@@ -235,25 +243,24 @@ async function load () {
               </>
             )}
           </DropdownMenu>
-          <BlockContextualToolbar isFixed />
+          <BlockToolbar isFixed />
         </div>
-        <div style={{
-          position: 'relative',
-          overflow: 'auto',
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
+        <div
+          id='editor'
+          style={{
+            position: 'relative',
+            overflow: 'auto',
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
         >
-          <BlockTools
-            __unstableContentRef={ref}
-            style={{ height: '100%' }}
-          >
-            <BlockCanvas
-              height='100%' styles={[
-                {
-                  css: `
+          <BlockCanvas
+            height='100%'
+            styles={[
+              {
+                css: `
 body {
   max-width: 600px;
   margin: 100px auto;
@@ -262,10 +269,9 @@ body {
   padding: 1px 1em;
 }
 `
-                }
-              ]} contentRef={ref}
-            />
-          </BlockTools>
+              }
+            ]}
+          />
         </div>
       </BlockEditorProvider>
     )

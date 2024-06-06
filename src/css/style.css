@@ -35,6 +35,15 @@ body,
   overflow-x: auto;
 }
 
+#editor > div {
+  display: block !important;
+}
+
+.block-editor-iframe__container,
+.block-editor-iframe__scale-container {
+  height: 100%
+}
+
 iframe[name="editor-canvas"] {
   display: block;
 }
@@ -45,13 +54,14 @@ iframe[name="editor-canvas"] {
 }
 
 #select,
-div.components-popover__content {
+/* .is-unstyled ? */
+.components-dropdown__content div.components-popover__content {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   background-color: rgba(255, 255, 255, 0.85);
 }
 
-div.components-popover__content {
+.components-dropdown__content div.components-popover__content {
   box-shadow: none;
   border: 1px solid #e0e0e0;
 }
