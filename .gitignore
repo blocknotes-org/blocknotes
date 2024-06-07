@@ -1,15 +1,6 @@
 dist
 node_modules/*
-!node_modules/@capacitor
-node_modules/@capacitor/*
-!node_modules/@capacitor/filesystem
-node_modules/@capacitor/filesystem/*
-!node_modules/@capacitor/filesystem/ios
-!node_modules/@capacitor/filesystem/dist
-node_modules/@capacitor/filesystem/dist/*
-!node_modules/@capacitor/filesystem/dist/esm
-node_modules/@capacitor/filesystem/dist/esm/*
-!node_modules/@capacitor/filesystem/dist/esm/web.js
+filesystem/node_modules/*
 .DS_Store
 /test-results/
 /playwright-report/
