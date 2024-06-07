@@ -1,29 +1,29 @@
-import { Filesystem } from '@capacitor/filesystem'
-import { getSelectedFolderURL } from './index'
+import { Filesystem } from '@capacitor/filesystem';
+import { getSelectedFolderURL } from './index';
 
-export async function getPaths (path = '', selectedFolderURL) {
-  const paths = []
-  if (!selectedFolderURL) {
-    selectedFolderURL = await getSelectedFolderURL()
-  }
-  const dir = await Filesystem.readdir({
-    path,
-    directory: selectedFolderURL
-  })
+export async function getPaths(path = '', selectedFolderURL) {
+	const paths = [];
+	if (!selectedFolderURL) {
+		selectedFolderURL = await getSelectedFolderURL();
+	}
+	const dir = await Filesystem.readdir({
+		path,
+		directory: selectedFolderURL,
+	});
 
-  // Recursively read all files in the iCloud folder
-  for (const file of dir.files) {
-    const nestedPath = path ? [path, file.name].join('/') : file.name
-    if (file.type === 'directory') {
-      if (file.name.startsWith('.') && file.name !== '.Trash') {
-        continue
-      }
-      // paths.push(nestedPath)
-      paths.push(...await getPaths(nestedPath, selectedFolderURL))
-    } else if (file.name.endsWith('.html')) {
-      paths.push(nestedPath)
-    }
-  }
+	// Recursively read all files in the iCloud folder
+	for (const file of dir.files) {
+		const nestedPath = path ? [path, file.name].join('/') : file.name;
+		if (file.type === 'directory') {
+			if (file.name.startsWith('.') && file.name !== '.Trash') {
+				continue;
+			}
+			// paths.push(nestedPath)
+			paths.push(...(await getPaths(nestedPath, selectedFolderURL)));
+		} else if (file.name.endsWith('.html')) {
+			paths.push(nestedPath);
+		}
+	}
 
-  return paths
+	return paths;
 }

@@ -10,17 +10,16 @@
     "sync": "npm run build && cap sync",
     "preview": "vite preview",
     "test": "playwright test",
-    "lint": "standard",
+    "lint": "eslint src/ --ext .js,.jsx",
     "prepare": "husky install"
   },
   "dependencies": {
     "@capacitor/app": "^5.0.3",
-    "@capacitor/core": "latest",
+    "@capacitor/core": "^5.0.0",
     "@capacitor/filesystem": "file:./filesystem",
     "@capacitor/ios": "^5.0.4",
     "@capacitor/keyboard": "^5.0.4",
     "@capacitor/preferences": "^5.0.6",
-    "@capacitor/splash-screen": "latest",
     "@wordpress/block-editor": "^13.0.0",
     "@wordpress/block-library": "^9.0.0",
     "@wordpress/blocks": "^13.0.0",
@@ -35,26 +34,19 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest",
     "@playwright/test": "^1.44.1",
     "@types/node": "^20.14.2",
+    "@wordpress/eslint-plugin": "^19.0.0",
+    "@wordpress/prettier-config": "^4.0.0",
     "fsa-mock": "^1.0.0",
     "http-server": "^14.1.1",
     "husky": "^8.0.3",
-    "standard": "^17.1.0",
+    "prettier": "^3.3.1",
     "vite": "^5.2.12"
   },
   "peerDependencies": {
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "standard": {
-    "globals": [
-      "self"
-    ],
-    "ignore": [
-      "filesystem/*",
-      "public"
-    ]
-  }
+  "prettier": "@wordpress/prettier-config"
 }
