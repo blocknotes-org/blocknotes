@@ -17,10 +17,24 @@ import {
 	serialize,
 } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
+import { set } from 'idb-keyval';
+import { Preferences } from '@capacitor/preferences';
 
 import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/content.css?url';
 import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url';
 import componentsStyleUrl from '@wordpress/components/build-style/style.css?url';
+
+async function pick() {
+	const { url } = await Filesystem.pickDirectory();
+	if (typeof url === 'string') {
+		await Preferences.set({ key: 'selectedFolderURL', value: url });
+	} else {
+		await Preferences.remove({ key: 'selectedFolderURL' });
+		await set('directoryHandle', url);
+	}
+
+	return url;
+}
 
 function sanitizeFileName(name) {
 	// Replace invalid characters with their percent-encoded equivalents
@@ -43,14 +57,7 @@ function useDelayedEffect(effect, deps, delay) {
 	}, deps);
 }
 
-function Editor({
-	blocks,
-	currentPath,
-	setCurrentPath,
-	paths,
-	setPaths,
-	selectedFolderURL,
-}) {
+function Editor({ blocks, currentPath, selectedFolderURL, notesSelect }) {
 	let selection;
 
 	if (!currentPath.path) {
@@ -158,64 +165,7 @@ function Editor({
 			}}
 		>
 			<div id="select" className="components-accessible-toolbar">
-				<DropdownMenu
-					className="blocknotes-select"
-					icon={chevronDown}
-					label={__('Notes')}
-					toggleProps={{
-						children: __('Notes'),
-					}}
-				>
-					{({ onClose }) => (
-						<>
-							<MenuGroup>
-								<MenuItem
-									onClick={() => {
-										const newPath = {};
-										setPaths([newPath, ...paths]);
-										setCurrentPath(newPath);
-										onClose();
-									}}
-								>
-									{__('New Note')}
-								</MenuItem>
-							</MenuGroup>
-							<MenuGroup>
-								{paths.map((path) => (
-									<MenuItem
-										key={path.path}
-										onClick={() => {
-											setCurrentPath(path);
-											onClose();
-										}}
-										className={
-											path === currentPath
-												? 'is-active'
-												: ''
-										}
-									>
-										{decodeURIComponent(
-											path.path?.replace(
-												/(?:\.?[0-9]+)?\.html$/,
-												''
-											) || __('New note')
-										)}
-									</MenuItem>
-								))}
-							</MenuGroup>
-							<MenuGroup>
-								<MenuItem
-									onClick={() => {
-										window.pick();
-										onClose();
-									}}
-								>
-									{__('Pick Folder')}
-								</MenuItem>
-							</MenuGroup>
-						</>
-					)}
-				</DropdownMenu>
+				{notesSelect}
 				<BlockToolbar hideDragHandle />
 			</div>
 			<div
@@ -256,6 +206,7 @@ function Note({
 	paths,
 	setPaths,
 	selectedFolderURL,
+	setSelectedFolderURL,
 }) {
 	const [note, setNote] = useState();
 	useEffect(() => {
@@ -276,36 +227,126 @@ function Note({
 	if (!note) {
 		return null;
 	}
+	function _setCurrentPath(path) {
+		if (path === currentPath) {
+			return;
+		}
+		setCurrentPath(path);
+		setNote();
+	}
+	const notesSelect = (
+		<DropdownMenu
+			className="blocknotes-select"
+			icon={chevronDown}
+			label={__('Notes')}
+			toggleProps={{
+				children: __('Notes'),
+			}}
+		>
+			{({ onClose }) => (
+				<>
+					<MenuGroup>
+						<MenuItem
+							onClick={() => {
+								const newPath = {};
+								setPaths([newPath, ...paths]);
+								_setCurrentPath(newPath);
+								onClose();
+							}}
+						>
+							{__('New Note')}
+						</MenuItem>
+					</MenuGroup>
+					<MenuGroup>
+						{paths.map((path) => (
+							<MenuItem
+								key={path.path}
+								onClick={() => {
+									_setCurrentPath(path);
+									onClose();
+								}}
+								className={
+									path === currentPath ? 'is-active' : ''
+								}
+							>
+								{decodeURIComponent(
+									path.path?.replace(
+										/(?:\.?[0-9]+)?\.html$/,
+										''
+									) || __('New note')
+								)}
+							</MenuItem>
+						))}
+					</MenuGroup>
+					<MenuGroup>
+						<MenuItem
+							onClick={async () => {
+								setSelectedFolderURL(await pick());
+								onClose();
+							}}
+						>
+							{__('Pick Folder')}
+						</MenuItem>
+					</MenuGroup>
+				</>
+			)}
+		</DropdownMenu>
+	);
 	return (
 		<Editor
 			key={String(currentPath.path)}
 			blocks={note}
 			currentPath={currentPath}
-			setCurrentPath={(path) => {
-				if (path === currentPath) {
-					return;
-				}
-				setCurrentPath(path);
-				setNote();
-			}}
-			paths={paths}
-			setPaths={setPaths}
 			selectedFolderURL={selectedFolderURL}
+			notesSelect={notesSelect}
 		/>
 	);
 }
 
-function App({ selectedFolderURL }) {
+function App({ selectedFolderURL: initialSelectedFolderURL }) {
 	const [paths, setPaths] = useState([]);
 	const [currentPath, setCurrentPath] = useState();
+	const [selectedFolderURL, setSelectedFolderURL] = useState(
+		initialSelectedFolderURL
+	);
 	useEffect(() => {
 		registerCoreBlocks();
-		getPaths().then((_paths) => {
-			const pathObjects = _paths.map((path) => ({ path }));
-			setPaths(pathObjects);
-			setCurrentPath(pathObjects[0] ?? {});
-		});
 	}, []);
+	useEffect(() => {
+		setCurrentPath();
+	}, [selectedFolderURL]);
+	useEffect(() => {
+		getPaths('', selectedFolderURL)
+			.then((_paths) => {
+				const pathObjects = _paths.map((path) => ({ path }));
+				setPaths(pathObjects);
+				setCurrentPath(pathObjects[0] ?? {});
+			})
+			.catch(() => {
+				setSelectedFolderURL();
+			});
+	}, [selectedFolderURL]);
+
+	if (!selectedFolderURL) {
+		return (
+			<button
+				className="start-button"
+				// eslint-disable-next-line jsx-a11y/no-autofocus
+				autoFocus
+				onClick={async () => {
+					try {
+						setSelectedFolderURL(await pick());
+					} catch (e) {
+						// eslint-disable-next-line no-alert
+						window.alert(e.message);
+					}
+				}}
+			>
+				{__('Pick Folder')}
+			</button>
+		);
+	}
+
 	if (!currentPath) {
 		return null;
 	}
@@ -316,6 +357,7 @@ function App({ selectedFolderURL }) {
 			paths={paths}
 			setPaths={setPaths}
 			selectedFolderURL={selectedFolderURL}
+			setSelectedFolderURL={setSelectedFolderURL}
 		/>
 	);
 }
