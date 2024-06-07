@@ -51,9 +51,7 @@
       "self"
     ],
     "ignore": [
-      "/node_modules/@capacitor/filesystem/dist/esm/web.js",
-      "/node_modules/@php-wasm/web/*",
-      "/src/js/wp-*",
+      "filesystem/*",
       "public"
     ]
   }
