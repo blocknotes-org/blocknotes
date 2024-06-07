@@ -1,16 +1,14 @@
 PODS:
-  - Capacitor (5.0.4):
+  - Capacitor (5.7.5):
     - CapacitorCordova
-  - CapacitorApp (5.0.3):
+  - CapacitorApp (5.0.7):
     - Capacitor
-  - CapacitorCordova (5.0.4)
+  - CapacitorCordova (5.7.5)
   - CapacitorFilesystem (5.0.4):
     - Capacitor
-  - CapacitorKeyboard (5.0.4):
+  - CapacitorKeyboard (5.0.8):
     - Capacitor
-  - CapacitorPreferences (5.0.6):
-    - Capacitor
-  - CapacitorSplashScreen (5.0.2):
+  - CapacitorPreferences (5.0.7):
     - Capacitor
 
 DEPENDENCIES:
@@ -20,7 +18,6 @@ DEPENDENCIES:
   - CapacitorFilesystem (from `../../filesystem`)
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
-  - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -35,18 +32,15 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/keyboard"
   CapacitorPreferences:
     :path: "../../node_modules/@capacitor/preferences"
-  CapacitorSplashScreen:
-    :path: "../../node_modules/@capacitor/splash-screen"
 
 SPEC CHECKSUMS:
-  Capacitor: d3d4463573438b9fa65326d1f3549da6f4c21634
-  CapacitorApp: 7a5dec8b33573707164b293475d5c89ba684364a
-  CapacitorCordova: b1fe6bf1f36974a8e4a9044b342d22d49c0996d6
+  Capacitor: 7d42085cb786b2d3ea9ac8a17ebd7e3305be7b72
+  CapacitorApp: 17fecd0e6cb23feafac7eb0939417389038b0979
+  CapacitorCordova: c946a6052b547e1e185fc46862003f7b9130ead1
   CapacitorFilesystem: e1bdfab09b95b181c844c16abcfda45ec8e8ed6b
-  CapacitorKeyboard: d1b25fde6f19744ad09c890862aefc6e2a7ded3d
-  CapacitorPreferences: f03954bcb0ff09c792909e46bff88e3183c16b10
-  CapacitorSplashScreen: d22414cbe4bf1730e35cb06eabc4d3cc2f813148
+  CapacitorKeyboard: aec619a578235c6ce279075009a2689c2cf5c42c
+  CapacitorPreferences: 77ac427e98db83bace772455f8ba447430382c4c
 
-PODFILE CHECKSUM: 4901303620a8d1a15a2ce0b7be8ec85064765e21
+PODFILE CHECKSUM: 819cd761e49bf9831ac5aacdf49e6c69a9d83b31
 
 COCOAPODS: 1.15.2

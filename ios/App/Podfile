@@ -15,7 +15,6 @@ def capacitor_pods
   pod 'CapacitorFilesystem', :path => '../../filesystem'
   pod 'CapacitorKeyboard', :path => '../../node_modules/@capacitor/keyboard'
   pod 'CapacitorPreferences', :path => '../../node_modules/@capacitor/preferences'
-  pod 'CapacitorSplashScreen', :path => '../../node_modules/@capacitor/splash-screen'
 end
 
 target 'Blocknotes' do
