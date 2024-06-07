@@ -1,6 +1,5 @@
 /dist
-node_modules/*
-filesystem/node_modules/*
+node_modules
 .DS_Store
 /test-results/
 /playwright-report/
