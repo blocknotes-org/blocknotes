@@ -1,4 +1,4 @@
-import { Filesystem, Encoding } from '../filesystem/dist/esm/index.js'
+import { Filesystem, Encoding } from '@capacitor/filesystem'
 import { App as NativeApp } from '@capacitor/app'
 import { Preferences } from '@capacitor/preferences'
 import { set, get } from 'idb-keyval'
