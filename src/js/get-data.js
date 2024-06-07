@@ -1,4 +1,4 @@
-import { Filesystem } from '@capacitor/filesystem'
+import { Filesystem } from '../filesystem/dist/esm/index.js'
 import { getSelectedFolderURL } from './index'
 
 export async function getPaths (path = '', selectedFolderURL) {
