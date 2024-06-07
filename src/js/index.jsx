@@ -131,7 +131,6 @@ async function load() {
 
 	function Editor({ blocks, currentPath, setCurrentPath, paths, setPaths }) {
 		let selection;
-		let selection;
 
 		if (!currentPath.path) {
 			const [firstBlock] = blocks;
