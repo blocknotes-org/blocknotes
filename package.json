@@ -14,7 +14,7 @@
   "dependencies": {
     "@capacitor/app": "^5.0.3",
     "@capacitor/core": "latest",
-    "@capacitor/filesystem": "^5.0.4",
+    "@capacitor/filesystem": "file:./filesystem",
     "@capacitor/ios": "^5.0.4",
     "@capacitor/keyboard": "^5.0.4",
     "@capacitor/preferences": "^5.0.6",
@@ -51,9 +51,7 @@
       "self"
     ],
     "ignore": [
-      "/node_modules/@capacitor/filesystem/dist/esm/web.js",
-      "/node_modules/@php-wasm/web/*",
-      "/src/js/wp-*",
+      "filesystem/*",
       "public"
     ]
   }
