@@ -10,7 +10,7 @@
     "sync": "npm run build && cap sync",
     "preview": "vite preview",
     "test": "playwright test",
-    "lint": "eslint src/ --ext .js,.jsx",
+    "lint": "eslint src tests --ext .js,.jsx",
     "prepare": "husky install"
   },
   "dependencies": {
