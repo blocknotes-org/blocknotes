@@ -21,11 +21,11 @@ body,
   height: 100%;
 }
 
-.start-button {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+#start {
+  padding: 1px 1em 1px;
+  max-width: 600px;
+  margin: env(safe-area-inset-top) auto 0;
+  font-size: 1em;
 }
 
 #select {

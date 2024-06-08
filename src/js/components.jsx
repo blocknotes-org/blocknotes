@@ -16,6 +16,7 @@ import {
 	MenuItem,
 	ToolbarButton,
 	ToolbarGroup,
+	Button,
 } from '@wordpress/components';
 import {
 	chevronDown,
@@ -50,13 +51,6 @@ function getUniqueId(object) {
 
 async function pick() {
 	const { url } = await Filesystem.pickDirectory();
-	if (typeof url === 'string') {
-		await Preferences.set({ key: 'selectedFolderURL', value: url });
-	} else {
-		await Preferences.remove({ key: 'selectedFolderURL' });
-		await set('directoryHandle', url);
-	}
-
 	return url;
 }
 
@@ -370,6 +364,13 @@ function Note({
 						>
 							{__('Pick Folder')}
 						</MenuItem>
+						<MenuItem
+							onClick={async () => {
+								setSelectedFolderURL();
+							}}
+						>
+							{__('Forget Folder')}
+						</MenuItem>
 					</MenuGroup>
 				</>
 			)}
@@ -438,8 +439,22 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 	useEffect(() => {
 		registerCoreBlocks();
 	}, []);
+	const isMounted = useRef(false);
 	useEffect(() => {
-		setCurrentPath();
+		if (isMounted.current) {
+			setCurrentPath();
+			if (typeof url === 'string') {
+				Preferences.set({
+					key: 'selectedFolderURL',
+					value: selectedFolderURL,
+				});
+			} else {
+				Preferences.remove({ key: 'selectedFolderURL' });
+				set('directoryHandle', selectedFolderURL);
+			}
+		} else {
+			isMounted.current = true;
+		}
 	}, [selectedFolderURL]);
 	useEffect(() => {
 		getPaths('', selectedFolderURL)
@@ -458,21 +473,36 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 
 	if (!selectedFolderURL) {
 		return (
-			<button
-				className="start-button"
-				// eslint-disable-next-line jsx-a11y/no-autofocus
-				autoFocus
-				onClick={async () => {
-					try {
-						setSelectedFolderURL(await pick());
-					} catch (e) {
-						// eslint-disable-next-line no-alert
-						window.alert(e.message);
-					}
-				}}
-			>
-				{__('Pick Folder')}
-			</button>
+			<main id="start">
+				<h1>Welcome to Blocknotes!</h1>
+				<p>Please pick a folder to read and write your notes.</p>
+				<Button
+					variant="primary"
+					className="start-button"
+					// eslint-disable-next-line jsx-a11y/no-autofocus
+					autoFocus
+					onClick={async () => {
+						try {
+							setSelectedFolderURL(await pick());
+						} catch (e) {
+							// eslint-disable-next-line no-alert
+							window.alert(e.message);
+						}
+					}}
+				>
+					{__('Pick Folder')}
+				</Button>
+				<p>
+					Blocknotes works completely offline, and notes are stored in
+					the folder you pick, so only you have complete control over
+					your data.
+				</p>
+				<p>
+					For the best experience, create a new cloud folder (such as
+					iCloud), so you can also use Blocknotes to access the notes
+					on your phone.
+				</p>
+			</main>
 		);
 	}
 
