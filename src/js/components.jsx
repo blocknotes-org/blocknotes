@@ -62,59 +62,50 @@ function Title({ path }) {
 	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
 }
 
-function Editor({ blocks, currentPath, selectedFolderURL, notesSelect }) {
-	let selection;
-
-	if (!currentPath.path) {
-		const [firstBlock] = blocks;
-		const sel = {
-			clientId: firstBlock.clientId,
-			attributeKey: 'content',
-			offset: 0,
-		};
-		selection = { selectionStart: sel, selectionEnd: sel };
+function getTitleFromBlocks(blocks) {
+	function flattenBlocks(_blocks) {
+		return _blocks.reduce((acc, block) => {
+			if (block.innerBlocks?.length) {
+				acc.push(...flattenBlocks(block.innerBlocks));
+				return acc;
+			}
+			acc.push(block);
+			return acc;
+		}, []);
 	}
 
-	const { value, setValue } = useStateWithHistory({ blocks, selection });
+	blocks = flattenBlocks(blocks);
+
+	for (const block of blocks) {
+		const html = getBlockContent(block);
+		const textContent = sanitizeFileName(
+			html.replace(/<[^>]+>/g, '').trim()
+		).slice(0, 50);
+		if (textContent) {
+			return textContent;
+		}
+	}
+}
+
+function useUpdateFile({ selectedFolderURL, note, currentPath }) {
 	useDelayedEffect(
 		async () => {
-			function flattenBlocks(_blocks) {
-				return _blocks.reduce((acc, block) => {
-					if (block.innerBlocks?.length) {
-						acc.push(...flattenBlocks(block.innerBlocks));
-						return acc;
-					}
-					acc.push(block);
-					return acc;
-				}, []);
-			}
-
 			if (!currentPath.path) {
 				currentPath.path = `${Date.now()}.html`;
 			}
 
-			const _blocks = flattenBlocks(value.blocks);
 			const base = currentPath.path.split('/').slice(0, -1).join('/');
+			const title = getTitleFromBlocks(note);
 			let newPath;
-
-			for (const block of _blocks) {
-				const html = getBlockContent(block);
-				const textContent = sanitizeFileName(
-					html.replace(/<[^>]+>/g, '').trim()
-				).slice(0, 50);
-				if (textContent) {
-					newPath = base
-						? base + '/' + textContent + '.html'
-						: textContent + '.html';
-					break;
-				}
+			if (title) {
+				newPath = base ? base + '/' + title + '.html' : title + '.html';
 			}
 
 			// First write because it's more important than renaming.
 			await Filesystem.writeFile({
 				path: currentPath.path,
 				directory: selectedFolderURL,
-				data: serialize(value.blocks),
+				data: serialize(note),
 				encoding: Encoding.UTF8,
 			});
 
@@ -146,18 +137,25 @@ function Editor({ blocks, currentPath, selectedFolderURL, notesSelect }) {
 				currentPath.path = newPath;
 			}
 		},
-		[value.blocks],
+		[note],
 		1000
 	);
+}
+
+function Editor({ state, setNote, notesSelect }) {
+	// To do: lift up and keep track of history for all notes.
+	const { value, setValue } = useStateWithHistory(state);
 	return (
 		<BlockEditorProvider
 			value={value.blocks}
 			selection={value.selection}
-			onInput={(_blocks, { selection: _sel }) => {
-				setValue({ blocks: _blocks, selection: _sel }, true);
+			onInput={(blocks, { selection }) => {
+				setValue({ blocks, selection }, true);
+				setNote(blocks);
 			}}
-			onChange={(_blocks, { selection: _sel }) => {
-				setValue({ blocks: _blocks, selection: _sel }, false);
+			onChange={(blocks, { selection }) => {
+				setValue({ blocks, selection }, false);
+				setNote(blocks);
 			}}
 			settings={{
 				hasFixedToolbar: true,
@@ -206,32 +204,28 @@ padding: 1px 1em;
 }
 
 function Note({
-	currentPath,
-	setCurrentPath,
+	note,
+	setNote,
 	paths,
 	setPaths,
+	currentPath,
+	setCurrentPath,
 	selectedFolderURL,
 	setSelectedFolderURL,
 }) {
-	const [note, setNote] = useState();
-	useEffect(() => {
-		if (currentPath.path) {
-			Filesystem.readFile({
-				path: currentPath.path,
-				directory: selectedFolderURL,
-				encoding: Encoding.UTF8,
-			}).then((file) => {
-				setNote(parse(file.data));
-			});
-		} else {
-			// Initialise with empty paragraph because we don't want merely clicking
-			// on an empty note to save it.
-			setNote([createBlock('core/paragraph')]);
-		}
-	}, [currentPath, selectedFolderURL]);
-	if (!note) {
-		return null;
+	let selection;
+
+	if (!currentPath.path) {
+		const [firstBlock] = note;
+		const sel = {
+			clientId: firstBlock.clientId,
+			attributeKey: 'content',
+			offset: 0,
+		};
+		selection = { selectionStart: sel, selectionEnd: sel };
 	}
+
+	useUpdateFile({ selectedFolderURL, note, currentPath });
 	function _setCurrentPath(path) {
 		if (path === currentPath) {
 			return;
@@ -274,7 +268,13 @@ function Note({
 									path === currentPath ? 'is-active' : ''
 								}
 							>
-								<Title path={path.path} />
+								{path === currentPath ? (
+									getTitleFromBlocks(note) || (
+										<em>{__('Untitled')}</em>
+									)
+								) : (
+									<Title path={path.path} />
+								)}
 							</MenuItem>
 						))}
 					</MenuGroup>
@@ -295,10 +295,53 @@ function Note({
 	return (
 		<Editor
 			key={String(currentPath.path)}
-			blocks={note}
+			state={{ blocks: note, selection }}
+			setNote={setNote}
 			currentPath={currentPath}
 			selectedFolderURL={selectedFolderURL}
 			notesSelect={notesSelect}
+		/>
+	);
+}
+
+function MaybeNote({
+	currentPath,
+	setCurrentPath,
+	paths,
+	setPaths,
+	selectedFolderURL,
+	setSelectedFolderURL,
+}) {
+	const [note, setNote] = useState();
+
+	useEffect(() => {
+		if (currentPath.path) {
+			Filesystem.readFile({
+				path: currentPath.path,
+				directory: selectedFolderURL,
+				encoding: Encoding.UTF8,
+			}).then((file) => {
+				setNote(parse(file.data));
+			});
+		} else {
+			// Initialise with empty paragraph because we don't want merely clicking
+			// on an empty note to save it.
+			setNote([createBlock('core/paragraph')]);
+		}
+	}, [currentPath, selectedFolderURL]);
+	if (!note) {
+		return null;
+	}
+	return (
+		<Note
+			note={note}
+			setNote={setNote}
+			paths={paths}
+			setPaths={setPaths}
+			currentPath={currentPath}
+			setCurrentPath={setCurrentPath}
+			selectedFolderURL={selectedFolderURL}
+			setSelectedFolderURL={setSelectedFolderURL}
 		/>
 	);
 }
@@ -354,7 +397,7 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 		return null;
 	}
 	return (
-		<Note
+		<MaybeNote
 			currentPath={currentPath}
 			setCurrentPath={setCurrentPath}
 			paths={paths}

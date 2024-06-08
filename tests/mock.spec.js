@@ -64,6 +64,12 @@ describe('Blocknotes', () => {
 				.getByRole('document', { name: 'Block: Paragraph' })
 		).toBeFocused();
 
+		await notesButton.click();
+
+		await expect(
+			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
+		).toHaveText(['New Note', 'a', 'Pick Folder']);
+
 		// wait 1s
 		await page.waitForTimeout(1000);
 
@@ -96,11 +102,5 @@ describe('Blocknotes', () => {
 
 		// Ensure the initial file is gone and renamed, expect no other files.
 		expect(paths).toEqual(['a.html']);
-
-		await notesButton.click();
-
-		await expect(
-			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'a', 'Pick Folder']);
 	});
 });
