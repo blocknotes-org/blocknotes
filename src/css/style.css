@@ -42,6 +42,11 @@ body,
   overflow-x: auto;
 }
 
+#select .components-toolbar {
+  border-color: #e0e0e0;
+  border-width: 0 1px 0 0;
+}
+
 #editor > div {
   display: block !important;
 }

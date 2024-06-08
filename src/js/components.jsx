@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -8,8 +10,18 @@ import {
 	BlockCanvas,
 	BlockToolbar,
 } from '@wordpress/block-editor';
-import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components';
-import { chevronDown } from '@wordpress/icons';
+import {
+	DropdownMenu,
+	MenuGroup,
+	MenuItem,
+	ToolbarButton,
+	ToolbarGroup,
+} from '@wordpress/components';
+import {
+	chevronDown,
+	undo as undoIcon,
+	redo as redoIcon,
+} from '@wordpress/icons';
 import {
 	createBlock,
 	getBlockContent,
@@ -172,7 +184,8 @@ function useUpdateFile({ selectedFolderURL, currentPath }) {
 
 function Editor({ state, setNote, notesSelect }) {
 	// To do: lift up and keep track of history for all notes.
-	const { value, setValue } = useStateWithHistory(state);
+	const { value, setValue, hasRedo, hasUndo, redo, undo } =
+		useStateWithHistory(state);
 	return (
 		<BlockEditorProvider
 			value={value.blocks}
@@ -197,6 +210,22 @@ function Editor({ state, setNote, notesSelect }) {
 		>
 			<div id="select" className="components-accessible-toolbar">
 				{notesSelect}
+				<ToolbarGroup className="components-toolbar-group">
+					<ToolbarButton
+						className="components-toolbar-button"
+						icon={undoIcon}
+						label={__('Undo')}
+						onClick={() => undo()}
+						disabled={!hasUndo}
+					/>
+					<ToolbarButton
+						className="components-toolbar-button"
+						icon={redoIcon}
+						label={__('Redo')}
+						onClick={() => redo()}
+						disabled={!hasRedo}
+					/>
+				</ToolbarGroup>
 				<BlockToolbar hideDragHandle />
 			</div>
 			<div
@@ -208,6 +237,22 @@ function Editor({ state, setNote, notesSelect }) {
 					width: '100%',
 					display: 'flex',
 					flexDirection: 'column',
+				}}
+				onKeyDown={(event) => {
+					if (
+						(event.ctrlKey || event.metaKey) &&
+						event.key === 'z' &&
+						!event.shiftKey
+					) {
+						event.preventDefault();
+						undo();
+					} else if (
+						(event.ctrlKey && event.key === 'y') ||
+						(event.metaKey && event.shiftKey && event.key === 'z')
+					) {
+						event.preventDefault();
+						redo();
+					}
 				}}
 			>
 				<BlockCanvas

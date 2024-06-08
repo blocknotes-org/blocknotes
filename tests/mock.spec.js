@@ -155,4 +155,65 @@ describe('Blocknotes', () => {
 <p>b</p>
 <!-- /wp:paragraph -->`);
 	});
+
+	test('undo/redo', async ({ page }) => {
+		await page.getByRole('button', { name: 'Pick Folder' }).click();
+
+		const undo = page.getByRole('button', { name: 'Undo' });
+		const redo = page.getByRole('button', { name: 'Redo' });
+
+		await expect(undo).toBeDisabled();
+		await expect(redo).toBeDisabled();
+
+		await page.keyboard.type('a');
+
+		await expect(undo).toBeEnabled();
+		await expect(redo).toBeDisabled();
+
+		// Typing a second character within 1s should be within the same undo
+		// step.
+		await page.waitForTimeout(500);
+		await page.keyboard.type('b');
+
+		await page.waitForTimeout(1000);
+		await page.keyboard.type('c');
+
+		const paragraph = canvas(page).getByRole('document', {
+			name: 'Block: Paragraph',
+		});
+
+		await expect(paragraph).toHaveText('abc');
+
+		await page.keyboard.press('Meta+z');
+
+		await expect(paragraph).toHaveText('ab');
+		await expect(undo).toBeEnabled();
+		await expect(redo).toBeEnabled();
+
+		await undo.click();
+
+		const emptyBlock = canvas(page).getByRole('document', {
+			name: 'Empty block',
+		});
+
+		await expect(emptyBlock).toBeFocused();
+		await expect(undo).toBeDisabled();
+
+		await page.keyboard.press('Meta+Shift+z');
+
+		await expect(paragraph).toHaveText('ab');
+		await expect(undo).toBeEnabled();
+		await expect(redo).toBeEnabled();
+
+		await redo.click();
+
+		await expect(paragraph).toHaveText('abc');
+		await expect(undo).toBeEnabled();
+		await expect(redo).toBeDisabled();
+
+		await undo.click();
+		await expect(redo).toBeEnabled();
+		await page.keyboard.type('d');
+		await expect(redo).toBeDisabled();
+	});
 });
