@@ -1,6 +1,6 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components';
 import { chevronDown } from '@wordpress/icons';
 import { createBlock, parse } from '@wordpress/blocks';
@@ -9,49 +9,50 @@ import { set } from 'idb-keyval';
 import { Preferences } from '@capacitor/preferences';
 import { v4 as uuidv4 } from 'uuid';
 
-import Editor from './editor-with-save.jsx';
+import EditorWithSave, { getTitleFromBlocks } from './editor-with-save.jsx';
 import Start from './start.jsx';
 
-function Title({ path }) {
+function Title({ item: { path, blocks } }) {
+	if (blocks) {
+		return getTitleFromBlocks(blocks) || <em>{__('Untitled')}</em>;
+	}
+
 	const title = path?.replace(/(?:\.?[0-9]+)?\.html$/, '');
 	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
 }
 
-function Note({ item, selectedFolderURL }) {
-	const [note, setNote] = useState();
-	const prevId = useRef();
-
+function Note({ item, setItem, selectedFolderURL }) {
 	const { path, id } = item;
-
-	if (prevId.current !== id) {
-		prevId.current = id;
-		setNote();
-	}
+	const pathRef = useRef(path);
 
 	useEffect(() => {
-		if (path) {
+		pathRef.current = path;
+	}, [path]);
+
+	useEffect(() => {
+		if (pathRef.current) {
 			Filesystem.readFile({
-				path,
+				path: pathRef.current,
 				directory: selectedFolderURL,
 				encoding: Encoding.UTF8,
 			}).then((file) => {
-				setNote(parse(file.data));
+				setItem({ blocks: parse(file.data) });
 			});
 		} else {
 			// Initialise with empty paragraph because we don't want merely clicking
 			// on an empty note to save it.
-			setNote([createBlock('core/paragraph')]);
+			setItem({ blocks: [createBlock('core/paragraph')] });
 		}
-	}, [id, path, selectedFolderURL, setNote]);
+	}, [id, selectedFolderURL, setItem]);
 
-	if (!note) {
+	if (!item.blocks) {
 		return null;
 	}
 
 	let selection;
 
 	if (!path) {
-		const [firstBlock] = note;
+		const [firstBlock] = item.blocks;
 		const sel = {
 			clientId: firstBlock.clientId,
 			attributeKey: 'content',
@@ -61,10 +62,12 @@ function Note({ item, selectedFolderURL }) {
 	}
 
 	return (
-		<Editor
+		<EditorWithSave
 			key={id}
-			state={{ blocks: note, selection }}
-			setNote={setNote}
+			state={{ blocks: item.blocks, selection }}
+			setNote={(blocks) => {
+				setItem({ blocks });
+			}}
 			item={item}
 			selectedFolderURL={selectedFolderURL}
 		/>
@@ -93,6 +96,17 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 				setSelectedFolderURL();
 			});
 	}, [selectedFolderURL, setSelectedFolderURL]);
+
+	const setItem = useCallback(
+		(item) => {
+			setItems((prevItems) =>
+				prevItems.map((_item) =>
+					_item.id === currentId ? { ..._item, ...item } : _item
+				)
+			);
+		},
+		[currentId]
+	);
 
 	if (!currentId) {
 		return null;
@@ -137,7 +151,7 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 												: ''
 										}
 									>
-										<Title path={item.path} />
+										<Title item={item} />
 									</MenuItem>
 								))}
 							</MenuGroup>
@@ -177,6 +191,7 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 			>
 				<Note
 					item={items.find(({ id }) => id === currentId)}
+					setItem={setItem}
 					selectedFolderURL={selectedFolderURL}
 				/>
 			</div>

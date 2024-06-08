@@ -47,7 +47,7 @@ function useDebouncedCallback(callback, delay) {
 	return debouncedCallback;
 }
 
-function getTitleFromBlocks(blocks) {
+export function getTitleFromBlocks(blocks) {
 	function flattenBlocks(_blocks) {
 		return _blocks.reduce((acc, block) => {
 			if (block.innerBlocks?.length) {
