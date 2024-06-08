@@ -57,6 +57,11 @@ function useDelayedEffect(effect, deps, delay) {
 	}, deps);
 }
 
+function Title({ path }) {
+	const title = path?.replace(/(?:\.?[0-9]+)?\.html$/, '');
+	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
+}
+
 function Editor({ blocks, currentPath, selectedFolderURL, notesSelect }) {
 	let selection;
 
@@ -269,12 +274,7 @@ function Note({
 									path === currentPath ? 'is-active' : ''
 								}
 							>
-								{decodeURIComponent(
-									path.path?.replace(
-										/(?:\.?[0-9]+)?\.html$/,
-										''
-									) || __('New note')
-								)}
+								<Title path={path.path} />
 							</MenuItem>
 						))}
 					</MenuGroup>
@@ -319,8 +319,11 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 		getPaths('', selectedFolderURL)
 			.then((_paths) => {
 				const pathObjects = _paths.map((path) => ({ path }));
+				if (!pathObjects.length) {
+					pathObjects.push({});
+				}
 				setPaths(pathObjects);
-				setCurrentPath(pathObjects[0] ?? {});
+				setCurrentPath(pathObjects[0]);
 			})
 			.catch(() => {
 				setSelectedFolderURL();

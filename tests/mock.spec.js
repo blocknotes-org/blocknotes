@@ -40,15 +40,23 @@ describe('Blocknotes', () => {
 
 		await page.getByRole('button', { name: 'Pick Folder' }).click();
 
+		const emptyBlock = page
+			.frameLocator('[name="editor-canvas"]')
+			.getByRole('document', { name: 'Empty block' });
+
+		await expect(emptyBlock).toBeFocused();
+
+		const notesButton = page.getByRole('button', { name: 'Notes' });
+
+		await notesButton.click();
+
 		await expect(
-			page
-				.frameLocator('[name="editor-canvas"]')
-				.getByRole('document', { name: 'Empty block' })
-		).toBeFocused();
+			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
+		).toHaveText(['New Note', 'Untitled', 'Pick Folder']);
+
+		await emptyBlock.click();
 
 		await page.keyboard.type('a');
-
-		page.pause();
 
 		await expect(
 			page
@@ -88,5 +96,11 @@ describe('Blocknotes', () => {
 
 		// Ensure the initial file is gone and renamed, expect no other files.
 		expect(paths).toEqual(['a.html']);
+
+		await notesButton.click();
+
+		await expect(
+			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
+		).toHaveText(['New Note', 'a', 'Pick Folder']);
 	});
 });

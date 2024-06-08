@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	base: './',
 	root: './src',
-	assetsInclude: ['**/*.wasm', '*.data'],
 	build: {
 		outDir: '../dist',
 		minify: false,
