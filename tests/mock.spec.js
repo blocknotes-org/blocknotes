@@ -1,12 +1,6 @@
-const {
-	describe,
-	beforeEach,
-	afterEach,
-	test,
-	expect,
-} = require('@playwright/test');
-const fs = require('fs');
-const path = require('path');
+import { test, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 
 const fsaMockPath = path.resolve(
 	'node_modules',
@@ -40,8 +34,8 @@ async function isFile(page, _path) {
 	}, _path);
 }
 
-describe('Blocknotes', () => {
-	beforeEach(async ({ page }) => {
+test.describe('Blocknotes', () => {
+	test.beforeEach(async ({ page }) => {
 		await page.addInitScript(fsaMockScript);
 		await page.addInitScript(() => {
 			const { mock } = window.fsaMock;
@@ -56,7 +50,7 @@ describe('Blocknotes', () => {
 		});
 	});
 
-	afterEach(async ({ page }) => {
+	test.afterEach(async ({ page }) => {
 		await page.evaluate(() => {
 			const { mock } = window.fsaMock;
 			mock.uninstall();

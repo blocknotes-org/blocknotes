@@ -1,26 +1,13 @@
 # Blocknotes
 
-Uses [Capacitor](https://capacitorjs.com) to create the native apps from a PWA.
-A modified version of `@capacitor/filesystem` is used to save files to your
-iCloud folder and the file system for web (PWA). By default
-`@capacitor/filesystem` saves to indexDB on the web, and a _local_ folder on
-iOS, so this package is heavily adjusted and should probably be rewritten as a
-custom Capacitor plugin.
+After cloning the repository and `npm install`, you can run `npm start` to run a
+local server with the dev files.
 
-Builds into the `dist` directory:
+Running the iOS and macOS apps is a bit slower, since it needs the `dist` files.
+You can build the `dist` directory with `npm run build`, then `npx cap sync` to
+sync the files to the `ios` directory. Open Xcode with `npx cap open ios`.
 
-```
-npm run build
-```
-
-Syncs the the build to `ios`:
-
-```
-npx cap sync
-```
-
-Open Xcode:
-
-```
-npx cap open ios
-```
+It uses [Capacitor](https://capacitorjs.com) to create the native apps from the
+PWA. A modified version of `@capacitor/filesystem` is used to allow picking any
+directory in the local filesystem. By default `@capacitor/filesystem` saves to
+indexDB on the web, and a hidden app folder on iOS/macOS.

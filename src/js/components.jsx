@@ -3,6 +3,7 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { registerCoreBlocks } from '@wordpress/block-library';
 import { useStateWithHistory } from '@wordpress/compose';
 import {
@@ -176,7 +177,7 @@ function useUpdateFile({ selectedFolderURL, currentPath }) {
 	}, 1000);
 }
 
-function Editor({ state, setNote, notesSelect }) {
+function Editor({ state, setNote }) {
 	// To do: lift up and keep track of history for all notes.
 	const { value, setValue, hasRedo, hasUndo, redo, undo } =
 		useStateWithHistory(state);
@@ -202,36 +203,30 @@ function Editor({ state, setNote, notesSelect }) {
 				},
 			}}
 		>
-			<div id="select" className="components-accessible-toolbar">
-				{notesSelect}
-				<ToolbarGroup className="components-toolbar-group">
-					<ToolbarButton
-						className="components-toolbar-button"
-						icon={undoIcon}
-						label={__('Undo')}
-						onClick={() => undo()}
-						disabled={!hasUndo}
-					/>
-					<ToolbarButton
-						className="components-toolbar-button"
-						icon={redoIcon}
-						label={__('Redo')}
-						onClick={() => redo()}
-						disabled={!hasRedo}
-					/>
-				</ToolbarGroup>
-				<BlockToolbar hideDragHandle />
-			</div>
+			{createPortal(
+				<>
+					<ToolbarGroup className="components-toolbar-group">
+						<ToolbarButton
+							className="components-toolbar-button"
+							icon={undoIcon}
+							label={__('Undo')}
+							onClick={() => undo()}
+							disabled={!hasUndo}
+						/>
+						<ToolbarButton
+							className="components-toolbar-button"
+							icon={redoIcon}
+							label={__('Redo')}
+							onClick={() => redo()}
+							disabled={!hasRedo}
+						/>
+					</ToolbarGroup>
+					<BlockToolbar hideDragHandle />
+				</>,
+				document.getElementById('select')
+			)}
 			<div
-				id="editor"
-				style={{
-					position: 'relative',
-					overflow: 'auto',
-					height: '100%',
-					width: '100%',
-					display: 'flex',
-					flexDirection: 'column',
-				}}
+				style={{ height: '100%' }}
 				onKeyDown={(event) => {
 					if (
 						(event.ctrlKey || event.metaKey) &&
@@ -270,16 +265,7 @@ padding: 1px 1em;
 	);
 }
 
-function Note({
-	note,
-	setNote,
-	paths,
-	setPaths,
-	currentPath,
-	setCurrentPath,
-	selectedFolderURL,
-	setSelectedFolderURL,
-}) {
+function Note({ note, setNote, currentPath, selectedFolderURL }) {
 	let selection;
 
 	if (!currentPath.path) {
@@ -303,79 +289,6 @@ function Note({
 		}
 	}, [updateFile, note]);
 
-	function _setCurrentPath(path) {
-		if (path === currentPath) {
-			return;
-		}
-		setCurrentPath(path);
-		setNote();
-	}
-	const notesSelect = (
-		<DropdownMenu
-			className="blocknotes-select"
-			icon={chevronDown}
-			label={__('Notes')}
-			toggleProps={{
-				children: __('Notes'),
-			}}
-		>
-			{({ onClose }) => (
-				<>
-					<MenuGroup>
-						<MenuItem
-							onClick={() => {
-								const newPath = {};
-								setPaths([newPath, ...paths]);
-								_setCurrentPath(newPath);
-								onClose();
-							}}
-						>
-							{__('New Note')}
-						</MenuItem>
-					</MenuGroup>
-					<MenuGroup>
-						{paths.map((path) => (
-							<MenuItem
-								key={path.path}
-								onClick={() => {
-									_setCurrentPath(path);
-									onClose();
-								}}
-								className={
-									path === currentPath ? 'is-active' : ''
-								}
-							>
-								{path === currentPath ? (
-									getTitleFromBlocks(note) || (
-										<em>{__('Untitled')}</em>
-									)
-								) : (
-									<Title path={path.path} />
-								)}
-							</MenuItem>
-						))}
-					</MenuGroup>
-					<MenuGroup>
-						<MenuItem
-							onClick={async () => {
-								setSelectedFolderURL(await pick());
-								onClose();
-							}}
-						>
-							{__('Pick Folder')}
-						</MenuItem>
-						<MenuItem
-							onClick={async () => {
-								setSelectedFolderURL();
-							}}
-						>
-							{__('Forget Folder')}
-						</MenuItem>
-					</MenuGroup>
-				</>
-			)}
-		</DropdownMenu>
-	);
 	return (
 		<Editor
 			key={getUniqueId(currentPath)}
@@ -383,7 +296,6 @@ function Note({
 			setNote={setNote}
 			currentPath={currentPath}
 			selectedFolderURL={selectedFolderURL}
-			notesSelect={notesSelect}
 		/>
 	);
 }
@@ -413,20 +325,104 @@ function MaybeNote({
 			setNote([createBlock('core/paragraph')]);
 		}
 	}, [currentPath, selectedFolderURL]);
-	if (!note) {
-		return null;
+	function _setCurrentPath(path) {
+		if (path === currentPath) {
+			return;
+		}
+		setCurrentPath(path);
+		setNote();
 	}
 	return (
-		<Note
-			note={note}
-			setNote={setNote}
-			paths={paths}
-			setPaths={setPaths}
-			currentPath={currentPath}
-			setCurrentPath={setCurrentPath}
-			selectedFolderURL={selectedFolderURL}
-			setSelectedFolderURL={setSelectedFolderURL}
-		/>
+		<>
+			<div id="select" className="components-accessible-toolbar">
+				<DropdownMenu
+					className="blocknotes-select"
+					icon={chevronDown}
+					label={__('Notes')}
+					toggleProps={{
+						children: __('Notes'),
+					}}
+				>
+					{({ onClose }) => (
+						<>
+							<MenuGroup>
+								<MenuItem
+									onClick={() => {
+										const newPath = {};
+										setPaths([newPath, ...paths]);
+										_setCurrentPath(newPath);
+										onClose();
+									}}
+								>
+									{__('New Note')}
+								</MenuItem>
+							</MenuGroup>
+							<MenuGroup>
+								{paths.map((path) => (
+									<MenuItem
+										key={path.path}
+										onClick={() => {
+											_setCurrentPath(path);
+											onClose();
+										}}
+										className={
+											path === currentPath
+												? 'is-active'
+												: ''
+										}
+									>
+										{path === currentPath ? (
+											getTitleFromBlocks(note) || (
+												<em>{__('Untitled')}</em>
+											)
+										) : (
+											<Title path={path.path} />
+										)}
+									</MenuItem>
+								))}
+							</MenuGroup>
+							<MenuGroup>
+								<MenuItem
+									onClick={async () => {
+										setSelectedFolderURL(await pick());
+										onClose();
+									}}
+								>
+									{__('Pick Folder')}
+								</MenuItem>
+								<MenuItem
+									onClick={async () => {
+										setSelectedFolderURL();
+									}}
+								>
+									{__('Forget Folder')}
+								</MenuItem>
+							</MenuGroup>
+						</>
+					)}
+				</DropdownMenu>
+			</div>
+			<div
+				id="editor"
+				style={{
+					position: 'relative',
+					overflow: 'auto',
+					height: '100%',
+					width: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+				}}
+			>
+				{note && (
+					<Note
+						note={note}
+						setNote={setNote}
+						currentPath={currentPath}
+						selectedFolderURL={selectedFolderURL}
+					/>
+				)}
+			</div>
+		</>
 	);
 }
 

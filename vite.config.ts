@@ -8,4 +8,7 @@ export default defineConfig({
 		emptyOutDir: true,
 	},
 	publicDir: '../public',
+	server: {
+		hmr: false,
+	},
 });
