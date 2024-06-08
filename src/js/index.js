@@ -3,8 +3,9 @@ import { App as NativeApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
+import { registerCoreBlocks } from '@wordpress/block-library';
 
-import app from './components';
+import app from './app.jsx';
 
 import '@wordpress/format-library';
 
@@ -37,6 +38,8 @@ async function load() {
 
 	const selectedFolderURL = await getSelectedFolderURL();
 	const root = createRoot(document.getElementById('app'));
+
+	registerCoreBlocks();
 	root.render(app({ selectedFolderURL }));
 
 	NativeApp.addListener('appStateChange', ({ isActive }) => {

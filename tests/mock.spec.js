@@ -88,7 +88,7 @@ test.describe('Blocknotes', () => {
 
 		await expect(
 			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'aa', 'Pick Folder', 'Forget Folder']);
+		).toHaveText(['New Note', 'Untitled', 'Pick Folder', 'Forget Folder']);
 
 		// Nothing should have been saved yet because saving is debounced.
 		expect(await getPaths(page)).toEqual([]);
@@ -134,7 +134,13 @@ test.describe('Blocknotes', () => {
 
 		await expect(
 			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'b', 'aaaa', 'Pick Folder', 'Forget Folder']);
+		).toHaveText([
+			'New Note',
+			'Untitled',
+			'aaaa',
+			'Pick Folder',
+			'Forget Folder',
+		]);
 
 		// Immediately switch back to note A.
 		await page.getByRole('menuitem', { name: 'aaaa' }).click();
@@ -228,7 +234,7 @@ test.describe('Blocknotes', () => {
 		await page.keyboard.type('2');
 
 		await notesButton.click();
-		await page.getByRole('menuitem', { name: 'a' }).nth(1).click();
+		await page.getByRole('menuitem', { name: 'a' }).click();
 
 		await expect(
 			canvas(page)
