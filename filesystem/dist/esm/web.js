@@ -25,6 +25,30 @@ function isPathParent(parent, children) {
     return (parent !== children &&
         pathsA.every((value, index) => value === pathsB[index]));
 }
+
+async function moveFile( dirHandle, handle, destinationDirHandle, newName = null) {
+    // Chrome implements a non-standard move method
+    if (handle.move) {
+        await handle.move(destinationDirHandle, newName);
+        return;
+    }
+
+    const originalName = handle.name;
+    const targetName = newName || originalName;
+
+    // Get the file data from the source handle
+    const fileData = await handle.getFile();
+
+    // Create a new file in the destination directory
+    const newFileHandle = await destinationDirHandle.getFileHandle(targetName, { create: true });
+    const writableStream = await newFileHandle.createWritable();
+
+    // Write the file data to the new file
+    await writableStream.write(fileData);
+    await writableStream.close();
+
+    await dirHandle.removeEntry(originalName);
+}
 export class FilesystemWeb extends WebPlugin {
     constructor() {
         super(...arguments);
@@ -324,16 +348,25 @@ export class FilesystemWeb extends WebPlugin {
      */
     async rename(options) {
         const { to, from } = options;
-        
-        // If it's a file, use move.
+
+        // Check if it's a file
+        let fileHandle;
         try {
-            const directories = to.split('/');
-            const newName = directories.pop();
-            const newDir = directories.join('/');
+            fileHandle = await this.getFileHandle(from,options);
+        } catch (e) {}
+
+        // If it's a file, use move.
+        if (fileHandle) {
+            const directories = from.split('/');
+            directories.pop();
+            const dir = directories.join('/');
+            const dirHandle = await this.getDirectoryHandle(dir,options);
+            const newDirectories = to.split('/');
+            const newName = newDirectories.pop();
+            const newDir = newDirectories.join('/');
             const newDirHandle = await this.getDirectoryHandle(newDir,options);
-            const fileHandle = await this.getFileHandle(from,options);
-            await fileHandle.move(newDirHandle, newName);
-        } catch (e) {
+            await moveFile( dirHandle, fileHandle, newDirHandle, newName);
+        } else {
             // There's no move method for directories, so we have to do it
             // manually.
             // Create the new directory.
