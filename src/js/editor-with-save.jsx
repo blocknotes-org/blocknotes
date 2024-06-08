@@ -72,13 +72,13 @@ function getTitleFromBlocks(blocks) {
 	}
 }
 
-function useUpdateFile({ selectedFolderURL, currentPath }) {
+function useUpdateFile({ selectedFolderURL, item }) {
 	return useDebouncedCallback(async (note) => {
-		if (!currentPath.path) {
-			currentPath.path = `${Date.now()}.html`;
+		if (!item.path) {
+			item.path = `${Date.now()}.html`;
 		}
 
-		const base = currentPath.path.split('/').slice(0, -1).join('/');
+		const base = item.path.split('/').slice(0, -1).join('/');
 		const title = getTitleFromBlocks(note);
 		let newPath;
 		if (title) {
@@ -87,13 +87,13 @@ function useUpdateFile({ selectedFolderURL, currentPath }) {
 
 		// First write because it's more important than renaming.
 		await Filesystem.writeFile({
-			path: currentPath.path,
+			path: item.path,
 			directory: selectedFolderURL,
 			data: serialize(note),
 			encoding: Encoding.UTF8,
 		});
 
-		if (newPath && newPath !== currentPath.path) {
+		if (newPath && newPath !== item.path) {
 			// Check if the wanted file name already exists.
 			try {
 				const exists = await Filesystem.stat({
@@ -108,14 +108,14 @@ function useUpdateFile({ selectedFolderURL, currentPath }) {
 			} catch (e) {}
 
 			await Filesystem.rename({
-				from: currentPath.path,
+				from: item.path,
 				to: newPath,
 				directory: selectedFolderURL,
 			});
 
 			// Only after the rename is successful, silently update the current
 			// path.
-			currentPath.path = newPath;
+			item.path = newPath;
 		}
 	}, 1000);
 }
@@ -124,9 +124,9 @@ export default function EditorWithSave({
 	state,
 	setNote,
 	selectedFolderURL,
-	currentPath,
+	item,
 }) {
-	const updateFile = useUpdateFile({ selectedFolderURL, currentPath });
+	const updateFile = useUpdateFile({ selectedFolderURL, item });
 	const isMounted = useRef(false);
 
 	useEffect(() => {

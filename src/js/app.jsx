@@ -12,35 +12,26 @@ import { v4 as uuidv4 } from 'uuid';
 import Editor from './editor-with-save.jsx';
 import Start from './start.jsx';
 
-const uuidMap = new WeakMap();
-
-function getUniqueId(object) {
-	let uuid = uuidMap.get(object);
-	if (!uuid) {
-		uuid = uuidv4();
-		uuidMap.set(object, uuid);
-	}
-	return uuid;
-}
-
 function Title({ path }) {
 	const title = path?.replace(/(?:\.?[0-9]+)?\.html$/, '');
 	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
 }
 
-function Note({ currentPath, selectedFolderURL }) {
+function Note({ item, selectedFolderURL }) {
 	const [note, setNote] = useState();
-	const prevPath = useRef();
+	const prevId = useRef();
 
-	if (prevPath.current !== currentPath) {
-		prevPath.current = currentPath;
+	const { path, id } = item;
+
+	if (prevId.current !== id) {
+		prevId.current = id;
 		setNote();
 	}
 
 	useEffect(() => {
-		if (currentPath.path) {
+		if (path) {
 			Filesystem.readFile({
-				path: currentPath.path,
+				path,
 				directory: selectedFolderURL,
 				encoding: Encoding.UTF8,
 			}).then((file) => {
@@ -51,7 +42,7 @@ function Note({ currentPath, selectedFolderURL }) {
 			// on an empty note to save it.
 			setNote([createBlock('core/paragraph')]);
 		}
-	}, [currentPath, selectedFolderURL, setNote]);
+	}, [id, path, selectedFolderURL, setNote]);
 
 	if (!note) {
 		return null;
@@ -59,7 +50,7 @@ function Note({ currentPath, selectedFolderURL }) {
 
 	let selection;
 
-	if (!currentPath.path) {
+	if (!path) {
 		const [firstBlock] = note;
 		const sel = {
 			clientId: firstBlock.clientId,
@@ -71,36 +62,39 @@ function Note({ currentPath, selectedFolderURL }) {
 
 	return (
 		<Editor
-			key={getUniqueId(currentPath)}
+			key={id}
 			state={{ blocks: note, selection }}
 			setNote={setNote}
-			currentPath={currentPath}
+			item={item}
 			selectedFolderURL={selectedFolderURL}
 		/>
 	);
 }
 
 function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
-	const [currentPath, setCurrentPath] = useState();
-	const [paths, setPaths] = useState([]);
+	const [currentId, setCurrentId] = useState();
+	const [items, setItems] = useState([]);
 
 	useEffect(() => {
-		setCurrentPath();
+		setCurrentId();
 		getPaths('', selectedFolderURL)
 			.then((_paths) => {
-				const pathObjects = _paths.map((path) => ({ path }));
+				const pathObjects = _paths.map((path) => ({
+					path,
+					id: uuidv4(),
+				}));
 				if (!pathObjects.length) {
-					pathObjects.push({});
+					pathObjects.push({ id: uuidv4() });
 				}
-				setPaths(pathObjects);
-				setCurrentPath(pathObjects[0]);
+				setItems(pathObjects);
+				setCurrentId(pathObjects[0].id);
 			})
 			.catch(() => {
 				setSelectedFolderURL();
 			});
 	}, [selectedFolderURL, setSelectedFolderURL]);
 
-	if (!currentPath) {
+	if (!currentId) {
 		return null;
 	}
 
@@ -120,9 +114,9 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 							<MenuGroup>
 								<MenuItem
 									onClick={() => {
-										const newPath = {};
-										setPaths([newPath, ...paths]);
-										setCurrentPath(newPath);
+										const newItem = { id: uuidv4() };
+										setItems([newItem, ...items]);
+										setCurrentId(newItem.id);
 										onClose();
 									}}
 								>
@@ -130,20 +124,20 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 								</MenuItem>
 							</MenuGroup>
 							<MenuGroup>
-								{paths.map((path) => (
+								{items.map((item) => (
 									<MenuItem
-										key={path.path}
+										key={item.id}
 										onClick={() => {
-											setCurrentPath(path);
+											setCurrentId(item.id);
 											onClose();
 										}}
 										className={
-											path === currentPath
+											item.id === currentId
 												? 'is-active'
 												: ''
 										}
 									>
-										<Title path={path.path} />
+										<Title path={item.path} />
 									</MenuItem>
 								))}
 							</MenuGroup>
@@ -182,7 +176,7 @@ function AppWithSelectedFolder({ selectedFolderURL, setSelectedFolderURL }) {
 				}}
 			>
 				<Note
-					currentPath={currentPath}
+					item={items.find(({ id }) => id === currentId)}
 					selectedFolderURL={selectedFolderURL}
 				/>
 			</div>
