@@ -325,7 +325,7 @@ export class FilesystemWeb extends WebPlugin {
     async getHandle(path, options) {
         const directories = path.split('/');
         const maybeFileName = directories.pop();
-        const handle = await this.getDirectoryHandle(directories.join('/'), options);
+        let handle = await this.getDirectoryHandle(directories.join('/'), options);
 
         try {
             handle = await handle.getFileHandle(maybeFileName, options);

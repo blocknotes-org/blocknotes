@@ -4,8 +4,7 @@
   "description": "Blocknotes",
   "main": "index.js",
   "scripts": {
-    "server": "http-server ./dist -p 3000",
-    "start": "vite build --watch",
+    "start": "vite",
     "build": "vite build",
     "sync": "npm run build && cap sync",
     "preview": "vite preview",
@@ -42,7 +41,6 @@
     "@wordpress/eslint-plugin": "^19.0.0",
     "@wordpress/prettier-config": "^4.0.0",
     "fsa-mock": "^1.0.0",
-    "http-server": "^14.1.1",
     "husky": "^8.0.3",
     "prettier": "^3.3.1",
     "sharp-cli": "^4.2.0",
