@@ -16,6 +16,30 @@ const fsaMockPath = path.resolve(
 );
 const fsaMockScript = fs.readFileSync(fsaMockPath, 'utf8');
 
+function canvas(page) {
+	return page.frameLocator('[name="editor-canvas"]');
+}
+
+async function getPaths(page) {
+	return await page.evaluate(() => {
+		return window.fsaMock.mock.fs().getDescendantPaths('');
+	});
+}
+
+async function getContents(page, _path) {
+	return await page.evaluate((__path) => {
+		return new TextDecoder('utf-8').decode(
+			window.fsaMock.mock.contents(__path)
+		);
+	}, _path);
+}
+
+async function isFile(page, _path) {
+	return await page.evaluate((__path) => {
+		return window.fsaMock.mock.isFile(__path);
+	}, _path);
+}
+
 describe('Blocknotes', () => {
 	beforeEach(async ({ page }) => {
 		await page.addInitScript(fsaMockScript);
@@ -26,6 +50,10 @@ describe('Blocknotes', () => {
 		});
 
 		await page.goto('/');
+
+		page.on('pageerror', (error) => {
+			throw error;
+		});
 	});
 
 	afterEach(async ({ page }) => {
@@ -40,9 +68,9 @@ describe('Blocknotes', () => {
 
 		await page.getByRole('button', { name: 'Pick Folder' }).click();
 
-		const emptyBlock = page
-			.frameLocator('[name="editor-canvas"]')
-			.getByRole('document', { name: 'Empty block' });
+		const emptyBlock = canvas(page).getByRole('document', {
+			name: 'Empty block',
+		});
 
 		await expect(emptyBlock).toBeFocused();
 
@@ -56,51 +84,75 @@ describe('Blocknotes', () => {
 
 		await emptyBlock.click();
 
-		await page.keyboard.type('a');
+		await page.keyboard.type('aa');
 
 		await expect(
-			page
-				.frameLocator('[name="editor-canvas"]')
-				.getByRole('document', { name: 'Block: Paragraph' })
+			canvas(page).getByRole('document', { name: 'Block: Paragraph' })
 		).toBeFocused();
 
 		await notesButton.click();
 
 		await expect(
 			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'a', 'Pick Folder']);
+		).toHaveText(['New Note', 'aa', 'Pick Folder']);
+
+		// Nothing should have been saved yet because saving is debounced.
+		expect(await getPaths(page)).toEqual([]);
+
+		const block = canvas(page).getByRole('document', {
+			name: 'Block: Paragraph',
+		});
+
+		await block.click();
+		await expect(block).toBeFocused();
 
 		// wait 1s
 		await page.waitForTimeout(1000);
 
-		const exists = await page.evaluate(() => {
-			return window.fsaMock.mock.exists('a.html');
-		});
-
-		expect(exists).toBe(true);
-
-		// check directory for file.
-		const isFile = await page.evaluate(() => {
-			return window.fsaMock.mock.isFile('a.html');
-		});
-
-		expect(isFile).toBe(true);
-
-		const contents = await page.evaluate(() => {
-			return new TextDecoder('utf-8').decode(
-				window.fsaMock.mock.contents('a.html')
-			);
-		});
-
-		expect(contents).toBe(`<!-- wp:paragraph -->
-<p>a</p>
-<!-- /wp:paragraph -->`);
-
-		const paths = await page.evaluate(() => {
-			return window.fsaMock.mock.fs().getDescendantPaths('');
-		});
+		// Make sure saving doesn't remove focus.
+		await expect(block).toBeFocused();
 
 		// Ensure the initial file is gone and renamed, expect no other files.
-		expect(paths).toEqual(['a.html']);
+		expect(await getPaths(page)).toEqual(['aa.html']);
+		expect(await isFile(page, 'aa.html')).toBe(true);
+		expect(await getContents(page, 'aa.html')).toBe(`<!-- wp:paragraph -->
+<p>aa</p>
+<!-- /wp:paragraph -->`);
+
+		// Focus should be kept during subsequent saves.
+		await page.keyboard.type('a');
+		await page.waitForTimeout(1000);
+		await page.keyboard.type('a');
+		await page.waitForTimeout(1000);
+
+		expect(await getPaths(page)).toEqual(['aaaa.html']);
+		expect(await getContents(page, 'aaaa.html')).toBe(`<!-- wp:paragraph -->
+<p>aaaa</p>
+<!-- /wp:paragraph -->`);
+
+		// Create a second note.
+		await notesButton.click();
+		await page.getByRole('menuitem', { name: 'New Note' }).click();
+
+		await page.keyboard.type('b');
+
+		await notesButton.click();
+
+		await expect(
+			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
+		).toHaveText(['New Note', 'b', 'aaaa', 'Pick Folder']);
+
+		// Immediately switch back to note A.
+		await page.getByRole('menuitem', { name: 'aaaa' }).click();
+
+		await expect(
+			canvas(page).getByRole('document', { name: 'Block: Paragraph' })
+		).toHaveText('aaaa');
+
+		// Check if note B is saved.
+		expect(await getPaths(page)).toEqual(['aaaa.html', 'b.html']);
+		expect(await getContents(page, 'b.html')).toBe(`<!-- wp:paragraph -->
+<p>b</p>
+<!-- /wp:paragraph -->`);
 	});
 });

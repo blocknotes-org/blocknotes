@@ -31,7 +31,8 @@
     "@wordpress/icons": "^10.0.0",
     "idb-keyval": "^6.2.1",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",

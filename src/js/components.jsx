@@ -1,6 +1,6 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { registerCoreBlocks } from '@wordpress/block-library';
 import { useStateWithHistory } from '@wordpress/compose';
 import {
@@ -19,10 +19,22 @@ import {
 import { __ } from '@wordpress/i18n';
 import { set } from 'idb-keyval';
 import { Preferences } from '@capacitor/preferences';
+import { v4 as uuidv4 } from 'uuid';
 
 import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/content.css?url';
 import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url';
 import componentsStyleUrl from '@wordpress/components/build-style/style.css?url';
+
+const uuidMap = new WeakMap();
+
+function getUniqueId(object) {
+	let uuid = uuidMap.get(object);
+	if (!uuid) {
+		uuid = uuidv4();
+		uuidMap.set(object, uuid);
+	}
+	return uuid;
+}
 
 async function pick() {
 	const { url } = await Filesystem.pickDirectory();
@@ -44,17 +56,40 @@ function sanitizeFileName(name) {
 	);
 }
 
-function useDelayedEffect(effect, deps, delay) {
-	const hasMounted = useRef(false);
+function useDebouncedCallback(callback, delay) {
+	const callbackRef = useRef(callback);
+	const timeoutRef = useRef(null);
+	const lastArgsRef = useRef();
+
 	useEffect(() => {
-		if (!hasMounted.current) {
-			hasMounted.current = true;
-			return;
-		}
-		const timeout = setTimeout(effect, delay);
-		return () => clearTimeout(timeout);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, deps);
+		callbackRef.current = callback;
+	}, [callback]);
+
+	const debouncedCallback = useCallback(
+		(...args) => {
+			lastArgsRef.current = args;
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+			timeoutRef.current = setTimeout(() => {
+				callbackRef.current(...lastArgsRef.current);
+			}, delay);
+		},
+		[delay]
+	);
+
+	useEffect(
+		() => () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+				timeoutRef.current = null;
+				callbackRef.current(...lastArgsRef.current);
+			}
+		},
+		[]
+	);
+
+	return debouncedCallback;
 }
 
 function Title({ path }) {
@@ -87,59 +122,52 @@ function getTitleFromBlocks(blocks) {
 	}
 }
 
-function useUpdateFile({ selectedFolderURL, note, currentPath }) {
-	useDelayedEffect(
-		async () => {
-			if (!currentPath.path) {
-				currentPath.path = `${Date.now()}.html`;
-			}
+function useUpdateFile({ selectedFolderURL, currentPath }) {
+	return useDebouncedCallback(async (note) => {
+		if (!currentPath.path) {
+			currentPath.path = `${Date.now()}.html`;
+		}
 
-			const base = currentPath.path.split('/').slice(0, -1).join('/');
-			const title = getTitleFromBlocks(note);
-			let newPath;
-			if (title) {
-				newPath = base ? base + '/' + title + '.html' : title + '.html';
-			}
+		const base = currentPath.path.split('/').slice(0, -1).join('/');
+		const title = getTitleFromBlocks(note);
+		let newPath;
+		if (title) {
+			newPath = base ? base + '/' + title + '.html' : title + '.html';
+		}
 
-			// First write because it's more important than renaming.
-			await Filesystem.writeFile({
-				path: currentPath.path,
-				directory: selectedFolderURL,
-				data: serialize(note),
-				encoding: Encoding.UTF8,
-			});
+		// First write because it's more important than renaming.
+		await Filesystem.writeFile({
+			path: currentPath.path,
+			directory: selectedFolderURL,
+			data: serialize(note),
+			encoding: Encoding.UTF8,
+		});
 
-			if (newPath && newPath !== currentPath.path) {
-				// Check if the wanted file name already exists.
-				try {
-					const exists = await Filesystem.stat({
-						path: newPath,
-						directory: selectedFolderURL,
-					});
-
-					// If it does, add a timestamp to the file name.
-					if (exists) {
-						newPath = newPath.replace(
-							'.html',
-							`.${Date.now()}.html`
-						);
-					}
-				} catch (e) {}
-
-				await Filesystem.rename({
-					from: currentPath.path,
-					to: newPath,
+		if (newPath && newPath !== currentPath.path) {
+			// Check if the wanted file name already exists.
+			try {
+				const exists = await Filesystem.stat({
+					path: newPath,
 					directory: selectedFolderURL,
 				});
 
-				// Only after the rename is successful, silently update the current
-				// path.
-				currentPath.path = newPath;
-			}
-		},
-		[note],
-		1000
-	);
+				// If it does, add a timestamp to the file name.
+				if (exists) {
+					newPath = newPath.replace('.html', `.${Date.now()}.html`);
+				}
+			} catch (e) {}
+
+			await Filesystem.rename({
+				from: currentPath.path,
+				to: newPath,
+				directory: selectedFolderURL,
+			});
+
+			// Only after the rename is successful, silently update the current
+			// path.
+			currentPath.path = newPath;
+		}
+	}, 1000);
 }
 
 function Editor({ state, setNote, notesSelect }) {
@@ -225,7 +253,17 @@ function Note({
 		selection = { selectionStart: sel, selectionEnd: sel };
 	}
 
-	useUpdateFile({ selectedFolderURL, note, currentPath });
+	const updateFile = useUpdateFile({ selectedFolderURL, currentPath });
+	const isMounted = useRef(false);
+
+	useEffect(() => {
+		if (isMounted.current) {
+			updateFile(note);
+		} else {
+			isMounted.current = true;
+		}
+	}, [updateFile, note]);
+
 	function _setCurrentPath(path) {
 		if (path === currentPath) {
 			return;
@@ -294,7 +332,7 @@ function Note({
 	);
 	return (
 		<Editor
-			key={String(currentPath.path)}
+			key={getUniqueId(currentPath)}
 			state={{ blocks: note, selection }}
 			setNote={setNote}
 			currentPath={currentPath}
