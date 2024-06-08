@@ -216,4 +216,43 @@ describe('Blocknotes', () => {
 		await page.keyboard.type('d');
 		await expect(redo).toBeDisabled();
 	});
+
+	test('existing filename', async ({ page }) => {
+		await page.getByRole('button', { name: 'Pick Folder' }).click();
+
+		await page.keyboard.type('a');
+		await page.keyboard.press('Enter');
+		await page.keyboard.type('1');
+
+		const notesButton = page.getByRole('button', { name: 'Notes' });
+
+		await notesButton.click();
+		await page.getByRole('menuitem', { name: 'New Note' }).click();
+
+		await page.keyboard.type('a');
+		await page.keyboard.press('Enter');
+		await page.keyboard.type('2');
+
+		await notesButton.click();
+		await page.getByRole('menuitem', { name: 'a' }).nth(1).click();
+
+		await expect(
+			canvas(page)
+				.getByRole('document', { name: 'Block: Paragraph' })
+				.nth(1)
+		).toHaveText('1');
+
+		// The original file should be intact.
+		expect(await getPaths(page)).toEqual([
+			'a.html',
+			expect.stringMatching(/^a\.\d+\.html$/),
+		]);
+		expect(await getContents(page, 'a.html')).toBe(`<!-- wp:paragraph -->
+<p>a</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>1</p>
+<!-- /wp:paragraph -->`);
+	});
 });
