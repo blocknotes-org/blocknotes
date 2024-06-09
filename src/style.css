@@ -34,7 +34,6 @@ body,
   width: 300px;
   bottom: 0;
   overflow-y: auto;
-  border-right: 1px solid #e0e0e0;
   word-break: break-all;
 }
 
@@ -52,12 +51,12 @@ body,
 .dataviews-view-list__item[aria-pressed="true"] {
   background-color: #3858e9;
   color: white;
-  padding: 7px;
 }
 
 .dataviews-view-list__item {
-  padding: 7px;
-  border-radius: 2px
+  padding: 10px 7px;
+  border-radius: 2px;
+  font-size: 14px;
 }
 
 .dataviews-view-list__item > div {

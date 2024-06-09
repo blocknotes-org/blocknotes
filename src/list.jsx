@@ -6,6 +6,7 @@ import { addCard, archive } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
+import { motion } from 'framer-motion';
 
 import { Read, Write } from './read-write';
 import Editor from './editor';
@@ -67,6 +68,10 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	}
 
 	const currentItem = items.find(({ id }) => id === currentId);
+	const animation = {
+		x: isSidebarOpen ? 300 : -1,
+		width: isSidebarOpen && width > 900 ? 'calc(100% - 300px)' : '100%',
+	};
 
 	return (
 		<>
@@ -93,14 +98,13 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					{__('Forget Folder')}
 				</Button>
 			</div>
-			<div
+			<motion.div
 				id="content"
+				initial={animation}
+				animate={animation}
+				transition={{ ease: 'anticipate', duration: 0.2 }}
 				style={{
-					transform: isSidebarOpen ? 'translateX(300px)' : '',
-					width:
-						isSidebarOpen && width > 900
-							? 'calc(100% - 300px)'
-							: '',
+					borderLeft: '1px solid #e0e0e0',
 				}}
 			>
 				{observer}
@@ -129,74 +133,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							}}
 						/>
 					</ToolbarGroup>
-					{/* <DropdownMenu
-						className="blocknotes-select"
-						icon={chevronDown}
-						label={__('Notes')}
-						toggleProps={{
-							children: __('Notes'),
-						}}
-					>
-						{({ onClose }) => (
-							<>
-								<MenuGroup>
-									<MenuItem
-										onClick={() => {
-											const newItem = { id: uuidv4() };
-											setItems([newItem, ...items]);
-											setCurrentId(newItem.id);
-											setItem(currentId, {
-												blocks: null,
-											});
-											onClose();
-										}}
-									>
-										{__('New Note')}
-									</MenuItem>
-								</MenuGroup>
-								<MenuGroup>
-									{items.map((item) => (
-										<MenuItem
-											key={item.id}
-											onClick={() => {
-												setCurrentId(item.id);
-												setItem(currentId, {
-													blocks: null,
-												});
-												onClose();
-											}}
-											className={
-												item.id === currentId
-													? 'is-active'
-													: ''
-											}
-										>
-											<Title item={item} />
-										</MenuItem>
-									))}
-								</MenuGroup>
-								<MenuGroup>
-									<MenuItem
-										onClick={async () => {
-											const { url } =
-												await Filesystem.pickDirectory();
-											setSelectedFolderURL(url);
-											onClose();
-										}}
-									>
-										{__('Pick Folder')}
-									</MenuItem>
-									<MenuItem
-										onClick={() => {
-											setSelectedFolderURL();
-										}}
-									>
-										{__('Forget Folder')}
-									</MenuItem>
-								</MenuGroup>
-							</>
-						)}
-					</DropdownMenu> */}
 				</div>
 				<div
 					id="editor"
@@ -230,7 +166,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						selectedFolderURL={selectedFolderURL}
 					/>
 				))(currentItem.blocks ? Write : Read)}
-			</div>
+			</motion.div>
 		</>
 	);
 }

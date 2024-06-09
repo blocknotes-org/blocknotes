@@ -9,6 +9,6 @@ export default defineConfig({
 	},
 	publicDir: '../public',
 	server: {
-		hmr: false,
+		hmr: true,
 	},
 });
