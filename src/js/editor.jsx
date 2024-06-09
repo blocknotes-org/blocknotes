@@ -16,21 +16,21 @@ import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/cont
 import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url';
 import componentsStyleUrl from '@wordpress/components/build-style/style.css?url';
 
-export default function Editor({ state, setNote }) {
+export default function Editor({ initialState, setBlocks }) {
 	// To do: lift up and keep track of history for all notes.
 	const { value, setValue, hasRedo, hasUndo, redo, undo } =
-		useStateWithHistory(state);
+		useStateWithHistory(initialState);
 	return (
 		<BlockEditorProvider
 			value={value.blocks}
 			selection={value.selection}
 			onInput={(blocks, { selection }) => {
 				setValue({ blocks, selection }, true);
-				setNote(blocks);
+				setBlocks(blocks);
 			}}
 			onChange={(blocks, { selection }) => {
 				setValue({ blocks, selection }, false);
-				setNote(blocks);
+				setBlocks(blocks);
 			}}
 			settings={{
 				hasFixedToolbar: true,

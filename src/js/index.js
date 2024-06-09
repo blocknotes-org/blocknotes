@@ -5,7 +5,7 @@ import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
 import { registerCoreBlocks } from '@wordpress/block-library';
 
-import app from './app.jsx';
+import app from './app';
 
 import '@wordpress/format-library';
 

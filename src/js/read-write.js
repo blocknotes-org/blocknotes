@@ -1,7 +1,11 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
-import React, { useEffect, useRef, useCallback } from 'react';
-import { getBlockContent, serialize } from '@wordpress/blocks';
-import Editor from './editor';
+import { useEffect, useRef, useCallback } from 'react';
+import {
+	createBlock,
+	parse,
+	getBlockContent,
+	serialize,
+} from '@wordpress/blocks';
 
 function sanitizeFileName(name) {
 	// Replace invalid characters with their percent-encoded equivalents
@@ -72,13 +76,14 @@ export function getTitleFromBlocks(blocks) {
 	}
 }
 
-function useUpdateFile({ selectedFolderURL, item }) {
+function useUpdateFile({ selectedFolderURL, item, setItem }) {
 	return useDebouncedCallback(async (note) => {
-		if (!item.path) {
-			item.path = `${Date.now()}.html`;
+		let path = item.path;
+		if (!path) {
+			path = `${Date.now()}.html`;
 		}
 
-		const base = item.path.split('/').slice(0, -1).join('/');
+		const base = path.split('/').slice(0, -1).join('/');
 		const title = getTitleFromBlocks(note);
 		let newPath;
 		if (title) {
@@ -87,13 +92,17 @@ function useUpdateFile({ selectedFolderURL, item }) {
 
 		// First write because it's more important than renaming.
 		await Filesystem.writeFile({
-			path: item.path,
+			path,
 			directory: selectedFolderURL,
 			data: serialize(note),
 			encoding: Encoding.UTF8,
 		});
 
-		if (newPath && newPath !== item.path) {
+		if (item.path !== path) {
+			setItem(item.id, { path });
+		}
+
+		if (newPath && newPath !== path) {
 			// Check if the wanted file name already exists.
 			try {
 				const exists = await Filesystem.stat({
@@ -108,34 +117,47 @@ function useUpdateFile({ selectedFolderURL, item }) {
 			} catch (e) {}
 
 			await Filesystem.rename({
-				from: item.path,
+				from: path,
 				to: newPath,
 				directory: selectedFolderURL,
 			});
 
-			// Only after the rename is successful, silently update the current
-			// path.
-			item.path = newPath;
+			setItem(item.id, { path: newPath });
 		}
 	}, 1000);
 }
 
-export default function EditorWithSave({
-	state,
-	setNote,
-	selectedFolderURL,
-	item,
-}) {
-	const updateFile = useUpdateFile({ selectedFolderURL, item });
+export function Write({ selectedFolderURL, item, setItem }) {
+	const updateFile = useUpdateFile({ selectedFolderURL, item, setItem });
 	const isMounted = useRef(false);
 
 	useEffect(() => {
 		if (isMounted.current) {
-			updateFile(state.blocks);
+			updateFile(item.blocks);
 		} else {
 			isMounted.current = true;
 		}
-	}, [updateFile, state.blocks]);
+	}, [updateFile, item.blocks]);
 
-	return <Editor state={state} setNote={setNote} />;
+	return null;
+}
+
+export function Read({ item, setItem, selectedFolderURL }) {
+	const { path, id } = item;
+	useEffect(() => {
+		if (path) {
+			Filesystem.readFile({
+				path,
+				directory: selectedFolderURL,
+				encoding: Encoding.UTF8,
+			}).then((file) => {
+				setItem(id, { blocks: parse(file.data) });
+			});
+		} else {
+			// Initialise with empty paragraph because we don't want merely clicking
+			// on an empty note to save it.
+			setItem(id, { blocks: [createBlock('core/paragraph')] });
+		}
+	}, [path, id, selectedFolderURL, setItem]);
+	return null;
 }
