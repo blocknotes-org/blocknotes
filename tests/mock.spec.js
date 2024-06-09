@@ -68,13 +68,11 @@ test.describe('Blocknotes', () => {
 
 		await expect(emptyBlock).toBeFocused();
 
-		const notesButton = page.getByRole('button', { name: 'Notes' });
+		await page.getByRole('button', { name: 'Notes' }).click();
 
-		await notesButton.click();
-
-		await expect(
-			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'Untitled', 'Pick Folder', 'Forget Folder']);
+		await expect(page.getByRole('grid').getByRole('row')).toHaveText([
+			'Untitled',
+		]);
 
 		await emptyBlock.click();
 
@@ -84,11 +82,7 @@ test.describe('Blocknotes', () => {
 			canvas(page).getByRole('document', { name: 'Block: Paragraph' })
 		).toBeFocused();
 
-		await notesButton.click();
-
-		await expect(
-			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'aa', 'Pick Folder', 'Forget Folder']);
+		await expect(page.getByRole('row')).toHaveText(['aa']);
 
 		// Nothing should have been saved yet because saving is debounced.
 		expect(await getPaths(page)).toEqual([]);
@@ -125,19 +119,14 @@ test.describe('Blocknotes', () => {
 <!-- /wp:paragraph -->`);
 
 		// Create a second note.
-		await notesButton.click();
-		await page.getByRole('menuitem', { name: 'New Note' }).click();
+		await page.getByRole('button', { name: 'New Note' }).click();
 
 		await page.keyboard.type('b');
 
-		await notesButton.click();
-
-		await expect(
-			page.getByRole('menu', { name: 'Notes' }).getByRole('menuitem')
-		).toHaveText(['New Note', 'b', 'aaaa', 'Pick Folder', 'Forget Folder']);
+		await expect(page.getByRole('row')).toHaveText(['b', 'aaaa']);
 
 		// Immediately switch back to note A.
-		await page.getByRole('menuitem', { name: 'aaaa' }).click();
+		await page.getByRole('button', { name: 'aaaa' }).click();
 
 		await expect(
 			canvas(page).getByRole('document', { name: 'Block: Paragraph' })
@@ -220,15 +209,14 @@ test.describe('Blocknotes', () => {
 
 		const notesButton = page.getByRole('button', { name: 'Notes' });
 
-		await notesButton.click();
-		await page.getByRole('menuitem', { name: 'New Note' }).click();
+		await page.getByRole('button', { name: 'New Note' }).click();
 
 		await page.keyboard.type('a');
 		await page.keyboard.press('Enter');
 		await page.keyboard.type('2');
 
 		await notesButton.click();
-		await page.getByRole('menuitem', { name: 'a' }).nth(1).click();
+		await page.getByRole('row', { name: 'a' }).nth(1).click();
 
 		await expect(
 			canvas(page)

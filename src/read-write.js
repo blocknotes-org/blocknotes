@@ -67,9 +67,10 @@ export function getTitleFromBlocks(blocks) {
 
 	for (const block of blocks) {
 		const html = getBlockContent(block);
-		const textContent = sanitizeFileName(
-			html.replace(/<[^>]+>/g, '').trim()
-		).slice(0, 50);
+		const textContent = html
+			.replace(/<[^>]+>/g, '')
+			.trim()
+			.slice(0, 50);
 		if (textContent) {
 			return textContent;
 		}
@@ -84,7 +85,7 @@ function useUpdateFile({ selectedFolderURL, item, setItem }) {
 		}
 
 		const base = path.split('/').slice(0, -1).join('/');
-		const title = getTitleFromBlocks(note);
+		const title = sanitizeFileName(getTitleFromBlocks(note));
 		let newPath;
 		if (title) {
 			newPath = base ? base + '/' + title + '.html' : title + '.html';

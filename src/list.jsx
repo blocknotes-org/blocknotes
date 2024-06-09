@@ -1,22 +1,15 @@
 import { Filesystem } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
 import React, { useState, useEffect, useCallback } from 'react';
-import { DropdownMenu, MenuGroup, MenuItem } from '@wordpress/components';
-import { chevronDown } from '@wordpress/icons';
+import { ToolbarButton, ToolbarGroup, Button } from '@wordpress/components';
+import { addCard, archive } from '@wordpress/icons';
+import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Read, Write, getTitleFromBlocks } from './read-write.js';
-import Editor from './editor.jsx';
-
-function Title({ item: { path, blocks } }) {
-	if (blocks) {
-		return getTitleFromBlocks(blocks) || <em>{__('Untitled')}</em>;
-	}
-
-	const title = path?.replace(/(?:\.?[0-9]+)?\.html$/, '');
-	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
-}
+import { Read, Write } from './read-write';
+import Editor from './editor';
+import Sidebar from './sidebar.jsx';
 
 function getInitialSelection({ path, blocks }) {
 	if (path) {
@@ -37,6 +30,7 @@ function getInitialSelection({ path, blocks }) {
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [currentId, setCurrentId] = useState();
 	const [items, setItems] = useState([]);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 	const setItem = useCallback((id, item) => {
 		setItems((_items) =>
@@ -66,6 +60,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 			});
 	}, [selectedFolderURL, setSelectedFolderURL, setCurrentId]);
 
+	const [observer, { width }] = useResizeObserver();
+
 	if (!currentId) {
 		return null;
 	}
@@ -74,106 +70,167 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 
 	return (
 		<>
-			<div id="select" className="components-accessible-toolbar">
-				<DropdownMenu
-					className="blocknotes-select"
-					icon={chevronDown}
-					label={__('Notes')}
-					toggleProps={{
-						children: __('Notes'),
+			<div id="sidebar">
+				<Sidebar
+					items={items}
+					setItem={setItem}
+					currentId={currentId}
+					setCurrentId={setCurrentId}
+				/>
+				<Button
+					onClick={async () => {
+						const { url } = await Filesystem.pickDirectory();
+						setSelectedFolderURL(url);
 					}}
 				>
-					{({ onClose }) => (
-						<>
-							<MenuGroup>
-								<MenuItem
-									onClick={() => {
-										const newItem = { id: uuidv4() };
-										setItems([newItem, ...items]);
-										setCurrentId(newItem.id);
-										setItem(currentId, { blocks: null });
-										onClose();
-									}}
-								>
-									{__('New Note')}
-								</MenuItem>
-							</MenuGroup>
-							<MenuGroup>
-								{items.map((item) => (
+					{__('Pick Folder')}
+				</Button>
+				<Button
+					onClick={() => {
+						setSelectedFolderURL();
+					}}
+				>
+					{__('Forget Folder')}
+				</Button>
+			</div>
+			<div
+				id="content"
+				style={{
+					transform: isSidebarOpen ? 'translateX(300px)' : '',
+					width:
+						isSidebarOpen && width > 900
+							? 'calc(100% - 300px)'
+							: '',
+				}}
+			>
+				{observer}
+				<div id="select" className="components-accessible-toolbar">
+					<ToolbarGroup className="components-toolbar-group">
+						<ToolbarButton
+							icon={archive}
+							label={__('Notes')}
+							isActive={isSidebarOpen}
+							onClick={() => {
+								setIsSidebarOpen(!isSidebarOpen);
+							}}
+						/>
+					</ToolbarGroup>
+					<ToolbarGroup className="components-toolbar-group">
+						<ToolbarButton
+							icon={addCard}
+							label={__('New Note')}
+							onClick={() => {
+								const newItem = { id: uuidv4() };
+								setItems([newItem, ...items]);
+								setCurrentId(newItem.id);
+								setItem(currentId, {
+									blocks: null,
+								});
+							}}
+						/>
+					</ToolbarGroup>
+					{/* <DropdownMenu
+						className="blocknotes-select"
+						icon={chevronDown}
+						label={__('Notes')}
+						toggleProps={{
+							children: __('Notes'),
+						}}
+					>
+						{({ onClose }) => (
+							<>
+								<MenuGroup>
 									<MenuItem
-										key={item.id}
 										onClick={() => {
-											setCurrentId(item.id);
+											const newItem = { id: uuidv4() };
+											setItems([newItem, ...items]);
+											setCurrentId(newItem.id);
 											setItem(currentId, {
 												blocks: null,
 											});
 											onClose();
 										}}
-										className={
-											item.id === currentId
-												? 'is-active'
-												: ''
-										}
 									>
-										<Title item={item} />
+										{__('New Note')}
 									</MenuItem>
-								))}
-							</MenuGroup>
-							<MenuGroup>
-								<MenuItem
-									onClick={async () => {
-										const { url } =
-											await Filesystem.pickDirectory();
-										setSelectedFolderURL(url);
-										onClose();
-									}}
-								>
-									{__('Pick Folder')}
-								</MenuItem>
-								<MenuItem
-									onClick={() => {
-										setSelectedFolderURL();
-									}}
-								>
-									{__('Forget Folder')}
-								</MenuItem>
-							</MenuGroup>
-						</>
+								</MenuGroup>
+								<MenuGroup>
+									{items.map((item) => (
+										<MenuItem
+											key={item.id}
+											onClick={() => {
+												setCurrentId(item.id);
+												setItem(currentId, {
+													blocks: null,
+												});
+												onClose();
+											}}
+											className={
+												item.id === currentId
+													? 'is-active'
+													: ''
+											}
+										>
+											<Title item={item} />
+										</MenuItem>
+									))}
+								</MenuGroup>
+								<MenuGroup>
+									<MenuItem
+										onClick={async () => {
+											const { url } =
+												await Filesystem.pickDirectory();
+											setSelectedFolderURL(url);
+											onClose();
+										}}
+									>
+										{__('Pick Folder')}
+									</MenuItem>
+									<MenuItem
+										onClick={() => {
+											setSelectedFolderURL();
+										}}
+									>
+										{__('Forget Folder')}
+									</MenuItem>
+								</MenuGroup>
+							</>
+						)}
+					</DropdownMenu> */}
+				</div>
+				<div
+					id="editor"
+					style={{
+						position: 'relative',
+						overflow: 'auto',
+						height: '100%',
+						width: '100%',
+						display: 'flex',
+						flexDirection: 'column',
+					}}
+				>
+					{currentItem.blocks && (
+						<Editor
+							// Remount the editor when the item changes.
+							key={currentItem.id}
+							initialState={{
+								blocks: currentItem.blocks,
+								selection: getInitialSelection(currentItem),
+							}}
+							setBlocks={(blocks) => {
+								setItem(currentItem.id, { blocks });
+							}}
+						/>
 					)}
-				</DropdownMenu>
-			</div>
-			<div
-				id="editor"
-				style={{
-					position: 'relative',
-					overflow: 'auto',
-					height: '100%',
-					width: '100%',
-					display: 'flex',
-					flexDirection: 'column',
-				}}
-			>
-				{currentItem.blocks && (
-					<Editor
-						// Remount the editor when the item changes.
-						key={currentItem.id}
-						initialState={{
-							blocks: currentItem.blocks,
-							selection: getInitialSelection(currentItem),
-						}}
-						setBlocks={(blocks) => {
-							setItem(currentItem.id, { blocks });
-						}}
+				</div>
+				{((ReadWrite) => (
+					<ReadWrite
+						item={currentItem}
+						setItem={setItem}
+						selectedFolderURL={selectedFolderURL}
 					/>
-				)}
+				))(currentItem.blocks ? Write : Read)}
 			</div>
-			{((ReadWrite) => (
-				<ReadWrite
-					item={currentItem}
-					setItem={setItem}
-					selectedFolderURL={selectedFolderURL}
-				/>
-			))(currentItem.blocks ? Write : Read)}
 		</>
 	);
 }
