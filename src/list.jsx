@@ -104,9 +104,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				initial={animation}
 				animate={animation}
 				transition={{ ease: 'anticipate', duration: 0.2 }}
-				style={{
-					borderLeft: '1px solid #e0e0e0',
-				}}
+				style={{ borderLeft: '1px solid #e0e0e0' }}
 			>
 				<div id="select" className="components-accessible-toolbar">
 					<ToolbarGroup className="components-toolbar-group">
@@ -127,9 +125,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								const newItem = { id: uuidv4() };
 								setItems([newItem, ...items]);
 								setCurrentId(newItem.id);
-								setItem(currentId, {
-									blocks: null,
-								});
+								setItem(currentId, { blocks: null });
 							}}
 						/>
 					</ToolbarGroup>

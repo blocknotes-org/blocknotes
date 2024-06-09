@@ -17,8 +17,6 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 		type: 'list',
 		search: '',
 		filters: [],
-		page: 1,
-		perPage: 5,
 		sort: {
 			field: 'path',
 			direction: 'desc',
@@ -26,6 +24,12 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 		hiddenFields: [],
 		layout: {},
 	});
+
+	if (view.search) {
+		items = items.filter(({ path }) =>
+			path.toLowerCase().includes(view.search.toLowerCase())
+		);
+	}
 
 	return (
 		<DataViews
@@ -37,6 +41,7 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 					// To do: remove hidden text from rows.
 					header: ' ',
 					enableHiding: false,
+					enableSorting: false,
 					render({ item }) {
 						return <Title item={item} />;
 					},
@@ -48,8 +53,10 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 				totalPages: 1,
 			}}
 			onSelectionChange={([item]) => {
-				setCurrentId(item.id);
-				setItem(currentId, { blocks: null });
+				if (item) {
+					setCurrentId(item.id);
+					setItem(currentId, { blocks: null });
+				}
 			}}
 			supportedLayouts={['list']}
 		/>
