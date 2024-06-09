@@ -74,7 +74,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	};
 
 	return (
-		<>
+		<div style={{ height: '100%' }}>
+			{observer}
 			<div id="sidebar">
 				<Sidebar
 					items={items}
@@ -107,7 +108,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					borderLeft: '1px solid #e0e0e0',
 				}}
 			>
-				{observer}
 				<div id="select" className="components-accessible-toolbar">
 					<ToolbarGroup className="components-toolbar-group">
 						<ToolbarButton
@@ -167,6 +167,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					/>
 				))(currentItem.blocks ? Write : Read)}
 			</motion.div>
-		</>
+		</div>
 	);
 }
