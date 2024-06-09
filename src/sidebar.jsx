@@ -1,6 +1,6 @@
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getTitleFromBlocks } from './read-write';
 
 function Title({ item: { path, blocks } }) {
@@ -30,6 +30,17 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 			path.toLowerCase().includes(view.search.toLowerCase())
 		);
 	}
+
+	// Temporary hack until we can control selection in data views.
+	useEffect(() => {
+		const button = document.getElementById('view-list-0-' + currentId);
+
+		if (button?.getAttribute('aria-pressed') === 'false') {
+			const { activeElement } = document;
+			button.click();
+			activeElement.focus();
+		}
+	}, [currentId]);
 
 	return (
 		<DataViews
