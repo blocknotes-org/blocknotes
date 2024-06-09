@@ -131,7 +131,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 									{__('Pick Folder')}
 								</MenuItem>
 								<MenuItem
-									onClick={async () => {
+									onClick={() => {
 										setSelectedFolderURL();
 									}}
 								>

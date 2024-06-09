@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import logoUrl from './assets/imgs/logo.png?url';
+import logoUrl from './assets/logo.png?url';
 
 // Add manifest.json to the home screen
 const link = document.createElement('link');
