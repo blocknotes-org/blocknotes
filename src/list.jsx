@@ -48,6 +48,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 			.then((_paths) => {
 				const pathObjects = _paths.map((file) => ({
 					...file,
+					mtime: +file.mtime,
 					id: uuidv4(),
 				}));
 				if (!pathObjects.length) {
