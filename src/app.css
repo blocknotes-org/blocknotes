@@ -44,6 +44,17 @@ body,
   top: 0;
 }
 
+#sidebar-bottom {
+  position: sticky;
+  bottom: 0;
+  padding: 7px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.dataviews-wrapper {
+  height: 100%;
+}
+
 .dataviews-view-list__item-wrapper {
   display: block !important;
 }
@@ -87,6 +98,7 @@ ul.dataviews-view-list li {
 
 #content {
   height: 100%;
+  background: white;
 }
 
 #select {
@@ -120,6 +132,7 @@ ul.dataviews-view-list li {
 
 iframe[name="editor-canvas"] {
   display: block;
+  background-color: transparent;
 }
 
 .components-button.components-menu-item__button.is-active {
@@ -129,6 +142,7 @@ iframe[name="editor-canvas"] {
 
 #select,
 .dataviews-filters__view-actions,
+#sidebar-bottom,
 /* .is-unstyled ? */
 .components-dropdown__content div.components-popover__content {
   backdrop-filter: blur(5px);

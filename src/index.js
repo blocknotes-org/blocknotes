@@ -15,6 +15,7 @@ import '@wordpress/block-editor/build-style/content.css';
 import '@wordpress/block-editor/build-style/style.css';
 import '@wordpress/block-library/build-style/style.css';
 import '@wordpress/components/build-style/style.css';
+import './app.css';
 
 export async function getSelectedFolderURL() {
 	const directoryHandle = await get('directoryHandle');

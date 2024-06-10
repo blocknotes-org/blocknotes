@@ -83,21 +83,23 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					currentId={currentId}
 					setCurrentId={setCurrentId}
 				/>
-				<Button
-					onClick={async () => {
-						const { url } = await Filesystem.pickDirectory();
-						setSelectedFolderURL(url);
-					}}
-				>
-					{__('Pick Folder')}
-				</Button>
-				<Button
-					onClick={() => {
-						setSelectedFolderURL();
-					}}
-				>
-					{__('Forget Folder')}
-				</Button>
+				<div id="sidebar-bottom">
+					<Button
+						onClick={async () => {
+							const { url } = await Filesystem.pickDirectory();
+							setSelectedFolderURL(url);
+						}}
+					>
+						{__('Pick Folder')}
+					</Button>
+					<Button
+						onClick={() => {
+							setSelectedFolderURL();
+						}}
+					>
+						{__('Forget Folder')}
+					</Button>
+				</div>
 			</div>
 			<motion.div
 				id="content"
