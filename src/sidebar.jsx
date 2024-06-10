@@ -18,7 +18,7 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 		search: '',
 		filters: [],
 		sort: {
-			field: 'path',
+			field: 'mtime',
 			direction: 'desc',
 		},
 		hiddenFields: [],
@@ -29,6 +29,20 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 		items = items.filter(({ path }) =>
 			path.toLowerCase().includes(view.search.toLowerCase())
 		);
+	}
+
+	if (view.sort) {
+		items = items.sort((a, b) => {
+			const aValue = a[view.sort.field];
+			const bValue = b[view.sort.field];
+			if (aValue < bValue) {
+				return view.sort.direction === 'asc' ? -1 : 1;
+			}
+			if (aValue > bValue) {
+				return view.sort.direction === 'asc' ? 1 : -1;
+			}
+			return 0;
+		});
 	}
 
 	// Temporary hack until we can control selection in data views.
@@ -50,11 +64,34 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 				{
 					id: 'path',
 					// To do: remove hidden text from rows.
-					header: ' ',
+					header: 'Text',
 					enableHiding: false,
-					enableSorting: false,
 					render({ item }) {
-						return <Title item={item} />;
+						return (
+							<span className="note-title">
+								<Title item={item} />
+							</span>
+						);
+					},
+				},
+				{
+					id: 'mtime',
+					header: 'Modified',
+					render({ item }) {
+						const time = item.mtime
+							? new Date(item.mtime).toLocaleString(undefined, {
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+								})
+							: 'now';
+						return (
+							<small style={{ opacity: 0.6 }}>
+								<time dateTime={item.mtime}>{time}</time>
+							</small>
+						);
 					},
 				},
 			]}

@@ -267,14 +267,26 @@ export class FilesystemWeb extends WebPlugin {
         const values = await dir.values();
         const files = [];
         for await (const entry of values) {
-            files.push({
-                name: entry.name,
-                type: entry.kind === 'file' ? 'file' : 'directory',
-                size: entry.kind === 'file' ? entry.size : 0,
-                ctime: entry.kind === 'file' ? entry.lastModified : 0,
-                mtime: entry.kind === 'file' ? entry.lastModified : 0,
-                uri: entry.kind === 'file' ? entry.name : entry.name + '/',
-            });
+            if (entry.kind === 'directory') {
+                files.push({
+                    name: entry.name,
+                    type: 'directory',
+                    size: 0,
+                    ctime: 0,
+                    mtime: 0,
+                    uri: entry.name + '/',
+                });
+            } else {
+                const file = await entry.getFile();
+                files.push({
+                    name: entry.name,
+                    type: 'file',
+                    size: file.size,
+                    ctime: null,
+                    mtime: file.lastModified,
+                    uri: entry.name,
+                });
+            }
         }
         return { files: files };
     }

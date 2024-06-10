@@ -70,7 +70,7 @@ test.describe('Blocknotes', () => {
 
 		await page.getByRole('button', { name: 'Notes' }).click();
 
-		await expect(page.getByRole('grid').getByRole('row')).toHaveText([
+		await expect(page.getByRole('row').locator('.note-title')).toHaveText([
 			'Untitled',
 		]);
 
@@ -82,7 +82,9 @@ test.describe('Blocknotes', () => {
 			canvas(page).getByRole('document', { name: 'Block: Paragraph' })
 		).toBeFocused();
 
-		await expect(page.getByRole('row')).toHaveText(['aa']);
+		await expect(page.getByRole('row').locator('.note-title')).toHaveText([
+			'aa',
+		]);
 
 		// Nothing should have been saved yet because saving is debounced.
 		expect(await getPaths(page)).toEqual([]);
@@ -123,7 +125,10 @@ test.describe('Blocknotes', () => {
 
 		await page.keyboard.type('b');
 
-		await expect(page.getByRole('row')).toHaveText(['b', 'aaaa']);
+		await expect(page.getByRole('row').locator('.note-title')).toHaveText([
+			'b',
+			'aaaa',
+		]);
 
 		// Immediately switch back to note A.
 		await page.getByRole('button', { name: 'aaaa' }).click();
@@ -216,7 +221,11 @@ test.describe('Blocknotes', () => {
 		await page.keyboard.type('2');
 
 		await notesButton.click();
-		await page.getByRole('row', { name: 'a' }).nth(1).click();
+		await page
+			.getByRole('row')
+			.locator('.note-title:text("a")')
+			.nth(1)
+			.click();
 
 		await expect(
 			canvas(page)

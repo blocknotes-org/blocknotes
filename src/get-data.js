@@ -1,15 +1,8 @@
 import { Filesystem } from '@capacitor/filesystem';
-import { getSelectedFolderURL } from './index';
 
-export async function getPaths(path = '', selectedFolderURL) {
+export async function getPaths(path = '', directory) {
 	const paths = [];
-	if (!selectedFolderURL) {
-		selectedFolderURL = await getSelectedFolderURL();
-	}
-	const dir = await Filesystem.readdir({
-		path,
-		directory: selectedFolderURL,
-	});
+	const dir = await Filesystem.readdir({ path, directory });
 
 	// Recursively read all files in the iCloud folder
 	for (const file of dir.files) {
@@ -19,9 +12,9 @@ export async function getPaths(path = '', selectedFolderURL) {
 				continue;
 			}
 			// paths.push(nestedPath)
-			paths.push(...(await getPaths(nestedPath, selectedFolderURL)));
+			paths.push(...(await getPaths(nestedPath, directory)));
 		} else if (file.name.endsWith('.html')) {
-			paths.push(nestedPath);
+			paths.push({ ...file, path: nestedPath });
 		}
 	}
 
