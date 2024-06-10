@@ -12,9 +12,20 @@ import { ToolbarButton, ToolbarGroup } from '@wordpress/components';
 import { undo as undoIcon, redo as redoIcon } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
 
-import blockEditorContentStyleUrl from '@wordpress/block-editor/build-style/content.css?url';
-import blockLibraryContentStyleUrl from '@wordpress/block-library/build-style/editor.css?url';
-import componentsStyleUrl from '@wordpress/components/build-style/style.css?url';
+import blockEditorContentStyle from '@wordpress/block-editor/build-style/content.css?raw';
+import blockLibraryContentStyle from '@wordpress/block-library/build-style/editor.css?raw';
+import componentsStyle from '@wordpress/components/build-style/style.css?raw';
+
+// eslint-disable-next-line import/no-unresolved
+import contentStyle from './content.css?raw';
+
+const contentStyles = [
+	componentsStyle,
+	blockLibraryContentStyle,
+	blockEditorContentStyle,
+	contentStyle,
+];
+const canvasStyles = contentStyles.map((css) => ({ css }));
 
 export default function Editor({ initialState, setBlocks }) {
 	// To do: lift up and keep track of history for all notes.
@@ -32,15 +43,7 @@ export default function Editor({ initialState, setBlocks }) {
 				setValue({ blocks, selection }, false);
 				setBlocks(blocks);
 			}}
-			settings={{
-				hasFixedToolbar: true,
-				__unstableResolvedAssets: {
-					styles: `
-<link rel="stylesheet" href="${componentsStyleUrl}">
-<link rel="stylesheet" href="${blockEditorContentStyleUrl}">
-<link rel="stylesheet" href="${blockLibraryContentStyleUrl}">`,
-				},
-			}}
+			settings={{ hasFixedToolbar: true }}
 		>
 			{document.getElementById('select') &&
 				createPortal(
@@ -84,22 +87,7 @@ export default function Editor({ initialState, setBlocks }) {
 					}
 				}}
 			>
-				<BlockCanvas
-					height="100%"
-					styles={[
-						{
-							css: `
-body {
-max-width: 600px;
-margin: 100px auto;
-font-family: Hoefler Text;
-font-size: 20px;
-padding: 1px 1em;
-}
-`,
-						},
-					]}
-				/>
+				<BlockCanvas height="100%" styles={canvasStyles} />
 			</div>
 		</BlockEditorProvider>
 	);
