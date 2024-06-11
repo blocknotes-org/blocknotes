@@ -1,5 +1,6 @@
 steps:
   - label: Build and Upload to TestFlight
+    branches: "main"
     command: .buildkite/commands/build-and-upload-to-testflight.sh
     plugins:
       - automattic/a8c-ci-toolkit#3.4.2
