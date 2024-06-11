@@ -7,7 +7,7 @@ node_modules
 /playwright/.cache/
 
 # Release Tooling
-/vendor
-fastlane/report.xml
-fastlane/README.md
-/build
+ios/App/vendor
+ios/App/fastlane/report.xml
+ios/App/fastlane/README.md
+ios/App/build
