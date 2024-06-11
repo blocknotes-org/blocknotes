@@ -1,13 +1,15 @@
 #!/bin/bash -eu
 
+# Switch to the `ios/App` directory where the Gemfile and Podfile are located
+cd ios/App
+
 echo "--- :rubygems: Setting up Ruby gems"
 install_gems
 
 echo "--- :cocoapods: Setting up Pods"
-# Switch to the `ios/App` directory where the Podfile is located before installing the Pods
-cd ios/App
 install_cocoapods
-# Switch back to the root directory after installing the Pods
+
+# Switch back to the root directory after installing the Gems and Pods
 cd -
 
 echo "--- :node: Installing NPM Dependencies and Syncing Project"
