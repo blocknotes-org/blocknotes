@@ -3,6 +3,7 @@ steps:
     command: .buildkite/commands/build-and-upload-to-testflight.sh
     plugins:
       - automattic/a8c-ci-toolkit#3.4.2
+      - automattic/nvm#0.3.0
     agents:
       queue: mac
     env:
