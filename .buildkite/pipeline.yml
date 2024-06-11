@@ -1,0 +1,12 @@
+steps:
+  - label: Build and Upload to TestFlight
+    command: .buildkite/commands/build-and-upload-to-testflight.sh
+    plugins:
+      - automattic/a8c-ci-toolkit#3.4.2
+    agents:
+      queue: mac
+    env:
+      IMAGE_ID: xcode-15.4
+    artifact_paths:
+      - build/Blocknotes.ipa
+      - build/Blocknotes.app.dSYM.zip
