@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+default_platform(:ios)
+
+UI.user_error!('Please run fastlane via `bundle exec`') unless FastlaneCore::Helper.bundler?
+
+PROJECT_ROOT_FOLDER = File.dirname(File.expand_path(__dir__))
+BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
+
+platform :ios do
+  desc 'Builds and uploads Blocknotes to TestFlight'
+  lane :build_and_upload_to_testflight do
+    set_up_code_signing
+
+    build_app(
+      workspace: File.join(PROJECT_ROOT_FOLDER, 'ios', 'App', 'App.xcworkspace'),
+      output_directory: File.join(PROJECT_ROOT_FOLDER, 'build'),
+      scheme: 'Blocknotes',
+      export_options: {
+        method: 'app-store',
+        provisioningProfiles: {
+          BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER}"
+        }
+      }
+    )
+
+    upload_to_testflight(api_key: app_store_connect_api_key)
+  end
+
+  desc 'Sets up code signing'
+  lane :set_up_code_signing do |options|
+    setup_ci
+
+    sync_code_signing(
+      type: 'appstore',
+      app_identifier: BUNDLE_IDENTIFIER,
+      team_id: 'PZYM8XX95Q',
+      api_key: app_store_connect_api_key,
+      storage_mode: 's3',
+      s3_region: 'us-east-2',
+      s3_bucket: 'a8c-fastlane-match',
+      readonly: options.fetch(:readonly, true)
+    )
+  end
+end
