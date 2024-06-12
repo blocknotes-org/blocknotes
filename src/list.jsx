@@ -68,10 +68,11 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		return null;
 	}
 
+	const isWide = width > 900;
 	const currentItem = items.find(({ id }) => id === currentId);
 	const animation = {
 		x: isSidebarOpen ? 300 : -1,
-		width: isSidebarOpen && width > 900 ? 'calc(100% - 300px)' : '100%',
+		width: isSidebarOpen && isWide ? 'calc(100% - 300px)' : '100%',
 	};
 
 	return (
@@ -83,6 +84,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					setItem={setItem}
 					currentId={currentId}
 					setCurrentId={setCurrentId}
+					setIsSidebarOpen={setIsSidebarOpen}
+					isWide={isWide}
 				/>
 				<div id="sidebar-bottom">
 					<Button
@@ -133,6 +136,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						/>
 					</ToolbarGroup>
 				</div>
+				{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
 				<div
 					id="editor"
 					style={{
@@ -143,6 +147,12 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						display: 'flex',
 						flexDirection: 'column',
 					}}
+					onClick={() => {
+						if (!isWide) {
+							setIsSidebarOpen(false);
+						}
+					}}
+					className={isSidebarOpen && !isWide ? 'has-overlay' : ''}
 				>
 					{currentItem.blocks && (
 						<Editor

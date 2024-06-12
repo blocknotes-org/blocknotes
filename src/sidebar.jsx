@@ -12,7 +12,14 @@ function Title({ item: { path, blocks } }) {
 	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
 }
 
-export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
+export default function SiderBar({
+	items,
+	setItem,
+	currentId,
+	setCurrentId,
+	setIsSidebarOpen,
+	isWide,
+}) {
 	const [view, setView] = useState({
 		type: 'list',
 		search: '',
@@ -104,6 +111,9 @@ export default function SiderBar({ items, setItem, currentId, setCurrentId }) {
 				if (item) {
 					setCurrentId(item.id);
 					setItem(currentId, { blocks: null });
+					if (!isWide) {
+						setIsSidebarOpen(false);
+					}
 				}
 			}}
 			supportedLayouts={['list']}

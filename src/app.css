@@ -34,6 +34,7 @@ body,
   width: 300px;
   bottom: 0;
   overflow-y: auto;
+  overscroll-behavior: none;
   word-break: break-all;
 }
 
@@ -42,6 +43,11 @@ body,
   border-bottom: 1px solid #e0e0e0;
   position: sticky;
   top: 0;
+  z-index: 1;
+}
+
+.dataviews-filters__container {
+  row-gap: 0 !important;
 }
 
 #sidebar-bottom {
@@ -49,6 +55,7 @@ body,
   bottom: 0;
   padding: 7px;
   border-top: 1px solid #e0e0e0;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 7px);
 }
 
 .dataviews-wrapper {
@@ -99,6 +106,8 @@ ul.dataviews-view-list li {
 #content {
   height: 100%;
   background: white;
+  position: relative;
+  z-index: 1;
 }
 
 #select {
@@ -123,6 +132,15 @@ ul.dataviews-view-list li {
 
 #editor > div {
   display: block !important;
+}
+
+#editor.has-overlay::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .block-editor-iframe__container,
