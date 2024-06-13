@@ -11,7 +11,13 @@ BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
 platform :ios do
   desc 'Builds and uploads Blocknotes to TestFlight'
   lane :build_and_upload_to_testflight do
-    set_up_code_signing
+    build_for_app_store
+    upload_to_testflight(api_key: app_store_connect_api_key)
+  end
+
+  desc 'Builds the app for App Store distribution'
+  lane :build_for_app_store do |options|
+    set_up_code_signing unless options[:skip_code_signing_setup]
 
     latest_build_number = latest_testflight_build_number(
       app_identifier: BUNDLE_IDENTIFIER,
@@ -34,8 +40,6 @@ platform :ios do
         }
       }
     )
-
-    upload_to_testflight(api_key: app_store_connect_api_key)
   end
 
   desc 'Sets up code signing'
