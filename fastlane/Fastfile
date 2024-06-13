@@ -97,6 +97,9 @@ platform :ios do
     )
     sync_code_signing(
       platform: 'catalyst',
+      # Without this, we'll get:
+      # error: exportArchive: Provisioning profile "match AppStore com.ellavandurpe.blocknotes catalyst" doesn't include signing certificate "3rd Party Mac Developer Installer: Automattic, Inc. (PZYM8XX95Q)".
+      additional_cert_types: 'mac_installer_distribution',
       **shared_options
     )
   end
