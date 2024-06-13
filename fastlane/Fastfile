@@ -11,6 +11,25 @@ APP_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'ios', 'App')
 
 BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
 
+APP_NAME_IOS = 'blocknotes-ios'
+APP_NAME_MAC_CATALYST = 'blocknotes-mac-catalyst'
+
+# Note that we cannot make this a subfolder of APP_FOLDER, or 'npx cap sync' will fail with:
+#
+# ✔ Updating iOS plugins in 1.60ms
+# ✖ Updating iOS native dependencies with bundle exec pod install - failed!
+# ✖ update ios - failed!
+# [error] Command line invocation:
+#         /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project
+#         App.xcodeproj clean
+
+#         User defaults from command line:
+#         IDEPackageSupportUseBuiltinSCM = YES
+
+#         error: Could not delete `<APP_FOLDER>/build`
+#         because it was not created by the build system.
+OUTPUT_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'build')
+
 ENV_FILE_NAME = 'blocknotes.env'
 USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
 
@@ -24,31 +43,35 @@ end
 platform :ios do
   desc 'Builds and uploads Blocknotes to TestFlight'
   lane :build_and_upload_to_testflight do
+    require_env_vars!(*ASC_API_KEY_ENV_VARS)
+    api_key = app_store_connect_api_key
+
+    bump_build_number
+
     build_for_app_store
-    upload_to_testflight(api_key: app_store_connect_api_key)
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: File.join(OUTPUT_FOLDER, "#{APP_NAME_IOS}.ipa")
+    )
+    upload_to_testflight(
+      api_key: api_key,
+      pkg: File.join(OUTPUT_FOLDER, "#{APP_NAME_MAC_CATALYST}.pkg")
+    )
   end
 
-  desc 'Builds the app for App Store distribution'
+  desc 'Builds the app for iOS and Mac Catalyst App Store distribution'
   lane :build_for_app_store do |options|
     set_up_code_signing unless options[:skip_code_signing_setup]
 
-    latest_build_number = latest_testflight_build_number(
-      app_identifier: BUNDLE_IDENTIFIER,
-      api_key: app_store_connect_api_key
-    )
-
-    increment_build_number(
-      xcodeproj: File.join(APP_FOLDER, 'App.xcodeproj'),
-      build_number: latest_build_number + 1
-    )
-
     shared_options = {
       scheme: 'Blocknotes',
-      workspace: File.join(APP_FOLDER, 'App.xcworkspace')
+      workspace: File.join(APP_FOLDER, 'App.xcworkspace'),
+      output_directory: OUTPUT_FOLDER
     }
 
     build_app(
-      output_directory: File.join(APP_FOLDER, 'build'),
+      output_name: APP_NAME_IOS,
       export_options: {
         method: 'app-store',
         provisioningProfiles: {
@@ -58,14 +81,12 @@ platform :ios do
       **shared_options
     )
     build_app(
+      output_name: APP_NAME_MAC_CATALYST,
       catalyst_platform: 'macos',
       destination: 'platform=macOS,arch=x86_64,variant=Mac Catalyst',
       clean: true,
       export_options: {
-        # We always used 'app-store' here, but, for Mac Catalyst only?, xcrun logs:
-        #
-        # xcodebuild[96916:64896588] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
-        method: 'app-store-connect',
+        method: 'app-store',
         provisioningProfiles: {
           BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER} catalyst"
         }
@@ -103,4 +124,16 @@ platform :ios do
       **shared_options
     )
   end
+end
+
+def bump_build_number
+  latest_build_number = latest_testflight_build_number(
+    app_identifier: BUNDLE_IDENTIFIER,
+    api_key: app_store_connect_api_key
+  )
+
+  increment_build_number(
+    xcodeproj: File.join(APP_FOLDER, 'App.xcodeproj'),
+    build_number: latest_build_number + 1
+  )
 end

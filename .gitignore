@@ -10,9 +10,6 @@ node_modules
 /vendor
 fastlane/report.xml
 fastlane/README.md
-/build
 
 # Keep repo neat when building locally
-*.app
-*.app.dSYM.zip
-*.pkg
+/build
