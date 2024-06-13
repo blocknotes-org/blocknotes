@@ -8,6 +8,7 @@ UI.user_error!('Please run fastlane via `bundle exec`') unless FastlaneCore::Hel
 
 PROJECT_ROOT_FOLDER = File.dirname(File.expand_path(__dir__))
 APP_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'ios', 'App')
+
 BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
 
 ENV_FILE_NAME = 'blocknotes.env'
@@ -41,16 +42,20 @@ platform :ios do
       build_number: latest_build_number + 1
     )
 
-    build_app(
-      workspace: File.join(APP_FOLDER, 'App.xcworkspace'),
-      output_directory: File.join(APP_FOLDER, 'build'),
+    shared_options = {
       scheme: 'Blocknotes',
+      workspace: File.join(APP_FOLDER, 'App.xcworkspace')
+    }
+
+    build_app(
+      output_directory: File.join(APP_FOLDER, 'build'),
       export_options: {
         method: 'app-store',
         provisioningProfiles: {
-          BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER}"
+          BUNDLE_IDENTIFIER: "match AppStore #{BUNDLE_IDENTIFIER}"
         }
-      }
+      },
+      **shared_options
     )
   end
 
@@ -60,15 +65,20 @@ platform :ios do
 
     setup_ci
 
-    sync_code_signing(
+    shared_options = {
       type: 'appstore',
       app_identifier: BUNDLE_IDENTIFIER,
       team_id: 'PZYM8XX95Q',
-      api_key: app_store_connect_api_key,
       storage_mode: 's3',
       s3_region: 'us-east-2',
       s3_bucket: 'a8c-fastlane-match',
-      readonly: options.fetch(:readonly, true)
+      readonly: options.fetch(:readonly, true),
+      api_key: app_store_connect_api_key
+    }
+
+    sync_code_signing(
+      platform: 'ios',
+      **shared_options
     )
   end
 end
