@@ -10,5 +10,6 @@ steps:
     env:
       IMAGE_ID: xcode-15.4
     artifact_paths:
-      - "ios/App/build/Blocknotes.ipa"
-      - "ios/App/build/Blocknotes.app.dSYM.zip"
+      - "build/*.ipa"
+      - "build/*.app.dSYM.zip"
+      - "build/*.pkg"
