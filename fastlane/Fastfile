@@ -52,7 +52,22 @@ platform :ios do
       export_options: {
         method: 'app-store',
         provisioningProfiles: {
-          BUNDLE_IDENTIFIER: "match AppStore #{BUNDLE_IDENTIFIER}"
+          BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER}"
+        }
+      },
+      **shared_options
+    )
+    build_app(
+      catalyst_platform: 'macos',
+      destination: 'platform=macOS,arch=x86_64,variant=Mac Catalyst',
+      clean: true,
+      export_options: {
+        # We always used 'app-store' here, but, for Mac Catalyst only?, xcrun logs:
+        #
+        # xcodebuild[96916:64896588] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
+        method: 'app-store-connect',
+        provisioningProfiles: {
+          BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER} catalyst"
         }
       },
       **shared_options
@@ -78,6 +93,10 @@ platform :ios do
 
     sync_code_signing(
       platform: 'ios',
+      **shared_options
+    )
+    sync_code_signing(
+      platform: 'catalyst',
       **shared_options
     )
   end
