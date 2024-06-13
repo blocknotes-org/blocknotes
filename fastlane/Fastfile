@@ -52,10 +52,12 @@ platform :ios do
 
     upload_to_testflight(
       api_key: api_key,
+      app_platform: 'ios',
       ipa: File.join(OUTPUT_FOLDER, "#{APP_NAME_IOS}.ipa")
     )
     upload_to_testflight(
       api_key: api_key,
+      app_platform: 'osx',
       pkg: File.join(OUTPUT_FOLDER, "#{APP_NAME_MAC_CATALYST}.pkg")
     )
   end
