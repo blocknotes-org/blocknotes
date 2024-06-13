@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'dotenv'
+
 default_platform(:ios)
 
 UI.user_error!('Please run fastlane via `bundle exec`') unless FastlaneCore::Helper.bundler?
@@ -7,6 +9,16 @@ UI.user_error!('Please run fastlane via `bundle exec`') unless FastlaneCore::Hel
 PROJECT_ROOT_FOLDER = File.dirname(File.expand_path(__dir__))
 APP_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'ios', 'App')
 BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
+
+ENV_FILE_NAME = 'blocknotes.env'
+USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
+
+# Notice this import currently needsto be after the USER_ENV_FILE_PATH definition because the const is used by the helpers.
+import 'lib/helpers.rb'
+
+before_all do
+  Dotenv.load(USER_ENV_FILE_PATH)
+end
 
 platform :ios do
   desc 'Builds and uploads Blocknotes to TestFlight'
@@ -44,6 +56,8 @@ platform :ios do
 
   desc 'Sets up code signing'
   lane :set_up_code_signing do |options|
+    require_env_vars!(*ASC_API_KEY_ENV_VARS, *MATCH_ENV_VARS)
+
     setup_ci
 
     sync_code_signing(
