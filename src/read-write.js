@@ -6,6 +6,7 @@ import {
 	getBlockContent,
 	serialize,
 } from '@wordpress/blocks';
+import { decodeEntities } from '@wordpress/html-entities';
 
 function sanitizeFileName(name) {
 	// Replace invalid characters with their percent-encoded equivalents
@@ -72,7 +73,7 @@ export function getTitleFromBlocks(blocks) {
 			.trim()
 			.slice(0, 50);
 		if (textContent) {
-			return textContent;
+			return decodeEntities(textContent);
 		}
 	}
 }
