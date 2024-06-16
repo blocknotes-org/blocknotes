@@ -33,8 +33,8 @@ export default function SiderBar({
 	});
 
 	if (view.search) {
-		items = items.filter(({ path }) =>
-			path.toLowerCase().includes(view.search.toLowerCase())
+		items = items.filter(({ text }) =>
+			text.toLowerCase().includes(view.search.toLowerCase())
 		);
 	}
 

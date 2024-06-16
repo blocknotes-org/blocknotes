@@ -11,10 +11,18 @@ export async function getPaths(path = '', directory) {
 			if (file.name.startsWith('.') && file.name !== '.Trash') {
 				continue;
 			}
-			// paths.push(nestedPath)
 			paths.push(...(await getPaths(nestedPath, directory)));
 		} else if (file.name.endsWith('.html')) {
-			paths.push({ ...file, path: nestedPath });
+			paths.push({
+				...file,
+				path: nestedPath,
+				text: (
+					await Filesystem.readFile({
+						path: nestedPath,
+						directory,
+					})
+				)?.data,
+			});
 		}
 	}
 
