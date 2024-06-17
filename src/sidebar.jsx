@@ -3,13 +3,47 @@ import { __ } from '@wordpress/i18n';
 import React, { useState, useEffect } from 'react';
 import { getTitleFromBlocks } from './read-write';
 
-function Title({ item: { path, blocks } }) {
+function stripHTML(html) {
+	const div = document.createElement('div');
+	div.innerHTML = html;
+	return div.textContent || div.innerText || '';
+}
+
+function getTitleFromText({ text, blocks }, second) {
 	if (blocks) {
-		return getTitleFromBlocks(blocks) || <em>{__('Untitled')}</em>;
+		return getTitleFromBlocks(blocks, second);
+	}
+	if (!text) {
+		return '';
+	}
+	let start = 0;
+	while (start < text.length) {
+		// Find the next newline character
+		let end = text.indexOf('\n', start);
+		if (end === -1) {
+			end = text.length; // Handle the case where there is no newline at the end
+		}
+
+		// Extract the current line
+		const currentLine = text.substring(start, end);
+
+		// Move the start index to the next character after the newline
+		start = end + 1;
+
+		// Strip HTML and trim the line
+		const strippedLine = stripHTML(currentLine).trim();
+
+		// Check if the line has meaningful content
+		if (strippedLine) {
+			if (second) {
+				second = false;
+				continue;
+			}
+			return strippedLine;
+		}
 	}
 
-	const title = path?.replace(/(?:\.?[0-9]+)?\.html$/, '');
-	return title ? decodeURIComponent(title) : <em>{__('Untitled')}</em>;
+	return '';
 }
 
 export default function SiderBar({
@@ -71,12 +105,26 @@ export default function SiderBar({
 				{
 					id: 'path',
 					// To do: remove hidden text from rows.
-					header: 'Text',
+					header: 'First line',
 					enableHiding: false,
 					render({ item }) {
 						return (
 							<span className="note-title">
-								<Title item={item} />
+								{getTitleFromText(item) || (
+									<em>{__('Untitled')}</em>
+								)}
+							</span>
+						);
+					},
+				},
+				{
+					id: 'second-line',
+					// To do: remove hidden text from rows.
+					header: 'Second line',
+					render({ item }) {
+						return (
+							<span style={{ opacity: 0.6 }}>
+								{getTitleFromText(item, true)}
 							</span>
 						);
 					},

@@ -52,7 +52,7 @@ function useDebouncedCallback(callback, delay) {
 	return debouncedCallback;
 }
 
-export function getTitleFromBlocks(blocks) {
+export function getTitleFromBlocks(blocks, second) {
 	function flattenBlocks(_blocks) {
 		return _blocks.reduce((acc, block) => {
 			if (block.innerBlocks?.length) {
@@ -73,6 +73,10 @@ export function getTitleFromBlocks(blocks) {
 			.trim()
 			.slice(0, 50);
 		if (textContent) {
+			if (second) {
+				second = false;
+				continue;
+			}
 			return decodeEntities(textContent);
 		}
 	}
@@ -92,17 +96,17 @@ function useUpdateFile({ selectedFolderURL, item, setItem }) {
 			newPath = base ? base + '/' + title + '.html' : title + '.html';
 		}
 
+		const text = serialize(note);
+
 		// First write because it's more important than renaming.
 		await Filesystem.writeFile({
 			path,
 			directory: selectedFolderURL,
-			data: serialize(note),
+			data: text,
 			encoding: Encoding.UTF8,
 		});
 
-		if (item.path !== path) {
-			setItem(item.id, { path });
-		}
+		setItem(item.id, { path, text });
 
 		if (newPath && newPath !== path) {
 			// Check if the wanted file name already exists.
