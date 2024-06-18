@@ -10,9 +10,14 @@ import { decodeEntities } from '@wordpress/html-entities';
 
 function sanitizeFileName(name) {
 	// Replace invalid characters with their percent-encoded equivalents
-	return name.replace(
-		/[\\/:*?"<>|]/g,
-		(char) => '%' + char.charCodeAt(0).toString(16).toUpperCase()
+	return (
+		name
+			.replace(
+				/[\\/:*?"<>|]/g,
+				(char) => '%' + char.charCodeAt(0).toString(16).toUpperCase()
+			)
+			// Control characters.
+			.replace(/[\u0000-\u001F\u007F\u0080-\u009F]+/g, ' ')
 	);
 }
 

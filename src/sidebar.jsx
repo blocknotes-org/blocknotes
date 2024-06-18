@@ -121,6 +121,7 @@ export default function SiderBar({
 					id: 'second-line',
 					// To do: remove hidden text from rows.
 					header: 'Second line',
+					enableSorting: false,
 					render({ item }) {
 						return (
 							<span style={{ opacity: 0.6 }}>
