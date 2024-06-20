@@ -49,6 +49,28 @@ async function moveFile( dirHandle, handle, destinationDirHandle, newName = null
 
     await dirHandle.removeEntry(originalName);
 }
+
+async function moveDir(sourceParentHandle, sourceDirHandle, destinationDirHandle, newName = null) {
+    const originalName = sourceDirHandle.name;
+    const targetName = newName || originalName;
+
+    // Create a new directory in the destination directory
+    const newDirHandle = await destinationDirHandle.getDirectoryHandle(targetName, { create: true });
+
+    // Recursively move all files and subdirectories
+    for await (const entry of sourceDirHandle.values()) {
+        if (entry.kind === 'file') {
+            const fileHandle = await sourceDirHandle.getFileHandle(entry.name);
+            await moveFile(sourceDirHandle, fileHandle, newDirHandle, entry.name);
+        } else if (entry.kind === 'directory') {
+            const subDirHandle = await sourceDirHandle.getDirectoryHandle(entry.name);
+            await moveDir(sourceDirHandle, subDirHandle, newDirHandle, entry.name);
+        }
+    }
+
+    // Remove the original directory
+    await sourceParentHandle.removeEntry(originalName, { recursive: true });
+}
 export class FilesystemWeb extends WebPlugin {
     constructor() {
         super(...arguments);
@@ -379,21 +401,16 @@ export class FilesystemWeb extends WebPlugin {
             const newDirHandle = await this.getDirectoryHandle(newDir,options);
             await moveFile( dirHandle, fileHandle, newDirHandle, newName);
         } else {
-            // There's no move method for directories, so we have to do it
-            // manually.
-            // Create the new directory.
-            const toDir = await this.getDirectoryHandle(to, {...options, create: true });
-            // Copy the contents of the old directory to the new one.
-            
-            const fromDir = await this.getDirectoryHandle(from,options);
-            const entries = await fromDir.values();
-            for await (const entry of entries) {
-                // use this.rename
-                await this.rename({
-                    from: `${from}/${entry.name}`,
-                    to: `${to}/${entry.name}`,
-                });
-            }
+            const directories = from.split('/');
+            const dir = directories.pop();
+            const parentDir = directories.join('/');
+            const parentDirHandle = await this.getDirectoryHandle(parentDir,options);
+            const dirHandle = await parentDirHandle.getDirectoryHandle(dir,options);
+            const newDirectories = to.split('/');
+            const newName = newDirectories.pop();
+            const newDir = newDirectories.join('/');
+            const newDirHandle = await this.getDirectoryHandle(newDir,options);
+            await moveDir( parentDirHandle, dirHandle, newDirHandle, newName);
         }
         return;
     }

@@ -11,6 +11,9 @@ export async function getPaths(path = '', directory) {
 			if (file.name.startsWith('.') && file.name !== '.Trash') {
 				continue;
 			}
+			if (file.name.endsWith('.revisions')) {
+				continue;
+			}
 			paths.push(...(await getPaths(nestedPath, directory)));
 		} else if (file.name.endsWith('.html')) {
 			paths.push({

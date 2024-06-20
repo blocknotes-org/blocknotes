@@ -34,6 +34,15 @@ async function isFile(page, _path) {
 	}, _path);
 }
 
+function createRevisionRegex(p) {
+	if (typeof p !== 'string') {
+		p = p.source;
+	}
+	return new RegExp(
+		`^${p}\\.html\\.revisions\\/\\d+\\-\\d+\\-\\d+T\\d+_\\d+_\\d+\\.\\d+Z\\.html$`
+	);
+}
+
 test.describe('Blocknotes', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.addInitScript(fsaMockScript);
@@ -103,7 +112,11 @@ test.describe('Blocknotes', () => {
 		await expect(block).toBeFocused();
 
 		// Ensure the initial file is gone and renamed, expect no other files.
-		expect(await getPaths(page)).toEqual(['aa.html']);
+		expect(await getPaths(page)).toEqual([
+			'aa.html',
+			'aa.html.revisions',
+			expect.stringMatching(createRevisionRegex('aa')),
+		]);
 		expect(await isFile(page, 'aa.html')).toBe(true);
 		expect(await getContents(page, 'aa.html')).toBe(`<!-- wp:paragraph -->
 <p>aa</p>
@@ -115,7 +128,11 @@ test.describe('Blocknotes', () => {
 		await page.keyboard.type('a');
 		await page.waitForTimeout(1000);
 
-		expect(await getPaths(page)).toEqual(['aaaa.html']);
+		expect(await getPaths(page)).toEqual([
+			'aaaa.html',
+			'aaaa.html.revisions',
+			expect.stringMatching(createRevisionRegex('aaaa')),
+		]);
 		expect(await getContents(page, 'aaaa.html')).toBe(`<!-- wp:paragraph -->
 <p>aaaa</p>
 <!-- /wp:paragraph -->`);
@@ -138,7 +155,14 @@ test.describe('Blocknotes', () => {
 		).toHaveText('aaaa');
 
 		// Check if note B is saved.
-		expect(await getPaths(page)).toEqual(['aaaa.html', 'b.html']);
+		expect(await getPaths(page)).toEqual([
+			'aaaa.html',
+			'aaaa.html.revisions',
+			expect.stringMatching(createRevisionRegex('aaaa')),
+			'b.html',
+			'b.html.revisions',
+			expect.stringMatching(createRevisionRegex('b')),
+		]);
 		expect(await getContents(page, 'b.html')).toBe(`<!-- wp:paragraph -->
 <p>b</p>
 <!-- /wp:paragraph -->`);
@@ -236,7 +260,11 @@ test.describe('Blocknotes', () => {
 		// The original file should be intact.
 		expect(await getPaths(page)).toEqual([
 			'a.html',
+			'a.html.revisions',
+			expect.stringMatching(createRevisionRegex('a')),
 			expect.stringMatching(/^a\.\d+\.html$/),
+			expect.stringMatching(/^a\.\d+\.html\.revisions$/),
+			expect.stringMatching(createRevisionRegex(/a\.\d+/)),
 		]);
 		expect(await getContents(page, 'a.html')).toBe(`<!-- wp:paragraph -->
 <p>a</p>
@@ -246,4 +274,38 @@ test.describe('Blocknotes', () => {
 <p>1</p>
 <!-- /wp:paragraph -->`);
 	});
+
+	test('store new revision on every note open', async ({ page }) => {
+		await page.getByRole('button', { name: 'Pick Folder' }).click();
+		await page.keyboard.type('a');
+
+		const notesButton = page.getByRole('button', { name: 'Notes' });
+
+		await page.getByRole('button', { name: 'New Note' }).click();
+
+		await page.keyboard.type('b');
+
+		await notesButton.click();
+		await page.getByRole('row').locator('.note-title:text("a")').click();
+
+		await canvas(page)
+			.getByRole('document', { name: 'Block: Paragraph' })
+			.click();
+		await page.keyboard.type('a');
+
+		await notesButton.click();
+		await page.getByRole('row').locator('.note-title:text("b")').click();
+
+		expect(await getPaths(page)).toEqual([
+			'b.html',
+			'b.html.revisions',
+			expect.stringMatching(createRevisionRegex('b')),
+			'aa.html',
+			'aa.html.revisions',
+			expect.stringMatching(createRevisionRegex('aa')),
+			expect.stringMatching(createRevisionRegex('aa')),
+		]);
+	});
+
+	// Test if file saves after deleting the file.
 });
