@@ -6,7 +6,7 @@ ASC_API_KEY_ENV_VARS = %w[
   APP_STORE_CONNECT_API_KEY_KEY
 ].freeze
 
-# Fastlane match also uses MATCH_PASSWORD, but we don't expect it to be set because when running locally folks my want to use the password-in-keychain workflow.
+# Fastlane match also uses MATCH_PASSWORD, but we don't expect it to be set because when running locally folks may want to use the password-in-keychain workflow.
 MATCH_ENV_VARS = %w[
   MATCH_S3_ACCESS_KEY
   MATCH_S3_SECRET_ACCESS_KEY
