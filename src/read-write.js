@@ -97,7 +97,7 @@ async function saveFile({
 	path,
 	blocks,
 	setItem,
-	currentRevision,
+	currentRevisionRef,
 }) {
 	if (!path) {
 		path = `${Date.now()}.html`;
@@ -132,7 +132,7 @@ async function saveFile({
 	} catch (e) {}
 
 	await Filesystem.writeFile({
-		path: path + '.revisions/' + currentRevision + '.html',
+		path: path + '.revisions/' + currentRevisionRef.current + '.html',
 		directory: selectedFolderURL,
 		data: text,
 		encoding: Encoding.UTF8,
@@ -174,6 +174,11 @@ export function Write({ selectedFolderURL, item, setItem }) {
 	const isMounted = useRef(false);
 	const debouncedUpdateFile = useDebouncedCallback(saveFile, 1000);
 	const { id, path, blocks } = item;
+	const currentRevisionRef = useRef(currentRevision);
+
+	useEffect(() => {
+		currentRevisionRef.current = currentRevision;
+	}, [currentRevision]);
 
 	useEffect(() => {
 		const args = {
@@ -182,22 +187,14 @@ export function Write({ selectedFolderURL, item, setItem }) {
 			path,
 			blocks,
 			setItem,
-			currentRevision,
+			currentRevisionRef,
 		};
 		if (isMounted.current) {
 			debouncedUpdateFile(args);
 		} else {
 			isMounted.current = true;
 		}
-	}, [
-		debouncedUpdateFile,
-		selectedFolderURL,
-		id,
-		path,
-		blocks,
-		setItem,
-		currentRevision,
-	]);
+	}, [debouncedUpdateFile, selectedFolderURL, id, path, blocks, setItem]);
 
 	useEffect(() => {
 		function change() {

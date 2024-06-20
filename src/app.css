@@ -125,6 +125,11 @@ ul.dataviews-view-list li {
   overflow-x: auto;
 }
 
+.block-editor-block-contextual-toolbar {
+  position: static;
+  width: auto;
+}
+
 #select .components-toolbar {
   border-color: #e0e0e0;
   border-width: 0 1px 0 0;
