@@ -33,7 +33,7 @@ OUTPUT_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'build')
 ENV_FILE_NAME = 'blocknotes.env'
 USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
 
-# Notice this import currently needsto be after the USER_ENV_FILE_PATH definition because the const is used by the helpers.
+# Notice this import currently needs to be after the USER_ENV_FILE_PATH definition because the const is used by the helpers.
 import 'lib/helpers.rb'
 
 before_all do
