@@ -1,56 +1,141 @@
 # frozen_string_literal: true
 
+require 'dotenv'
+
 default_platform(:ios)
 
 UI.user_error!('Please run fastlane via `bundle exec`') unless FastlaneCore::Helper.bundler?
 
 PROJECT_ROOT_FOLDER = File.dirname(File.expand_path(__dir__))
 APP_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'ios', 'App')
+
 BUNDLE_IDENTIFIER = 'com.ellavandurpe.blocknotes'
+
+APP_NAME_IOS = 'blocknotes-ios'
+APP_NAME_MAC_CATALYST = 'blocknotes-mac-catalyst'
+
+# Note that we cannot make this a subfolder of APP_FOLDER, or 'npx cap sync' will fail with:
+#
+# ✔ Updating iOS plugins in 1.60ms
+# ✖ Updating iOS native dependencies with bundle exec pod install - failed!
+# ✖ update ios - failed!
+# [error] Command line invocation:
+#         /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project
+#         App.xcodeproj clean
+
+#         User defaults from command line:
+#         IDEPackageSupportUseBuiltinSCM = YES
+
+#         error: Could not delete `<APP_FOLDER>/build`
+#         because it was not created by the build system.
+OUTPUT_FOLDER = File.join(PROJECT_ROOT_FOLDER, 'build')
+
+ENV_FILE_NAME = 'blocknotes.env'
+USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
+
+# Notice this import currently needs to be after the USER_ENV_FILE_PATH definition because the const is used by the helpers.
+import 'lib/helpers.rb'
+
+before_all do
+  Dotenv.load(USER_ENV_FILE_PATH)
+end
 
 platform :ios do
   desc 'Builds and uploads Blocknotes to TestFlight'
   lane :build_and_upload_to_testflight do
-    set_up_code_signing
+    require_env_vars!(*ASC_API_KEY_ENV_VARS)
+    api_key = app_store_connect_api_key
 
-    latest_build_number = latest_testflight_build_number(
-      app_identifier: BUNDLE_IDENTIFIER,
-      api_key: app_store_connect_api_key
-    )
+    bump_build_number
 
-    increment_build_number(
-      xcodeproj: File.join(APP_FOLDER, 'App.xcodeproj'),
-      build_number: latest_build_number + 1
+    build_for_app_store
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_platform: 'ios',
+      ipa: File.join(OUTPUT_FOLDER, "#{APP_NAME_IOS}.ipa")
     )
+    upload_to_testflight(
+      api_key: api_key,
+      app_platform: 'osx',
+      pkg: File.join(OUTPUT_FOLDER, "#{APP_NAME_MAC_CATALYST}.pkg")
+    )
+  end
+
+  desc 'Builds the app for iOS and Mac Catalyst App Store distribution'
+  lane :build_for_app_store do |options|
+    set_up_code_signing unless options[:skip_code_signing_setup]
+
+    shared_options = {
+      scheme: 'Blocknotes',
+      workspace: File.join(APP_FOLDER, 'App.xcworkspace'),
+      output_directory: OUTPUT_FOLDER
+    }
 
     build_app(
-      workspace: File.join(APP_FOLDER, 'App.xcworkspace'),
-      output_directory: File.join(APP_FOLDER, 'build'),
-      scheme: 'Blocknotes',
+      output_name: APP_NAME_IOS,
       export_options: {
         method: 'app-store',
         provisioningProfiles: {
           BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER}"
         }
-      }
+      },
+      **shared_options
     )
-
-    upload_to_testflight(api_key: app_store_connect_api_key)
+    build_app(
+      output_name: APP_NAME_MAC_CATALYST,
+      catalyst_platform: 'macos',
+      destination: 'platform=macOS,arch=x86_64,variant=Mac Catalyst',
+      clean: true,
+      export_options: {
+        method: 'app-store',
+        provisioningProfiles: {
+          BUNDLE_IDENTIFIER => "match AppStore #{BUNDLE_IDENTIFIER} catalyst"
+        }
+      },
+      **shared_options
+    )
   end
 
   desc 'Sets up code signing'
   lane :set_up_code_signing do |options|
+    require_env_vars!(*ASC_API_KEY_ENV_VARS, *MATCH_ENV_VARS)
+
     setup_ci
 
-    sync_code_signing(
+    shared_options = {
       type: 'appstore',
       app_identifier: BUNDLE_IDENTIFIER,
       team_id: 'PZYM8XX95Q',
-      api_key: app_store_connect_api_key,
       storage_mode: 's3',
       s3_region: 'us-east-2',
       s3_bucket: 'a8c-fastlane-match',
-      readonly: options.fetch(:readonly, true)
+      readonly: options.fetch(:readonly, true),
+      api_key: app_store_connect_api_key
+    }
+
+    sync_code_signing(
+      platform: 'ios',
+      **shared_options
+    )
+    sync_code_signing(
+      platform: 'catalyst',
+      # Without this, we'll get:
+      # error: exportArchive: Provisioning profile "match AppStore com.ellavandurpe.blocknotes catalyst" doesn't include signing certificate "3rd Party Mac Developer Installer: Automattic, Inc. (PZYM8XX95Q)".
+      additional_cert_types: 'mac_installer_distribution',
+      **shared_options
     )
   end
+end
+
+def bump_build_number
+  latest_build_number = latest_testflight_build_number(
+    app_identifier: BUNDLE_IDENTIFIER,
+    api_key: app_store_connect_api_key
+  )
+
+  increment_build_number(
+    xcodeproj: File.join(APP_FOLDER, 'App.xcodeproj'),
+    build_number: latest_build_number + 1
+  )
 end
