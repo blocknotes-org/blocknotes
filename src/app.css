@@ -116,12 +116,12 @@ ul.dataviews-view-list li {
 
 #select {
   position: absolute;
+  height: calc( env(safe-area-inset-top) + 47px );
 }
 
 .select-toolbar {
   top: 0;
   width: 100%;
-  height: calc( env(safe-area-inset-top) + 47px );
   display: flex;
   justify-content: start;
   align-items: end;
