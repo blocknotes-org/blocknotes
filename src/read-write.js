@@ -61,13 +61,23 @@ function useDebouncedCallback(callback, delay) {
 	return debouncedCallback;
 }
 
+const tagRegex = /#[\p{L}\p{N}]+/gu;
+
 export function getTagsFromText(text) {
 	const textContent = text.replace(/<[^>]+>/g, '');
-	const matches = textContent.match(/#[^\s#]+/g);
+	const matches = textContent.match(tagRegex);
 	if (!matches) {
 		return [];
 	}
-	return matches;
+	// Filter out numbers only.
+	return matches.filter((tag) => !/^#\d+$/.test(tag));
+}
+
+export function stripTags(text) {
+	return text.replace(tagRegex, (match) => {
+		// Don't replace tags with just numbers.
+		return /^#\d+$/.test(match) ? match : '';
+	});
 }
 
 export function getTitleFromBlocks(blocks, second) {
@@ -86,9 +96,7 @@ export function getTitleFromBlocks(blocks, second) {
 
 	for (const block of blocks) {
 		const html = getBlockContent(block);
-		const textContent = html
-			.replace(/<[^>]+>/g, '')
-			.replace(/#[^\s#]+/g, '') // Remove tags
+		const textContent = stripTags(html.replace(/<[^>]+>/g, ''))
 			.trim()
 			.slice(0, 50);
 		if (textContent) {

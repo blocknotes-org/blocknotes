@@ -1,7 +1,7 @@
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
 import React, { useEffect } from 'react';
-import { getTitleFromBlocks } from './read-write';
+import { getTitleFromBlocks, stripTags } from './read-write';
 
 function stripHTML(html) {
 	const div = document.createElement('div');
@@ -31,9 +31,7 @@ function getTitleFromText({ text, blocks, path }, second) {
 		start = end + 1;
 
 		// Strip HTML and trim the line
-		const strippedLine = stripHTML(currentLine)
-			.replace(/#[^\s#]+/g, '') // Remove tags
-			.trim();
+		const strippedLine = stripTags(stripHTML(currentLine)).trim();
 
 		// Check if the line has meaningful content
 		if (strippedLine) {
