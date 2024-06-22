@@ -1,4 +1,4 @@
-import { Filesystem } from '@capacitor/filesystem';
+import { Filesystem, Encoding } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -60,19 +60,34 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					...file,
 					mtime: +file.mtime,
 					id: uuidv4(),
-					tags: file.text ? getTagsFromText(file.text) : [],
+					tags: [],
+					// tags: file.text ? getTagsFromText(file.text) : [],
 				}));
 				if (!pathObjects.length) {
 					pathObjects.push({ id: uuidv4(), tags: [] });
 				}
 				filterItems(pathObjects, INITIAL_VIEW);
 				setItems(pathObjects);
-				setCurrentId(pathObjects[0].id);
+				const nonSelectedPaths = [...pathObjects];
+				const currentPath = nonSelectedPaths.shift();
+				setCurrentId(currentPath.id);
+				nonSelectedPaths.forEach((item) => {
+					Filesystem.readFile({
+						path: item.path,
+						directory: selectedFolderURL,
+						encoding: Encoding.UTF8,
+					}).then((file) => {
+						setItem(item.id, {
+							text: file.data,
+							tags: getTagsFromText(file.data),
+						});
+					});
+				});
 			})
 			.catch(() => {
 				setSelectedFolderURL();
 			});
-	}, [selectedFolderURL, setSelectedFolderURL, setCurrentId]);
+	}, [selectedFolderURL, setSelectedFolderURL, setCurrentId, setItem]);
 
 	const [observer, { width }] = useResizeObserver();
 

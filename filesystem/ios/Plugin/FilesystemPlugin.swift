@@ -10,6 +10,56 @@ import UniformTypeIdentifiers
 public class FilesystemPlugin: CAPPlugin, UIDocumentPickerDelegate {
     private let implementation = Filesystem()
 
+    func readRegularFile(_ fileUrl: URL, encoding: String?, call: CAPPluginCall) {
+        do {
+            let data = try implementation.readFile(at: fileUrl, with: encoding)
+            call.resolve([
+                "data": data
+            ])
+        } catch let error as NSError {
+            handleError(call, error.localizedDescription, error)
+        }
+    }
+
+    func downloadAndReadICloudFile(_ fileUrl: URL, encoding: String?, call: CAPPluginCall) {
+        let fileManager = FileManager.default
+        do {
+            try fileManager.startDownloadingUbiquitousItem(at: fileUrl)
+            // Wait for download to complete
+            waitForDownload(fileUrl) { success in
+                if success {
+                    self.readRegularFile(fileUrl, encoding: encoding, call: call)
+                } else {
+                    self.handleError(call, "Failed to download iCloud file")
+                }
+            }
+        } catch {
+            handleError(call, "Error starting download: \(error.localizedDescription)", error)
+        }
+    }
+
+    func waitForDownload(_ fileUrl: URL, completion: @escaping (Bool) -> Void) {
+        let query = NSMetadataQuery()
+        query.predicate = NSPredicate(format: "%K == %@", NSMetadataItemURLKey, fileUrl as NSURL)
+        query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
+
+        NotificationCenter.default.addObserver(forName: .NSMetadataQueryDidFinishGathering, object: query, queue: .main) { _ in
+            query.stop()
+            if let item = query.results.first as? NSMetadataItem,
+            let status = item.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String {
+                if status == NSMetadataUbiquitousItemDownloadingStatusCurrent {
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            } else {
+                completion(false)
+            }
+        }
+
+        query.start()
+    }
+
     /**
      * Read a file from the filesystem.
      */
@@ -26,13 +76,24 @@ public class FilesystemPlugin: CAPPlugin, UIDocumentPickerDelegate {
             handleError(call, "Invalid path")
             return
         }
-        do {
-            let data = try implementation.readFile(at: fileUrl, with: encoding)
-            call.resolve([
-                "data": data
-            ])
-        } catch let error as NSError {
-            handleError(call, error.localizedDescription, error)
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        if fileManager.fileExists(atPath: fileUrl.path, isDirectory: &isDirectory) {
+            if fileUrl.pathExtension == "icloud" {
+                // Handle .icloud file
+                downloadAndReadICloudFile(fileUrl, encoding: encoding, call: call)
+            } else {
+                // Handle regular file
+                readRegularFile(fileUrl, encoding: encoding, call: call)
+            }
+        } else {
+            // File doesn't exist, check if it's in iCloud
+            let originalFileUrl = fileUrl.deletingPathExtension()
+            if fileManager.isUbiquitousItem(at: originalFileUrl) {
+                downloadAndReadICloudFile(originalFileUrl, encoding: encoding, call: call)
+            } else {
+                handleError(call, "File does not exist and is not in iCloud: \(fileUrl.path)")
+            }
         }
     }
 

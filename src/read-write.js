@@ -251,7 +251,11 @@ export function Read({ item, setItem, selectedFolderURL }) {
 				directory: selectedFolderURL,
 				encoding: Encoding.UTF8,
 			}).then((file) => {
-				setItem(id, { blocks: parse(file.data) });
+				setItem(id, {
+					text: file.data,
+					tags: getTagsFromText(file.data),
+					blocks: parse(file.data),
+				});
 			});
 		} else {
 			// Initialise with empty paragraph because we don't want merely clicking

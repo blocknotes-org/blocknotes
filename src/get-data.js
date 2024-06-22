@@ -1,4 +1,4 @@
-import { Filesystem, Encoding } from '@capacitor/filesystem';
+import { Filesystem } from '@capacitor/filesystem';
 
 export async function getPaths(path = '', directory) {
 	const paths = [];
@@ -19,13 +19,6 @@ export async function getPaths(path = '', directory) {
 			paths.push({
 				...file,
 				path: nestedPath,
-				text: (
-					await Filesystem.readFile({
-						path: nestedPath,
-						directory,
-						encoding: Encoding.UTF8,
-					})
-				)?.data,
 			});
 		} else if (file.name.endsWith('.icloud')) {
 			paths.push({

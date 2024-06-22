@@ -154,7 +154,9 @@ export default function SiderBar({
 						return (
 							<span style={{ opacity: 0.6 }}>
 								{getTitleFromText(item, true)}
-								{!item.text && <em>{__('Offloaded')}</em>}
+								{item.path?.endsWith('.icloud') && (
+									<em>{__('Offloaded')}</em>
+								)}
 							</span>
 						);
 					},
