@@ -135,6 +135,15 @@ ul.dataviews-view-list li {
   margin-left: auto;
 }
 
+.notes-tag {
+  background: #444;
+  color: white;
+  padding: 2px 3px;
+  border-radius: 2px;
+  margin: 2px 3px 2px 0;
+  display: inline-block;
+}
+
 .block-editor-block-contextual-toolbar {
   position: static;
   width: auto;

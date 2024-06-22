@@ -32,8 +32,8 @@ function getTitleFromText({ text, blocks }, second) {
 
 		// Strip HTML and trim the line
 		const strippedLine = stripHTML(currentLine)
-			.trim()
-			.replace(/#[^\s#]+/g, ''); // Remove tags
+			.replace(/#[^\s#]+/g, '') // Remove tags
+			.trim();
 
 		// Check if the line has meaningful content
 		if (strippedLine) {
@@ -163,11 +163,17 @@ export default function SiderBar({
 					header: 'Tags',
 					enableSorting: false,
 					render({ item }) {
-						return (
-							<span style={{ opacity: 0.6 }}>
-								{item.tags.join(', ')}
-							</span>
-						);
+						return item.tags
+							.filter(
+								(tag) => !view.filters[0]?.value.includes(tag)
+							)
+							.map((tag) => {
+								return (
+									<span key={tag} className="notes-tag">
+										{tag}
+									</span>
+								);
+							});
 					},
 					elements: Array.from(allTags).map((tag) => ({
 						id: tag,

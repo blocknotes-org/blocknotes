@@ -88,8 +88,8 @@ export function getTitleFromBlocks(blocks, second) {
 		const html = getBlockContent(block);
 		const textContent = html
 			.replace(/<[^>]+>/g, '')
-			.trim()
 			.replace(/#[^\s#]+/g, '') // Remove tags
+			.trim()
 			.slice(0, 50);
 		if (textContent) {
 			if (second) {
