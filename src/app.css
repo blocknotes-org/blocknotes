@@ -125,9 +125,22 @@ ul.dataviews-view-list li {
   overflow-x: auto;
 }
 
+#select-right {
+  margin-left: auto;
+}
+
 .block-editor-block-contextual-toolbar {
   position: static;
   width: auto;
+}
+
+.block-editor-block-toolbar .components-toolbar-group, .block-editor-block-toolbar .components-toolbar {
+  margin: 0;
+}
+
+#block-toolbar {
+  display: flex;
+  flex-shrink: 0;
 }
 
 #select .components-toolbar {

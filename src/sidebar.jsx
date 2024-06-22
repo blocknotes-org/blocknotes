@@ -46,26 +46,19 @@ function getTitleFromText({ text, blocks }, second) {
 	return '';
 }
 
-export default function SiderBar({
-	items,
-	setItem,
-	currentId,
-	setCurrentId,
-	setIsSidebarOpen,
-	isWide,
-}) {
-	const [view, setView] = useState({
-		type: 'list',
-		search: '',
-		filters: [],
-		sort: {
-			field: 'mtime',
-			direction: 'desc',
-		},
-		hiddenFields: [],
-		layout: {},
-	});
+export const INITIAL_VIEW = {
+	type: 'list',
+	search: '',
+	filters: [],
+	sort: {
+		field: 'mtime',
+		direction: 'desc',
+	},
+	hiddenFields: [],
+	layout: {},
+};
 
+export function filterItems(items, view) {
 	if (view.search) {
 		items = items.filter(({ text }) =>
 			text.toLowerCase().includes(view.search.toLowerCase())
@@ -85,6 +78,19 @@ export default function SiderBar({
 			return 0;
 		});
 	}
+}
+
+export default function SiderBar({
+	items,
+	setItem,
+	currentId,
+	setCurrentId,
+	setIsSidebarOpen,
+	isWide,
+}) {
+	const [view, setView] = useState(INITIAL_VIEW);
+
+	filterItems(items, view);
 
 	// Temporary hack until we can control selection in data views.
 	useEffect(() => {

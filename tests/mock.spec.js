@@ -307,5 +307,36 @@ test.describe('Blocknotes', () => {
 		]);
 	});
 
+	test('trash', async ({ page }) => {
+		await page.getByRole('button', { name: 'Pick Folder' }).click();
+		await page.keyboard.type('a');
+
+		const notesButton = page.getByRole('button', { name: 'Notes' });
+
+		await page.getByRole('button', { name: 'New Note' }).click();
+
+		await page.keyboard.type('b');
+
+		await notesButton.click();
+		await page.getByRole('row').locator('.note-title:text("a")').click();
+
+		page.on('dialog', async (dialog) => {
+			await dialog.accept();
+		});
+
+		await page.getByRole('button', { name: 'Trash' }).click();
+
+		// wait for dialog to close
+		await page.waitForTimeout(1000);
+
+		expect(await getPaths(page)).toEqual([
+			'a.html.revisions',
+			expect.stringMatching(createRevisionRegex('a')),
+			'b.html',
+			'b.html.revisions',
+			expect.stringMatching(createRevisionRegex('b')),
+		]);
+	});
+
 	// Test if file saves after deleting the file.
 });

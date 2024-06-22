@@ -1,16 +1,16 @@
 import { Filesystem } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ToolbarButton, ToolbarGroup, Button } from '@wordpress/components';
-import { addCard, archive } from '@wordpress/icons';
+import { addCard, archive, trash } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 
-import { Read, Write } from './read-write';
+import { Read, Write, saveFile } from './read-write';
 import Editor from './editor';
-import Sidebar from './sidebar.jsx';
+import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
 
 function getInitialSelection({ path, blocks }) {
 	if (path) {
@@ -32,6 +32,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [currentId, setCurrentId] = useState();
 	const [items, setItems] = useState([]);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const currentRevisionRef = useRef();
 
 	const setItem = useCallback((id, item) => {
 		setItems((_items) =>
@@ -54,6 +55,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				if (!pathObjects.length) {
 					pathObjects.push({ id: uuidv4() });
 				}
+				filterItems(pathObjects, INITIAL_VIEW);
 				setItems(pathObjects);
 				setCurrentId(pathObjects[0].id);
 			})
@@ -135,6 +137,44 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							}}
 						/>
 					</ToolbarGroup>
+					<div id="block-toolbar"></div>
+					<ToolbarGroup
+						id="select-right"
+						className="components-toolbar-group"
+					>
+						<ToolbarButton
+							icon={trash}
+							label={__('Trash')}
+							onClick={() => {
+								if (
+									// eslint-disable-next-line no-alert
+									window.confirm(
+										__(
+											'Are you sure you want to delete this note?'
+										)
+									)
+								) {
+									saveFile({
+										selectedFolderURL,
+										item: currentItem,
+										setItem,
+										currentRevisionRef,
+										trash: true,
+									});
+									setItems((_items) => {
+										const nextItems = _items.filter(
+											(_item) => _item.id !== currentId
+										);
+										if (!nextItems.length) {
+											nextItems.push({ id: uuidv4() });
+										}
+										setCurrentId(nextItems[0].id);
+										return nextItems;
+									});
+								}
+							}}
+						/>
+					</ToolbarGroup>
 				</div>
 				{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
 				<div
@@ -173,6 +213,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						item={currentItem}
 						setItem={setItem}
 						selectedFolderURL={selectedFolderURL}
+						currentRevisionRef={currentRevisionRef}
 					/>
 				))(currentItem.blocks ? Write : Read)}
 			</motion.div>

@@ -1,5 +1,5 @@
 import { Filesystem, Encoding } from '@capacitor/filesystem';
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import {
 	createBlock,
 	parse,
@@ -91,101 +91,115 @@ export function getTitleFromBlocks(blocks, second) {
 	}
 }
 
-async function saveFile({
+export async function saveFile({
 	selectedFolderURL,
-	id,
-	path,
-	blocks,
+	item: { id, path, blocks, text: oldText },
 	setItem,
 	currentRevisionRef,
+	trash = false,
 }) {
-	if (!path) {
-		path = `${Date.now()}.html`;
-	}
-
-	const base = path.split('/').slice(0, -1).join('/');
-	const title = sanitizeFileName(getTitleFromBlocks(blocks));
-	let newPath;
-	if (title) {
-		newPath = base ? base + '/' + title + '.html' : title + '.html';
-	}
-
 	const text = serialize(blocks);
 
-	// First write to the actual file, if revisioning fails, we can recover.
-	// This main file is always our source of truth.
+	if (text !== oldText) {
+		if (!path) {
+			path = `${Date.now()}.html`;
+		}
 
-	// First write because it's more important than renaming.
-	await Filesystem.writeFile({
-		path,
-		directory: selectedFolderURL,
-		data: text,
-		encoding: Encoding.UTF8,
-	});
+		const base = path.split('/').slice(0, -1).join('/');
+		const title = sanitizeFileName(getTitleFromBlocks(blocks));
+		let newPath;
+		if (title) {
+			newPath = base ? base + '/' + title + '.html' : title + '.html';
+		}
 
-	// Create path + '.revisions/' if it doesn't exist.
-	try {
-		await Filesystem.mkdir({
-			path: path + '.revisions',
+		// First write to the actual file, if revisioning fails, we can recover.
+		// This main file is always our source of truth.
+
+		// First write because it's more important than renaming.
+		await Filesystem.writeFile({
+			path,
 			directory: selectedFolderURL,
+			data: text,
+			encoding: Encoding.UTF8,
 		});
-	} catch (e) {}
 
-	await Filesystem.writeFile({
-		path: path + '.revisions/' + currentRevisionRef.current + '.html',
-		directory: selectedFolderURL,
-		data: text,
-		encoding: Encoding.UTF8,
-	});
-
-	setItem(id, { path, text });
-
-	if (newPath && newPath !== path) {
-		// Check if the wanted file name already exists.
+		// Create path + '.revisions/' if it doesn't exist.
 		try {
-			const exists = await Filesystem.stat({
-				path: newPath,
+			await Filesystem.mkdir({
+				path: path + '.revisions',
+				directory: selectedFolderURL,
+			});
+		} catch (e) {}
+
+		await Filesystem.writeFile({
+			path: path + '.revisions/' + currentRevisionRef.current + '.html',
+			directory: selectedFolderURL,
+			data: text,
+			encoding: Encoding.UTF8,
+		});
+
+		setItem(id, { path, text });
+
+		if (newPath && newPath !== path) {
+			// Check if the wanted file name already exists.
+			try {
+				const exists = await Filesystem.stat({
+					path: newPath,
+					directory: selectedFolderURL,
+				});
+
+				// If it does, add a timestamp to the file name.
+				if (exists) {
+					newPath = newPath.replace('.html', `.${Date.now()}.html`);
+				}
+			} catch (e) {}
+
+			await Filesystem.rename({
+				from: path,
+				to: newPath,
+				directory: selectedFolderURL,
+			});
+			await Filesystem.rename({
+				from: path + '.revisions',
+				to: newPath + '.revisions',
 				directory: selectedFolderURL,
 			});
 
-			// If it does, add a timestamp to the file name.
-			if (exists) {
-				newPath = newPath.replace('.html', `.${Date.now()}.html`);
-			}
-		} catch (e) {}
+			setItem(id, { path: newPath });
+		}
+	}
 
-		await Filesystem.rename({
-			from: path,
-			to: newPath,
+	if (trash) {
+		await Filesystem.deleteFile({
+			path,
 			directory: selectedFolderURL,
 		});
-		await Filesystem.rename({
-			from: path + '.revisions',
-			to: newPath + '.revisions',
-			directory: selectedFolderURL,
-		});
-
-		setItem(id, { path: newPath });
 	}
 }
 
-export function Write({ selectedFolderURL, item, setItem }) {
-	const [currentRevision, setCurrentRevision] = useState(createRevisionName);
+export function Write({
+	selectedFolderURL,
+	item,
+	setItem,
+	currentRevisionRef,
+}) {
 	const isMounted = useRef(false);
 	const debouncedUpdateFile = useDebouncedCallback(saveFile, 1000);
-	const { id, path, blocks } = item;
-	const currentRevisionRef = useRef(currentRevision);
+	const { path, blocks } = item;
+	const itemRef = useRef(item);
 
 	useEffect(() => {
-		currentRevisionRef.current = currentRevision;
-	}, [currentRevision]);
+		currentRevisionRef.current = createRevisionName();
+	}, [currentRevisionRef]);
+
+	useEffect(() => {
+		itemRef.current = item;
+	}, [item]);
 
 	useEffect(() => {
 		const args = {
 			selectedFolderURL,
-			id,
-			path,
-			blocks,
+			item: itemRef.current,
 			setItem,
 			currentRevisionRef,
 		};
@@ -194,19 +208,26 @@ export function Write({ selectedFolderURL, item, setItem }) {
 		} else {
 			isMounted.current = true;
 		}
-	}, [debouncedUpdateFile, selectedFolderURL, id, path, blocks, setItem]);
+	}, [
+		currentRevisionRef,
+		debouncedUpdateFile,
+		selectedFolderURL,
+		path,
+		blocks,
+		setItem,
+	]);
 
 	useEffect(() => {
 		function change() {
 			if (document.visibilityState === 'visible') {
-				setCurrentRevision(createRevisionName());
+				currentRevisionRef.current = createRevisionName();
 			}
 		}
 		document.addEventListener('visibilitychange', change);
 		return () => {
 			document.removeEventListener('visibilitychange', change);
 		};
-	}, []);
+	}, [currentRevisionRef]);
 
 	return null;
 }

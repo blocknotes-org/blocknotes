@@ -232,16 +232,11 @@ export class FilesystemWeb extends WebPlugin {
      * @return a promise that resolves with the deleted file data result
      */
     async deleteFile(options) {
-        const path = this.getPath(options.directory, options.path);
-        const entry = (await this.dbRequest('get', [path]));
-        if (entry === undefined)
-            throw Error('File does not exist.');
-        const entries = await this.dbIndexRequest('by_folder', 'getAllKeys', [
-            IDBKeyRange.only(path),
-        ]);
-        if (entries.length !== 0)
-            throw Error('Folder is not empty.');
-        await this.dbRequest('delete', [path]);
+        const directories = options.path.split('/');
+        const dir = directories.pop();
+        const parentDir = directories.join('/');
+        const parentDirHandle = await this.getDirectoryHandle(parentDir,options);
+        await parentDirHandle.removeEntry(dir);
     }
     /**
      * Create a directory.

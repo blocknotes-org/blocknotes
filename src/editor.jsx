@@ -45,7 +45,7 @@ export default function Editor({ initialState, setBlocks }) {
 			}}
 			settings={{ hasFixedToolbar: true }}
 		>
-			{document.getElementById('select') &&
+			{document.getElementById('block-toolbar') &&
 				createPortal(
 					<>
 						<ToolbarGroup className="components-toolbar-group">
@@ -66,7 +66,7 @@ export default function Editor({ initialState, setBlocks }) {
 						</ToolbarGroup>
 						<BlockToolbar hideDragHandle />
 					</>,
-					document.getElementById('select')
+					document.getElementById('block-toolbar')
 				)}
 			<div
 				style={{ height: '100%' }}
