@@ -60,7 +60,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					...file,
 					mtime: +file.mtime,
 					id: uuidv4(),
-					tags: getTagsFromText(file.text),
+					tags: file.text ? getTagsFromText(file.text) : [],
 				}));
 				if (!pathObjects.length) {
 					pathObjects.push({ id: uuidv4(), tags: [] });

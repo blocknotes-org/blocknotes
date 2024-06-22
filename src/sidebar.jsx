@@ -9,12 +9,12 @@ function stripHTML(html) {
 	return div.textContent || div.innerText || '';
 }
 
-function getTitleFromText({ text, blocks }, second) {
+function getTitleFromText({ text, blocks, path }, second) {
 	if (blocks) {
 		return getTitleFromBlocks(blocks, second);
 	}
 	if (!text) {
-		return '';
+		return second ? '' : path;
 	}
 	let start = 0;
 	while (start < text.length) {
@@ -154,6 +154,7 @@ export default function SiderBar({
 						return (
 							<span style={{ opacity: 0.6 }}>
 								{getTitleFromText(item, true)}
+								{!item.text && <em>{__('Offloaded')}</em>}
 							</span>
 						);
 					},

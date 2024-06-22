@@ -27,6 +27,11 @@ export async function getPaths(path = '', directory) {
 					})
 				)?.data,
 			});
+		} else if (file.name.endsWith('.icloud')) {
+			paths.push({
+				...file,
+				path: nestedPath,
+			});
 		}
 	}
 
