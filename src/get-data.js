@@ -1,4 +1,4 @@
-import { Filesystem } from '@capacitor/filesystem';
+import { Filesystem, Encoding } from '@capacitor/filesystem';
 
 export async function getPaths(path = '', directory) {
 	const paths = [];
@@ -23,6 +23,7 @@ export async function getPaths(path = '', directory) {
 					await Filesystem.readFile({
 						path: nestedPath,
 						directory,
+						encoding: Encoding.UTF8,
 					})
 				)?.data,
 			});

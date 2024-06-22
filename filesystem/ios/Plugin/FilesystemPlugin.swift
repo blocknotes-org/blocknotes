@@ -383,7 +383,8 @@ public class FilesystemPlugin: CAPPlugin, UIDocumentPickerDelegate {
                 "url": bookmarkString
             ])
         } catch {
-            currentCall?.reject("Failed to create bookmark for directory.")
+            print("Failed to create bookmark: \(error.localizedDescription) - \(error)")
+            currentCall?.reject("Failed to create bookmark for directory. \(error.localizedDescription)")
         }
 
         currentCall = nil

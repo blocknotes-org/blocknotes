@@ -202,8 +202,14 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				<div id="sidebar-bottom">
 					<Button
 						onClick={async () => {
-							const { url } = await Filesystem.pickDirectory();
-							setSelectedFolderURL(url);
+							try {
+								const { url } =
+									await Filesystem.pickDirectory();
+								setSelectedFolderURL(url);
+							} catch (e) {
+								// eslint-disable-next-line no-alert
+								window.alert(e.message);
+							}
 						}}
 					>
 						{__('Pick Folder')}
