@@ -1,14 +1,22 @@
 import { Filesystem } from '@capacitor/filesystem';
 import { getPaths } from './get-data.js';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ToolbarButton, ToolbarGroup, Button } from '@wordpress/components';
-import { addCard, archive, trash } from '@wordpress/icons';
+import {
+	ToolbarButton,
+	ToolbarGroup,
+	Button,
+	DropdownMenu,
+	MenuItem,
+	MenuGroup,
+	SearchControl,
+} from '@wordpress/components';
+import { addCard, archive, trash, tag } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 
-import { Read, Write, saveFile } from './read-write';
+import { Read, Write, saveFile, getTagsFromText } from './read-write';
 import Editor from './editor';
 import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
 
@@ -29,6 +37,7 @@ function getInitialSelection({ path, blocks }) {
 }
 
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
+	const [view, setView] = useState(INITIAL_VIEW);
 	const [currentId, setCurrentId] = useState();
 	const [items, setItems] = useState([]);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -51,9 +60,10 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					...file,
 					mtime: +file.mtime,
 					id: uuidv4(),
+					tags: getTagsFromText(file.text),
 				}));
 				if (!pathObjects.length) {
-					pathObjects.push({ id: uuidv4() });
+					pathObjects.push({ id: uuidv4(), tags: [] });
 				}
 				filterItems(pathObjects, INITIAL_VIEW);
 				setItems(pathObjects);
@@ -77,11 +87,111 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		width: isSidebarOpen && isWide ? 'calc(100% - 300px)' : '100%',
 	};
 
+	const allTags = items.reduce((acc, item) => {
+		item.tags.forEach((_tag) => {
+			acc.add(_tag);
+		});
+		return acc;
+	}, new Set());
+
 	return (
 		<div style={{ height: '100%' }}>
 			{observer}
 			<div id="sidebar">
+				<div className="select-toolbar dataviews-filters__view-actions">
+					<ToolbarGroup className="components-toolbar-group">
+						<DropdownMenu
+							className="blocknotes-select"
+							icon={tag}
+							label={__('Tags')}
+							toggleProps={{
+								// current tag
+								children: view.filters.length
+									? view.filters[0].value[0]
+									: __('All'),
+							}}
+						>
+							{({ onClose }) => (
+								<>
+									<MenuGroup>
+										<MenuItem
+											className={
+												!view.filters.length
+													? 'is-active'
+													: ''
+											}
+											onClick={() => {
+												setView((v) => ({
+													...v,
+													filters: [],
+												}));
+												onClose();
+											}}
+										>
+											{__('All')}
+										</MenuItem>
+									</MenuGroup>
+									<MenuGroup>
+										{Array.from(allTags).map(
+											(_tag, index) => (
+												<MenuItem
+													key={index}
+													className={
+														view.filters.some(
+															(filter) =>
+																filter.value.includes(
+																	_tag
+																)
+														)
+															? 'is-active'
+															: ''
+													}
+													onClick={() => {
+														setView((v) => ({
+															...v,
+															filters: [
+																{
+																	field: 'tags',
+																	value: [
+																		_tag,
+																	],
+																},
+															],
+														}));
+														onClose();
+													}}
+												>
+													{_tag}
+												</MenuItem>
+											)
+										)}
+										{allTags.size === 0 && (
+											<MenuItem disabled>
+												{__(
+													'Write #tags in your notes'
+												)}
+											</MenuItem>
+										)}
+									</MenuGroup>
+								</>
+							)}
+						</DropdownMenu>
+					</ToolbarGroup>
+					<div style={{ padding: '7px' }}>
+						<SearchControl
+							__nextHasNoMarginBottom
+							size="compact"
+							value={view.search}
+							onChange={(search) => {
+								setView((v) => ({ ...v, search }));
+							}}
+							placeholder={__('Search')}
+						/>
+					</div>
+				</div>
 				<Sidebar
+					view={view}
+					setView={setView}
 					items={items}
 					setItem={setItem}
 					currentId={currentId}
@@ -114,7 +224,10 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				transition={{ ease: 'anticipate', duration: 0.2 }}
 				style={{ borderLeft: '1px solid #e0e0e0' }}
 			>
-				<div id="select" className="components-accessible-toolbar">
+				<div
+					id="select"
+					className="select-toolbar components-accessible-toolbar"
+				>
 					<ToolbarGroup className="components-toolbar-group">
 						<ToolbarButton
 							icon={archive}
@@ -130,7 +243,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							icon={addCard}
 							label={__('New Note')}
 							onClick={() => {
-								const newItem = { id: uuidv4() };
+								const newItem = { id: uuidv4(), tags: [] };
 								setItems([newItem, ...items]);
 								setCurrentId(newItem.id);
 								setItem(currentId, { blocks: null });
@@ -166,7 +279,10 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 											(_item) => _item.id !== currentId
 										);
 										if (!nextItems.length) {
-											nextItems.push({ id: uuidv4() });
+											nextItems.push({
+												id: uuidv4(),
+												tags: [],
+											});
 										}
 										setCurrentId(nextItems[0].id);
 										return nextItems;

@@ -39,11 +39,14 @@ body,
 }
 
 .dataviews-filters__view-actions {
-  padding: 7px;
   border-bottom: 1px solid #e0e0e0;
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+.dataviews-wrapper .dataviews-filters__view-actions {
+  display: none;
 }
 
 .dataviews-filters__container {
@@ -113,6 +116,9 @@ ul.dataviews-view-list li {
 
 #select {
   position: absolute;
+}
+
+.select-toolbar {
   top: 0;
   width: 100%;
   height: calc( env(safe-area-inset-top) + 47px );
@@ -143,7 +149,7 @@ ul.dataviews-view-list li {
   flex-shrink: 0;
 }
 
-#select .components-toolbar {
+.select-toolbar .components-toolbar {
   border-color: #e0e0e0;
   border-width: 0 1px 0 0;
   background-color: transparent;
@@ -177,7 +183,7 @@ iframe[name="editor-canvas"] {
   color: white;
 }
 
-#select,
+.select-toolbar,
 .dataviews-filters__view-actions,
 #sidebar-bottom,
 /* .is-unstyled ? */
@@ -192,36 +198,36 @@ iframe[name="editor-canvas"] {
   border: 1px solid #e0e0e0;
 }
 
-#select .blocknotes-select button {
+.select-toolbar .blocknotes-select button {
   padding-right: 1em;
 }
 
-#select button.components-button {
+.select-toolbar button.components-button:not(.is-small) {
   font-size: 16px;
   height: 46px;
 }
 
-#select .components-toolbar-group {
+.select-toolbar .components-toolbar-group {
   min-height: auto;
 }
 
-#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container {
+.select-toolbar .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container {
   flex-direction: unset;
 }
 
-#select .block-editor-block-contextual-toolbar {
+.select-toolbar .block-editor-block-contextual-toolbar {
   border: none;
   background: none;
 }
 
-#select .block-editor-block-contextual-toolbar .block-editor-block-toolbar .components-toolbar-group {
+.select-toolbar .block-editor-block-contextual-toolbar .block-editor-block-toolbar .components-toolbar-group {
   border-color: #e0e0e0;
 }
 
-#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-down-button svg {
+.select-toolbar .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-down-button svg {
   bottom: unset;
 }
 
-#select .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-up-button svg {
+.select-toolbar .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-up-button svg {
   top: unset;
 }

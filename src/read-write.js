@@ -61,6 +61,15 @@ function useDebouncedCallback(callback, delay) {
 	return debouncedCallback;
 }
 
+export function getTagsFromText(text) {
+	const textContent = text.replace(/<[^>]+>/g, '');
+	const matches = textContent.match(/#[^\s#]+/g);
+	if (!matches) {
+		return [];
+	}
+	return matches;
+}
+
 export function getTitleFromBlocks(blocks, second) {
 	function flattenBlocks(_blocks) {
 		return _blocks.reduce((acc, block) => {
@@ -80,6 +89,7 @@ export function getTitleFromBlocks(blocks, second) {
 		const textContent = html
 			.replace(/<[^>]+>/g, '')
 			.trim()
+			.replace(/#[^\s#]+/g, '') // Remove tags
 			.slice(0, 50);
 		if (textContent) {
 			if (second) {
@@ -138,7 +148,7 @@ export async function saveFile({
 			encoding: Encoding.UTF8,
 		});
 
-		setItem(id, { path, text });
+		setItem(id, { path, text, tags: getTagsFromText(text) });
 
 		if (newPath && newPath !== path) {
 			// Check if the wanted file name already exists.

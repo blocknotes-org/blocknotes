@@ -1,6 +1,6 @@
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { getTitleFromBlocks } from './read-write';
 
 function stripHTML(html) {
@@ -31,7 +31,9 @@ function getTitleFromText({ text, blocks }, second) {
 		start = end + 1;
 
 		// Strip HTML and trim the line
-		const strippedLine = stripHTML(currentLine).trim();
+		const strippedLine = stripHTML(currentLine)
+			.trim()
+			.replace(/#[^\s#]+/g, ''); // Remove tags
 
 		// Check if the line has meaningful content
 		if (strippedLine) {
@@ -59,14 +61,16 @@ export const INITIAL_VIEW = {
 };
 
 export function filterItems(items, view) {
+	let filteredItems = items;
+
 	if (view.search) {
-		items = items.filter(({ text }) =>
+		filteredItems = filteredItems.filter(({ text }) =>
 			text.toLowerCase().includes(view.search.toLowerCase())
 		);
 	}
 
 	if (view.sort) {
-		items = items.sort((a, b) => {
+		filteredItems = filteredItems.sort((a, b) => {
 			const aValue = a[view.sort.field];
 			const bValue = b[view.sort.field];
 			if (aValue < bValue) {
@@ -78,9 +82,22 @@ export function filterItems(items, view) {
 			return 0;
 		});
 	}
+
+	for (const filter of view.filters) {
+		if (!filter.value?.length) {
+			continue;
+		}
+		filteredItems = filteredItems.filter((item) => {
+			return item[filter.field].some((tag) => filter.value.includes(tag));
+		});
+	}
+
+	return filteredItems;
 }
 
 export default function SiderBar({
+	view,
+	setView,
 	items,
 	setItem,
 	currentId,
@@ -88,9 +105,14 @@ export default function SiderBar({
 	setIsSidebarOpen,
 	isWide,
 }) {
-	const [view, setView] = useState(INITIAL_VIEW);
+	const allTags = items.reduce((acc, item) => {
+		item.tags.forEach((tag) => {
+			acc.add(tag);
+		});
+		return acc;
+	}, new Set());
 
-	filterItems(items, view);
+	const filteredItems = filterItems(items, view);
 
 	// Temporary hack until we can control selection in data views.
 	useEffect(() => {
@@ -105,7 +127,7 @@ export default function SiderBar({
 
 	return (
 		<DataViews
-			data={items}
+			data={filteredItems}
 			view={view}
 			fields={[
 				{
@@ -134,6 +156,26 @@ export default function SiderBar({
 								{getTitleFromText(item, true)}
 							</span>
 						);
+					},
+				},
+				{
+					id: 'tags',
+					header: 'Tags',
+					enableSorting: false,
+					render({ item }) {
+						return (
+							<span style={{ opacity: 0.6 }}>
+								{item.tags.join(', ')}
+							</span>
+						);
+					},
+					elements: Array.from(allTags).map((tag) => ({
+						id: tag,
+						label: tag,
+						value: tag,
+					})),
+					filterBy: {
+						operators: ['isAny'],
 					},
 				},
 				{
