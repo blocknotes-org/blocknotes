@@ -40,7 +40,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [view, setView] = useState(INITIAL_VIEW);
 	const [currentId, setCurrentId] = useState();
 	const [items, setItems] = useState([]);
-	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const currentRevisionRef = useRef();
 
 	const setItem = useCallback((id, item) => {
