@@ -26,7 +26,13 @@ import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 
-import { Read, Write, saveFile, getTagsFromText } from './read-write';
+import {
+	Read,
+	Write,
+	saveFile,
+	getTagsFromText,
+	createRevisionName,
+} from './read-write';
 import Editor from './editor';
 import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
 import { Revisions } from './revisions';
@@ -47,8 +53,8 @@ function getInitialSelection({ path, blocks }) {
 	return { selectionStart: sel, selectionEnd: sel };
 }
 
-function refresh({ selectedFolderURL, items, setItems, setItem }) {
-	getPaths('', selectedFolderURL)
+async function refresh({ selectedFolderURL, items, setItems, setItem }) {
+	await getPaths('', selectedFolderURL)
 		.then((_paths) => {
 			const pathObjects = _paths.map((_file) => ({
 				..._file,
@@ -134,6 +140,33 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	}, [selectedFolderURL, setSelectedFolderURL, setCurrentId, setItem]);
 
 	const [observer, { width }] = useResizeObserver();
+
+	const itemsRef = useRef(items);
+
+	useEffect(() => {
+		itemsRef.current = items;
+	}, [items]);
+
+	useEffect(() => {
+		function change() {
+			if (document.visibilityState === 'visible') {
+				currentRevisionRef.current = createRevisionName();
+				document.body.classList.add('is-loading');
+				refresh({
+					selectedFolderURL,
+					items: itemsRef.current,
+					setItems,
+					setItem,
+				}).then(() => {
+					document.body.classList.remove('is-loading');
+				});
+			}
+		}
+		document.addEventListener('visibilitychange', change);
+		return () => {
+			document.removeEventListener('visibilitychange', change);
+		};
+	}, [currentRevisionRef, selectedFolderURL, setItem]);
 
 	if (!currentId) {
 		return null;
@@ -276,7 +309,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						onClick={() => {
 							refresh({
 								selectedFolderURL,
-								items,
+								items: itemsRef.current,
 								setItems,
 								setItem,
 							});

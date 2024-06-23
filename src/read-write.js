@@ -8,7 +8,7 @@ import {
 } from '@wordpress/blocks';
 import { decodeEntities } from '@wordpress/html-entities';
 
-function createRevisionName() {
+export function createRevisionName() {
 	return new Date().toISOString().replaceAll(':', '_');
 }
 
@@ -254,18 +254,6 @@ export function Write({
 		blocks,
 		setItem,
 	]);
-
-	useEffect(() => {
-		function change() {
-			if (document.visibilityState === 'visible') {
-				currentRevisionRef.current = createRevisionName();
-			}
-		}
-		document.addEventListener('visibilitychange', change);
-		return () => {
-			document.removeEventListener('visibilitychange', change);
-		};
-	}, [currentRevisionRef]);
 
 	return null;
 }

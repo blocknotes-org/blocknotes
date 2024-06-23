@@ -244,3 +244,8 @@ iframe[name="editor-canvas"] {
 .revision-content {
   max-width: 600px;
 }
+
+.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
