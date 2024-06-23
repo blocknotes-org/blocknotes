@@ -61,14 +61,13 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					mtime: +file.mtime,
 					id: uuidv4(),
 					tags: [],
-					// tags: file.text ? getTagsFromText(file.text) : [],
 				}));
 				if (!pathObjects.length) {
 					pathObjects.push({ id: uuidv4(), tags: [] });
 				}
-				filterItems(pathObjects, INITIAL_VIEW);
-				setItems(pathObjects);
-				const nonSelectedPaths = [...pathObjects];
+				const filtered = filterItems(pathObjects, INITIAL_VIEW);
+				setItems(filtered);
+				const nonSelectedPaths = [...filtered];
 				const currentPath = nonSelectedPaths.shift();
 				setCurrentId(currentPath.id);
 				nonSelectedPaths.forEach((item) => {
@@ -173,6 +172,18 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 																},
 															],
 														}));
+														// Change current note
+														const nextItem =
+															items.find((item) =>
+																item.tags.includes(
+																	_tag
+																)
+															);
+														if (nextItem) {
+															setCurrentId(
+																nextItem.id
+															);
+														}
 														onClose();
 													}}
 												>
@@ -306,6 +317,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 										}
 										setCurrentId(nextItems[0].id);
 										setItems(nextItems);
+										setIsSidebarOpen(true);
 									});
 								}
 							}}

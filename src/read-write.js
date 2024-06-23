@@ -12,14 +12,15 @@ function createRevisionName() {
 	return new Date().toISOString().replaceAll(':', '_');
 }
 
+function encode(char) {
+	return '%' + char.charCodeAt(0).toString(16).toUpperCase();
+}
+
 function sanitizeFileName(name) {
 	// Replace invalid characters with their percent-encoded equivalents
 	return (
 		name
-			.replace(
-				/[\\/:*?"<>|]/g,
-				(char) => '%' + char.charCodeAt(0).toString(16).toUpperCase()
-			)
+			.replace(/[\\/:*?"<>|]/g, encode)
 			// Control characters.
 			.replace(/[\u0000-\u001F\u007F\u0080-\u009F]+/g, ' ')
 	);
@@ -68,7 +69,7 @@ export function getTagsFromText(text) {
 	if (!matches) {
 		return [];
 	}
-	return matches.map((match) => match.replace(/<\/?u>/g, ''));
+	return [...new Set(matches.map((match) => match.replace(/<\/?u>/g, '')))];
 }
 
 export function stripTags(text) {
@@ -120,7 +121,11 @@ export async function saveFile({
 		}
 
 		const base = path.split('/').slice(0, -1).join('/');
-		const title = sanitizeFileName(getTitleFromBlocks(blocks));
+		const tags = getTagsFromText(text).join(' ');
+		const title = sanitizeFileName(
+			getTitleFromBlocks(blocks).replace(/#/g, encode) +
+				(tags.length ? ' ' + tags : '')
+		);
 		let newPath;
 		if (title) {
 			newPath = base ? base + '/' + title + '.html' : title + '.html';
@@ -152,7 +157,12 @@ export async function saveFile({
 			encoding: Encoding.UTF8,
 		});
 
-		setItem(id, { path, text, tags: getTagsFromText(text) });
+		setItem(id, {
+			path,
+			text,
+			tags: getTagsFromText(text),
+			mtime: Date.now(),
+		});
 
 		if (newPath && newPath !== path) {
 			// Check if the wanted file name already exists.
