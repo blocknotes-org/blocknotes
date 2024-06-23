@@ -109,27 +109,17 @@ export function getTitleFromBlocks(blocks, second) {
 
 export async function saveFile({
 	selectedFolderURL,
-	item: { id, path, blocks, text: oldText },
+	itemRef,
 	setItem,
 	currentRevisionRef,
 	trash = false,
 }) {
+	let { id, path, blocks, text: oldText } = itemRef.current;
 	const text = serialize(blocks);
 
 	if (text !== oldText) {
 		if (!path) {
 			path = `${Date.now()}.html`;
-		}
-
-		const base = path.split('/').slice(0, -1).join('/');
-		const tags = getTagsFromText(text).join(' ');
-		const title = sanitizeFileName(
-			getTitleFromBlocks(blocks).replace(/#/g, encode) +
-				(tags.length ? ' ' + tags : '')
-		);
-		let newPath;
-		if (title) {
-			newPath = base ? base + '/' + title + '.html' : title + '.html';
 		}
 
 		// First write to the actual file, if revisioning fails, we can recover.
@@ -158,12 +148,25 @@ export async function saveFile({
 			encoding: Encoding.UTF8,
 		});
 
+		const tags = getTagsFromText(text);
+
 		setItem(id, {
 			path,
 			text,
-			tags: getTagsFromText(text),
+			tags,
 			mtime: Date.now(),
 		});
+
+		const title = sanitizeFileName(
+			getTitleFromBlocks(blocks).replace(/#/g, encode) +
+				(tags.length ? ' ' + tags.join(' ') : '')
+		);
+
+		let newPath;
+		if (title) {
+			const base = path.split('/').slice(0, -1).join('/');
+			newPath = base ? base + '/' + title + '.html' : title + '.html';
+		}
 
 		if (newPath && newPath !== path) {
 			// Check if the wanted file name already exists.
@@ -184,13 +187,23 @@ export async function saveFile({
 				to: newPath,
 				directory: selectedFolderURL,
 			});
-			await Filesystem.rename({
-				from: path + '.revisions',
-				to: newPath + '.revisions',
-				directory: selectedFolderURL,
-			});
-
 			setItem(id, { path: newPath });
+
+			try {
+				await Filesystem.rename({
+					from: path + '.revisions',
+					to: newPath + '.revisions',
+					directory: selectedFolderURL,
+				});
+			} catch (e) {
+				// Revert the file name change.
+				await Filesystem.rename({
+					from: newPath,
+					to: path,
+					directory: selectedFolderURL,
+				});
+				setItem(id, { path });
+			}
 		}
 	}
 
@@ -224,7 +237,7 @@ export function Write({
 	useEffect(() => {
 		const args = {
 			selectedFolderURL,
-			item: itemRef.current,
+			itemRef,
 			setItem,
 			currentRevisionRef,
 		};

@@ -369,7 +369,9 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								) {
 									saveFile({
 										selectedFolderURL,
-										item: currentItem,
+										itemRef: {
+											current: currentItem,
+										},
 										setItem,
 										currentRevisionRef,
 										trash: true,
