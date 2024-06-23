@@ -9,8 +9,17 @@ import {
 	MenuItem,
 	MenuGroup,
 	SearchControl,
+	Modal,
 } from '@wordpress/components';
-import { addCard, archive, trash, tag } from '@wordpress/icons';
+import {
+	addCard,
+	archive,
+	trash,
+	tag,
+	file,
+	cog,
+	update,
+} from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,11 +45,44 @@ function getInitialSelection({ path, blocks }) {
 	return { selectionStart: sel, selectionEnd: sel };
 }
 
+function refresh({ selectedFolderURL, items, setItems, setItem }) {
+	getPaths('', selectedFolderURL)
+		.then((_paths) => {
+			const pathObjects = _paths.map((_file) => ({
+				..._file,
+				mtime: +_file.mtime,
+				// Reuse the existing id if it exists.
+				id:
+					items.find((item) => item.path === _file.path)?.id ||
+					uuidv4(),
+				tags: [],
+			}));
+			setItems(pathObjects);
+			pathObjects.forEach((item) => {
+				Filesystem.readFile({
+					path: item.path,
+					directory: selectedFolderURL,
+					encoding: Encoding.UTF8,
+				}).then((__file) => {
+					setItem(item.id, {
+						text: __file.data,
+						tags: getTagsFromText(__file.data),
+					});
+				});
+			});
+		})
+		.catch((error) => {
+			// eslint-disable-next-line no-alert
+			window.alert(error);
+		});
+}
+
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [view, setView] = useState(INITIAL_VIEW);
 	const [currentId, setCurrentId] = useState();
 	const [items, setItems] = useState([]);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+	const [isModalOpen, setIsModalOpen] = useState(false);
 	const currentRevisionRef = useRef();
 
 	const setItem = useCallback((id, item) => {
@@ -56,9 +98,9 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		setCurrentId();
 		getPaths('', selectedFolderURL)
 			.then((_paths) => {
-				const pathObjects = _paths.map((file) => ({
-					...file,
-					mtime: +file.mtime,
+				const pathObjects = _paths.map((_file) => ({
+					..._file,
+					mtime: +_file.mtime,
 					id: uuidv4(),
 					tags: [],
 				}));
@@ -75,10 +117,10 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						path: item.path,
 						directory: selectedFolderURL,
 						encoding: Encoding.UTF8,
-					}).then((file) => {
+					}).then((__file) => {
 						setItem(item.id, {
-							text: file.data,
-							tags: getTagsFromText(file.data),
+							text: __file.data,
+							tags: getTagsFromText(__file.data),
 						});
 					});
 				});
@@ -226,6 +268,20 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				/>
 				<div id="sidebar-bottom">
 					<Button
+						icon={update}
+						label="Refresh"
+						onClick={() => {
+							refresh({
+								selectedFolderURL,
+								items,
+								setItems,
+								setItem,
+							});
+						}}
+					/>
+					<Button
+						icon={file}
+						label={__('Pick Different Folder')}
 						onClick={async () => {
 							try {
 								const { url } =
@@ -236,16 +292,29 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								window.alert(e.message);
 							}
 						}}
-					>
-						{__('Pick Folder')}
-					</Button>
+					/>
 					<Button
+						icon={cog}
+						label={__('Settings')}
 						onClick={() => {
-							setSelectedFolderURL();
+							setIsModalOpen(true);
 						}}
-					>
-						{__('Forget Folder')}
-					</Button>
+					/>
+					{isModalOpen && (
+						<Modal
+							title={__('Settings')}
+							onRequestClose={() => setIsModalOpen(false)}
+						>
+							<Button
+								onClick={() => {
+									setSelectedFolderURL();
+								}}
+								variant="secondary"
+							>
+								{__('Forget picked Folder')}
+							</Button>
+						</Modal>
+					)}
 				</div>
 			</div>
 			<motion.div

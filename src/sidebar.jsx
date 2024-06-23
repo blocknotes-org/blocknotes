@@ -14,7 +14,7 @@ function getTitleFromText({ text, blocks, path }, second) {
 		return getTitleFromBlocks(blocks, second);
 	}
 	if (!text) {
-		return second ? '' : path;
+		return second ? '' : decodeURIComponent(path?.split('/').pop());
 	}
 	let start = 0;
 	while (start < text.length) {
