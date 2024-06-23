@@ -54,6 +54,10 @@ export function Revisions({ selectedFolderURL, item: currentItem }) {
 	const selectedRevision = revisions[selectedIndex];
 	return (
 		<div>
+			<p>
+				🚧 The revisions feature is preview only for now, files can be
+				restored manually in the filesystem.
+			</p>
 			<RangeControl
 				label="Pick a revision to view"
 				withInputField={false}
