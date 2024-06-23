@@ -20,6 +20,12 @@ async function getPaths(page) {
 	});
 }
 
+export async function saveFile(page, name) {
+	return await page.evaluate(async (_name) => {
+		window.fsaMock.mock.createFile(_name);
+	}, name);
+}
+
 async function getContents(page, _path) {
 	return await page.evaluate((__path) => {
 		return new TextDecoder('utf-8').decode(
@@ -326,9 +332,6 @@ test.describe('Blocknotes', () => {
 
 		await page.getByRole('button', { name: 'Trash' }).click();
 
-		// wait for dialog to close
-		await page.waitForTimeout(1000);
-
 		expect(await getPaths(page)).toEqual([
 			'a.html.revisions',
 			expect.stringMatching(createRevisionRegex('a')),
@@ -336,6 +339,21 @@ test.describe('Blocknotes', () => {
 			'b.html.revisions',
 			expect.stringMatching(createRevisionRegex('b')),
 		]);
+	});
+
+	test('trash item in folder', async ({ page }) => {
+		await saveFile(page, 'folder/a.html');
+		await page.getByRole('button', { name: 'Pick Folder' }).click();
+
+		expect(await getPaths(page)).toEqual(['folder', 'folder/a.html']);
+
+		page.on('dialog', async (dialog) => {
+			await dialog.accept();
+		});
+
+		await page.getByRole('button', { name: 'Trash' }).click();
+
+		expect(await getPaths(page)).toEqual(['folder']);
 	});
 
 	// Test if file saves after deleting the file.

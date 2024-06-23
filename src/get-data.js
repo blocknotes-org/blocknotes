@@ -8,7 +8,7 @@ export async function getPaths(path = '', directory) {
 	for (const file of dir.files) {
 		const nestedPath = path ? [path, file.name].join('/') : file.name;
 		if (file.type === 'directory') {
-			if (file.name.startsWith('.') && file.name !== '.Trash') {
+			if (file.name.startsWith('.')) {
 				continue;
 			}
 			if (file.name.endsWith('.revisions')) {

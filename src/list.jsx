@@ -294,9 +294,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 										setItem,
 										currentRevisionRef,
 										trash: true,
-									});
-									setItems((_items) => {
-										const nextItems = _items.filter(
+									}).then(() => {
+										const nextItems = items.filter(
 											(_item) => _item.id !== currentId
 										);
 										if (!nextItems.length) {
@@ -306,7 +305,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 											});
 										}
 										setCurrentId(nextItems[0].id);
-										return nextItems;
+										setItems(nextItems);
 									});
 								}
 							}}

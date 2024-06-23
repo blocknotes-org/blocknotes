@@ -4,6 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 
 import List from './list';
 import Start from './start';
+import { ErrorBoundary } from './error-boundary';
 
 function App({ selectedFolderURL: initialSelectedFolderURL }) {
 	const [selectedFolderURL, setSelectedFolderURL] = useState(
@@ -38,4 +39,8 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 	);
 }
 
-export default (props) => <App {...props} />;
+export default (props) => (
+	<ErrorBoundary>
+		<App {...props} />
+	</ErrorBoundary>
+);
