@@ -240,3 +240,7 @@ iframe[name="editor-canvas"] {
 .select-toolbar .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-up-button svg {
   top: unset;
 }
+
+.revision-content {
+  max-width: 600px;
+}

@@ -19,6 +19,7 @@ import {
 	file,
 	cog,
 	update,
+	backup,
 } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
@@ -28,6 +29,7 @@ import { motion } from 'framer-motion';
 import { Read, Write, saveFile, getTagsFromText } from './read-write';
 import Editor from './editor';
 import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
+import { Revisions } from './revisions';
 
 function getInitialSelection({ path, blocks }) {
 	if (path) {
@@ -83,6 +85,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [items, setItems] = useState([]);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
 	const currentRevisionRef = useRef();
 
 	const setItem = useCallback((id, item) => {
@@ -392,6 +395,26 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								}
 							}}
 						/>
+						<ToolbarButton
+							icon={backup}
+							label={__('Revisions')}
+							onClick={() => {
+								setIsRevisionModalOpen(true);
+							}}
+						/>
+						{isRevisionModalOpen && (
+							<Modal
+								title={__('Revisions')}
+								onRequestClose={() =>
+									setIsRevisionModalOpen(false)
+								}
+							>
+								<Revisions
+									item={currentItem}
+									selectedFolderURL={selectedFolderURL}
+								/>
+							</Modal>
+						)}
 					</ToolbarGroup>
 				</div>
 				{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
