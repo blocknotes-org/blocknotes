@@ -356,5 +356,61 @@ test.describe('Blocknotes', () => {
 		expect(await getPaths(page)).toEqual(['folder']);
 	});
 
+	test.describe('tags', () => {
+		async function getInnerHTML(page) {
+			return await canvas(page)
+				.locator(':focus')
+				.evaluate((node) => node.innerHTML);
+		}
+
+		test('can insert', async ({ page }) => {
+			await page.getByRole('button', { name: 'Pick Folder' }).click();
+
+			await page.keyboard.type('#');
+
+			expect(await getInnerHTML(page)).toBe('#');
+
+			await page.keyboard.type('ab');
+
+			expect(await getInnerHTML(page)).toBe(
+				'<u data-rich-text-format-boundary="true">#ab</u>'
+			);
+
+			await page.keyboard.type('.');
+
+			expect(await getInnerHTML(page)).toBe('<u>#ab</u>.');
+
+			await page.keyboard.press('Home');
+			await page.keyboard.press('ArrowRight');
+			await page.keyboard.press('ArrowRight');
+
+			await page.keyboard.type('.');
+
+			expect(await getInnerHTML(page)).toBe('#.ab.');
+		});
+
+		test('can insert before text', async ({ page }) => {
+			await page.getByRole('button', { name: 'Pick Folder' }).click();
+
+			await page.keyboard.type('z');
+
+			await page.keyboard.press('ArrowLeft');
+
+			await page.keyboard.type('#');
+
+			expect(await getInnerHTML(page)).toBe('#z');
+
+			await page.keyboard.type('ab');
+
+			expect(await getInnerHTML(page)).toBe(
+				'<u data-rich-text-format-boundary="true">#ab</u>z'
+			);
+
+			await page.keyboard.type('.');
+
+			expect(await getInnerHTML(page)).toBe('<u>#ab</u>.z');
+		});
+	});
+
 	// Test if file saves after deleting the file.
 });

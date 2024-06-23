@@ -1,0 +1,13 @@
+diff --git a/node_modules/@wordpress/block-editor/build-module/components/rich-text/event-listeners/input-rules.js b/node_modules/@wordpress/block-editor/build-module/components/rich-text/event-listeners/input-rules.js
+index 03436e6..225ec15 100644
+--- a/node_modules/@wordpress/block-editor/build-module/components/rich-text/event-listeners/input-rules.js
++++ b/node_modules/@wordpress/block-editor/build-module/components/rich-text/event-listeners/input-rules.js
+@@ -112,7 +112,7 @@ export default (props => element => {
+       __unstableMarkLastChangeAsPersistent();
+       onChange({
+         ...transformed,
+-        activeFormats: value.activeFormats
++        // activeFormats: value.activeFormats
+       });
+       __unstableMarkAutomaticChange();
+     }

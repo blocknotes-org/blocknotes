@@ -31,7 +31,7 @@ function getTitleFromText({ text, blocks, path }, second) {
 		start = end + 1;
 
 		// Strip HTML and trim the line
-		const strippedLine = stripTags(stripHTML(currentLine)).trim();
+		const strippedLine = stripHTML(stripTags(currentLine)).trim();
 
 		// Check if the line has meaningful content
 		if (strippedLine) {

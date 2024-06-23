@@ -4,10 +4,14 @@ import { Preferences } from '@capacitor/preferences';
 import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
 import { registerCoreBlocks } from '@wordpress/block-library';
+import { registerFormatType } from '@wordpress/rich-text';
+import tagFormat from './tag-format';
 
 import app from './app';
 
 import '@wordpress/format-library';
+
+registerFormatType(tagFormat.name, tagFormat);
 
 // It is needed for the appenders, this should be fixed in GB.
 import '@wordpress/block-editor/build-style/content.css';
