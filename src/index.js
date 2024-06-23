@@ -46,19 +46,19 @@ export async function getSelectedFolderURL() {
 }
 
 async function load() {
+	let canUseNativeFilesystem = true;
 	try {
 		await Filesystem.checkPermissions();
 	} catch (e) {
 		// eslint-disable-next-line no-alert
-		window.alert(e.message);
-		return;
+		canUseNativeFilesystem = false;
 	}
 
 	const selectedFolderURL = await getSelectedFolderURL();
 	const root = createRoot(document.getElementById('app'));
 
 	registerCoreBlocks();
-	root.render(app({ selectedFolderURL }));
+	root.render(app({ selectedFolderURL, canUseNativeFilesystem }));
 
 	NativeApp.addListener('appStateChange', ({ isActive }) => {
 		if (!isActive) {

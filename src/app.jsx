@@ -6,7 +6,10 @@ import List from './list';
 import Start from './start';
 import { ErrorBoundary } from './error-boundary';
 
-function App({ selectedFolderURL: initialSelectedFolderURL }) {
+function App({
+	selectedFolderURL: initialSelectedFolderURL,
+	canUseNativeFilesystem,
+}) {
 	const [selectedFolderURL, setSelectedFolderURL] = useState(
 		initialSelectedFolderURL
 	);
@@ -28,7 +31,12 @@ function App({ selectedFolderURL: initialSelectedFolderURL }) {
 	}, [selectedFolderURL]);
 
 	if (!selectedFolderURL) {
-		return <Start setSelectedFolderURL={setSelectedFolderURL} />;
+		return (
+			<Start
+				setSelectedFolderURL={setSelectedFolderURL}
+				canUseNativeFilesystem={canUseNativeFilesystem}
+			/>
+		);
 	}
 
 	return (
