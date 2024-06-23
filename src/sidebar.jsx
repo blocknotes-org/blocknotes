@@ -3,6 +3,33 @@ import { __ } from '@wordpress/i18n';
 import React, { useEffect } from 'react';
 import { getTitleFromBlocks, stripTags } from './read-write';
 
+const tagColors = [
+	{ name: 'Purple', color: [128, 0, 255] },
+	{ name: 'Red', color: [220, 20, 60] }, // Crimson red
+	{ name: 'Orange', color: [255, 128, 0] },
+	{ name: 'Yellow', color: [255, 196, 0] }, // Golden yellow
+	{ name: 'Blue', color: [0, 128, 255] },
+	{ name: 'Green', color: [34, 139, 34] }, // Forest green
+	{ name: 'Pink', color: [255, 0, 128] },
+	{ name: 'Brown', color: [139, 69, 19] }, // Saddle brown
+];
+
+function mixWithWhite(rgb, percentage) {
+	const white = [255, 255, 255];
+	const mixedColor = rgb.map((channel, index) =>
+		Math.round(channel * (1 - percentage) + white[index] * percentage)
+	);
+	return mixedColor;
+}
+
+function mix(rgb, percentage) {
+	const white = [0, 0, 0];
+	const mixedColor = rgb.map((channel, index) =>
+		Math.round(channel * (1 - percentage) + white[index] * percentage)
+	);
+	return mixedColor;
+}
+
 function stripHTML(html) {
 	const div = document.createElement('div');
 	div.innerHTML = html;
@@ -123,6 +150,11 @@ export default function SiderBar({
 		}
 	}, [currentId]);
 
+	const colorsByTag = Array.from(allTags).reduce((acc, tag, index) => {
+		acc[tag] = tagColors[index];
+		return acc;
+	}, {});
+
 	return (
 		<DataViews
 			data={filteredItems}
@@ -170,7 +202,22 @@ export default function SiderBar({
 							)
 							.map((tag) => {
 								return (
-									<span key={tag} className="notes-tag">
+									<span
+										key={tag}
+										className="notes-tag"
+										style={
+											colorsByTag[tag] && {
+												color: `rgb(${mix(
+													colorsByTag[tag].color,
+													0.4
+												).join(',')})`,
+												backgroundColor: `rgb(${mixWithWhite(
+													colorsByTag[tag].color,
+													0.8
+												).join(',')})`,
+											}
+										}
+									>
 										{tag}
 									</span>
 								);
