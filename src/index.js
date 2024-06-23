@@ -25,7 +25,20 @@ export async function getSelectedFolderURL() {
 	const selectedFolderURL = await Preferences.get({
 		key: 'selectedFolderURL',
 	});
-	return selectedFolderURL?.value;
+	if (selectedFolderURL?.value) {
+		return selectedFolderURL.value;
+	}
+
+	try {
+		const defaultDir = await Filesystem.getDefaultDirectory();
+
+		if (defaultDir.url) {
+			return defaultDir.url;
+		}
+	} catch (e) {
+		// eslint-disable-next-line no-alert
+		window.alert(e);
+	}
 }
 
 async function load() {

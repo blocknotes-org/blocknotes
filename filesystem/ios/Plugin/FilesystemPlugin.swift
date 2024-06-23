@@ -463,4 +463,23 @@ public class FilesystemPlugin: CAPPlugin, UIDocumentPickerDelegate {
         call.reject(message, nil, error)
     }
 
+    @objc public func getDefaultDirectory(_ call: CAPPluginCall) {
+        if let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+            do {
+                let bookmarkData = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                // Convert bookmark data to a base64 encoded string
+                let bookmarkString = bookmarkData.base64EncodedString()
+
+                call.resolve([
+                    "url": bookmarkString
+                ])
+            } catch {
+                print("Failed to create bookmark: \(error.localizedDescription) - \(error)")
+                call.reject("Failed to create bookmark for directory. \(error.localizedDescription)")
+            }
+        } else {
+            call.reject("No iCloud directory")
+        }
+    }
+
 }

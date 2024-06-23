@@ -433,6 +433,9 @@ export class FilesystemWeb extends WebPlugin {
         } );
         return { url: this._dirHandle };
     }
+    async getDefaultDirectory() {
+        return {};
+    }
     async checkPermissions() {
         if (!('showDirectoryPicker' in window)) {
             throw this.unavailable("This browser doesn't support showDirectoryPicker.");
