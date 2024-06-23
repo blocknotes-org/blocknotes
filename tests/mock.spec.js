@@ -83,8 +83,6 @@ test.describe('Blocknotes', () => {
 
 		await expect(emptyBlock).toBeFocused();
 
-		await page.getByRole('button', { name: 'Notes' }).click();
-
 		await expect(page.getByRole('row').locator('.note-title')).toHaveText([
 			'Untitled',
 		]);
@@ -242,15 +240,12 @@ test.describe('Blocknotes', () => {
 		await page.keyboard.press('Enter');
 		await page.keyboard.type('1');
 
-		const notesButton = page.getByRole('button', { name: 'Notes' });
-
 		await page.getByRole('button', { name: 'New Note' }).click();
 
 		await page.keyboard.type('a');
 		await page.keyboard.press('Enter');
 		await page.keyboard.type('2');
 
-		await notesButton.click();
 		await page
 			.getByRole('row')
 			.locator('.note-title:text("a")')
@@ -285,13 +280,10 @@ test.describe('Blocknotes', () => {
 		await page.getByRole('button', { name: 'Pick Folder' }).click();
 		await page.keyboard.type('a');
 
-		const notesButton = page.getByRole('button', { name: 'Notes' });
-
 		await page.getByRole('button', { name: 'New Note' }).click();
 
 		await page.keyboard.type('b');
 
-		await notesButton.click();
 		await page.getByRole('row').locator('.note-title:text("a")').click();
 
 		await canvas(page)
@@ -299,7 +291,6 @@ test.describe('Blocknotes', () => {
 			.click();
 		await page.keyboard.type('a');
 
-		await notesButton.click();
 		await page.getByRole('row').locator('.note-title:text("b")').click();
 
 		expect(await getPaths(page)).toEqual([
@@ -317,13 +308,10 @@ test.describe('Blocknotes', () => {
 		await page.getByRole('button', { name: 'Pick Folder' }).click();
 		await page.keyboard.type('a');
 
-		const notesButton = page.getByRole('button', { name: 'Notes' });
-
 		await page.getByRole('button', { name: 'New Note' }).click();
 
 		await page.keyboard.type('b');
 
-		await notesButton.click();
 		await page.getByRole('row').locator('.note-title:text("a")').click();
 
 		page.on('dialog', async (dialog) => {

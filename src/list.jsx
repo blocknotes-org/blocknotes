@@ -108,9 +108,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		return acc;
 	}, new Set());
 
-	return (
-		<div style={{ height: '100%' }}>
-			{observer}
+	const frame = (
+		<>
 			<div id="sidebar">
 				<div className="select-toolbar dataviews-filters__view-actions">
 					<ToolbarGroup className="components-toolbar-group">
@@ -365,6 +364,13 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					/>
 				))(currentItem.blocks ? Write : Read)}
 			</motion.div>
+		</>
+	);
+
+	return (
+		<div style={{ height: '100%' }}>
+			{observer}
+			{width && frame}
 		</div>
 	);
 }
