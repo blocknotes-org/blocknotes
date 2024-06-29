@@ -1,5 +1,4 @@
 import { Filesystem } from '@capacitor/filesystem';
-import { App as NativeApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
@@ -59,12 +58,6 @@ async function load() {
 
 	registerCoreBlocks();
 	root.render(app({ selectedFolderURL, canUseNativeFilesystem }));
-
-	NativeApp.addListener('appStateChange', ({ isActive }) => {
-		if (!isActive) {
-			// save
-		}
-	});
 }
 
 load();

@@ -103,6 +103,39 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	}, []);
 
 	useEffect(() => {
+		if (isSidebarOpen) {
+			return;
+		}
+
+		let startTouchX = 0;
+
+		document.addEventListener('touchstart', handleTouchStart);
+		document.addEventListener('touchmove', handleTouchMove);
+
+		function handleTouchStart(event) {
+			startTouchX = event.touches[0].clientX;
+		}
+
+		function handleTouchMove(event) {
+			if (event.touches.length > 1) {
+				return;
+			}
+
+			const touchX = event.touches[0].clientX;
+			const deltaX = touchX - startTouchX;
+
+			if (deltaX > 50 && startTouchX < 20) {
+				setIsSidebarOpen(true);
+			}
+		}
+
+		return () => {
+			document.removeEventListener('touchstart', handleTouchStart);
+			document.removeEventListener('touchmove', handleTouchMove);
+		};
+	}, [isSidebarOpen, setIsSidebarOpen]);
+
+	useEffect(() => {
 		setItems([]);
 		setCurrentId();
 		getPaths('', selectedFolderURL)
