@@ -14,6 +14,13 @@ body {
 html {
   /* margin-top: env(safe-area-inset-top); */
   height: 100%;
+  background: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    filter: invert(.9) hue-rotate(180deg);
+  }
 }
 
 body,
