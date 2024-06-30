@@ -2,7 +2,6 @@ import { Filesystem } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
-import { registerCoreBlocks } from '@wordpress/block-library';
 import { registerFormatType } from '@wordpress/rich-text';
 import tagFormat from './tag-format';
 
@@ -16,9 +15,10 @@ registerFormatType(tagFormat.name, tagFormat);
 import '@wordpress/block-editor/build-style/content.css';
 
 import '@wordpress/block-editor/build-style/style.css';
-import '@wordpress/block-library/build-style/style.css';
 import '@wordpress/components/build-style/style.css';
 import './app.css';
+
+import './block-types/auto-generated.js';
 
 export async function getSelectedFolderURL() {
 	const directoryHandle = await get('directoryHandle');
@@ -56,7 +56,6 @@ async function load() {
 	const selectedFolderURL = await getSelectedFolderURL();
 	const root = createRoot(document.getElementById('app'));
 
-	registerCoreBlocks();
 	root.render(app({ selectedFolderURL, canUseNativeFilesystem }));
 }
 

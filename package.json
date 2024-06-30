@@ -13,7 +13,8 @@
     "test": "playwright test",
     "lint": "eslint src tests --ext .js,.jsx",
     "prepare": "husky install",
-    "regenerate-icons": "./src/assets/icon/generate.sh"
+    "regenerate-icons": "./src/assets/icon/generate.sh",
+    "regenerate-blocks": "node ./src/block-types/generate.js"
   },
   "dependencies": {
     "@capacitor-community/image-to-text": "^6.0.1",

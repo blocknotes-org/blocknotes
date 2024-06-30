@@ -13,7 +13,8 @@ import { undo as undoIcon, redo as redoIcon } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
 
 import blockEditorContentStyle from '@wordpress/block-editor/build-style/content.css?raw';
-import blockLibraryContentStyle from '@wordpress/block-library/build-style/editor.css?raw';
+// eslint-disable-next-line import/no-unresolved
+import blockLibraryContentStyle from './block-types/auto-generated-content.css?raw';
 import componentsStyle from '@wordpress/components/build-style/style.css?raw';
 
 // eslint-disable-next-line import/no-unresolved

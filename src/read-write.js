@@ -105,6 +105,8 @@ export function getTitleFromBlocks(blocks, second) {
 			return decodeEntities(textContent);
 		}
 	}
+
+	return '';
 }
 
 export async function saveFile({
