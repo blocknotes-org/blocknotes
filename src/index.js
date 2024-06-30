@@ -4,6 +4,7 @@ import { get } from 'idb-keyval';
 import { createRoot } from 'react-dom/client';
 import { registerFormatType } from '@wordpress/rich-text';
 import tagFormat from './tag-format';
+import { setDefaultBlockName } from '@wordpress/blocks';
 
 import app from './app';
 
@@ -19,6 +20,8 @@ import '@wordpress/components/build-style/style.css';
 import './app.css';
 
 import './block-types/auto-generated.js';
+
+setDefaultBlockName('core/paragraph');
 
 export async function getSelectedFolderURL() {
 	const directoryHandle = await get('directoryHandle');
