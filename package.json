@@ -16,12 +16,12 @@
     "regenerate-icons": "./src/assets/icon/generate.sh"
   },
   "dependencies": {
-    "@capacitor/app": "^5.0.3",
-    "@capacitor/core": "^5.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
     "@capacitor/filesystem": "file:./filesystem",
-    "@capacitor/ios": "^5.0.4",
-    "@capacitor/keyboard": "^5.0.4",
-    "@capacitor/preferences": "^5.0.6",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/preferences": "^6.0.0",
     "@wordpress/block-editor": "^13.0.0",
     "@wordpress/block-library": "^9.0.0",
     "@wordpress/blocks": "^13.0.0",
