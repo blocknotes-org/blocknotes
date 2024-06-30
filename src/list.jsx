@@ -92,7 +92,7 @@ async function refresh({ selectedFolderURL, items, setItems, setItem }) {
 
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [view, setView] = useState(INITIAL_VIEW);
-	const [currentId, setCurrentId] = useState();
+	const [selection, setSelection] = useState([]);
 	const [items, setItems] = useState([]);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -142,7 +142,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 
 	useEffect(() => {
 		setItems([]);
-		setCurrentId();
+		setSelection([]);
 		getPaths('', selectedFolderURL)
 			.then((_paths) => {
 				const pathObjects = _paths.map((_file) => ({
@@ -158,7 +158,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				setItems(filtered);
 				const nonSelectedPaths = [...filtered];
 				const currentPath = nonSelectedPaths.shift();
-				setCurrentId(currentPath.id);
+				setSelection([currentPath.id]);
 				nonSelectedPaths.forEach((item) => {
 					Filesystem.readFile({
 						path: item.path,
@@ -175,7 +175,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 			.catch(() => {
 				setSelectedFolderURL();
 			});
-	}, [selectedFolderURL, setSelectedFolderURL, setCurrentId, setItem]);
+	}, [selectedFolderURL, setSelectedFolderURL, setSelection, setItem]);
 
 	const [observer, { width }] = useResizeObserver();
 
@@ -206,12 +206,12 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		};
 	}, [currentRevisionRef, selectedFolderURL, setItem]);
 
-	if (!currentId) {
+	if (!selection.length) {
 		return null;
 	}
 
 	const isWide = width > 900;
-	const currentItem = items.find(({ id }) => id === currentId);
+	const currentItem = items.find(({ id }) => id === selection[0]);
 	const animation = {
 		x: isSidebarOpen ? 300 : -1,
 		width: isSidebarOpen && isWide ? 'calc(100% - 300px)' : '100%',
@@ -295,9 +295,9 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 																)
 															);
 														if (nextItem) {
-															setCurrentId(
-																nextItem.id
-															);
+															setSelection([
+																nextItem.id,
+															]);
 														}
 														onClose();
 													}}
@@ -335,8 +335,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					setView={setView}
 					items={items}
 					setItem={setItem}
-					currentId={currentId}
-					setCurrentId={setCurrentId}
+					selection={selection}
+					setSelection={setSelection}
 					setIsSidebarOpen={setIsSidebarOpen}
 					isWide={isWide}
 				/>
@@ -411,7 +411,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								};
 
 								setItems([newItem, ...items]);
-								setCurrentId(newItem.id);
+								setSelection([newItem.id]);
 							}}
 						/>
 					)}
@@ -460,7 +460,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							onClick={() => {
 								const newItem = { id: uuidv4(), tags: [] };
 								setItems([newItem, ...items]);
-								setCurrentId(newItem.id);
+								setSelection([newItem.id]);
 							}}
 						/>
 					</ToolbarGroup>
@@ -491,7 +491,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 										trash: true,
 									}).then(() => {
 										const nextItems = items.filter(
-											(_item) => _item.id !== currentId
+											(_item) => _item.id !== selection[0]
 										);
 										if (!nextItems.length) {
 											nextItems.push({
@@ -499,7 +499,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 												tags: [],
 											});
 										}
-										setCurrentId(nextItems[0].id);
+										setSelection([nextItems[0].id]);
 										setItems(nextItems);
 										setIsSidebarOpen(true);
 									});

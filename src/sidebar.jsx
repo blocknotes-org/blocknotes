@@ -1,6 +1,6 @@
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { getTitleFromBlocks, stripTags } from './read-write';
 
 function stripHTML(html) {
@@ -97,8 +97,8 @@ export default function SiderBar({
 	view,
 	setView,
 	items,
-	currentId,
-	setCurrentId,
+	selection,
+	setSelection,
 	setIsSidebarOpen,
 	isWide,
 }) {
@@ -111,19 +111,10 @@ export default function SiderBar({
 
 	const filteredItems = filterItems(items, view);
 
-	// Temporary hack until we can control selection in data views.
-	useEffect(() => {
-		const button = document.getElementById('view-list-0-' + currentId);
-
-		if (button?.getAttribute('aria-pressed') === 'false') {
-			const { activeElement } = document;
-			button.click();
-			activeElement.focus();
-		}
-	}, [currentId]);
-
 	return (
 		<DataViews
+			selection={selection}
+			setSelection={setSelection}
 			data={filteredItems}
 			view={view}
 			fields={[
@@ -212,8 +203,6 @@ export default function SiderBar({
 			}}
 			onSelectionChange={([item]) => {
 				if (item) {
-					setCurrentId(item.id);
-
 					if (!isWide) {
 						setIsSidebarOpen(false);
 					}
