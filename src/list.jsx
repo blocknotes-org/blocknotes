@@ -20,6 +20,7 @@ import {
 	cog,
 	update,
 	backup,
+	capturePhoto,
 } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
@@ -36,6 +37,10 @@ import {
 import Editor from './editor';
 import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
 import { Revisions } from './revisions';
+import { Camera, CameraResultType } from '@capacitor/camera';
+import { Ocr } from '@capacitor-community/image-to-text';
+import { createBlock, serialize } from '@wordpress/blocks';
+import { Capacitor } from '@capacitor/core';
 
 function getInitialSelection({ path, blocks }) {
 	if (path) {
@@ -369,6 +374,47 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							setIsModalOpen(true);
 						}}
 					/>
+					{Capacitor.getPlatform() !== 'web' && (
+						<Button
+							icon={capturePhoto}
+							label={__('Scan Document')}
+							onClick={async () => {
+								const photo = await Camera.getPhoto({
+									resultType: CameraResultType.Uri,
+								});
+								const data = await Ocr.detectText({
+									filename: photo.path,
+								});
+
+								if (!data.textDetections.length) {
+									return;
+								}
+
+								const blocks = [];
+
+								for (const detection of data.textDetections) {
+									const block = createBlock(
+										'core/paragraph',
+										{
+											content: detection.text,
+										}
+									);
+									blocks.push(block);
+								}
+
+								const text = serialize(blocks);
+								const newItem = {
+									id: uuidv4(),
+									tags: getTagsFromText(text),
+									blocks,
+									text,
+								};
+
+								setItems([newItem, ...items]);
+								setCurrentId(newItem.id);
+							}}
+						/>
+					)}
 					{isModalOpen && (
 						<Modal
 							title={__('Settings')}
@@ -415,7 +461,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								const newItem = { id: uuidv4(), tags: [] };
 								setItems([newItem, ...items]);
 								setCurrentId(newItem.id);
-								setItem(currentId, { blocks: null });
 							}}
 						/>
 					</ToolbarGroup>
@@ -501,7 +546,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					}}
 					className={isSidebarOpen && !isWide ? 'has-overlay' : ''}
 				>
-					{currentItem.blocks && (
+					{currentItem && currentItem.blocks && (
 						<Editor
 							// Remount the editor when the item changes.
 							key={currentItem.id}
@@ -515,14 +560,16 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						/>
 					)}
 				</div>
-				{((ReadWrite) => (
-					<ReadWrite
-						item={currentItem}
-						setItem={setItem}
-						selectedFolderURL={selectedFolderURL}
-						currentRevisionRef={currentRevisionRef}
-					/>
-				))(currentItem.blocks ? Write : Read)}
+				{currentItem &&
+					((ReadWrite) => (
+						<ReadWrite
+							key={currentItem.id}
+							item={currentItem}
+							setItem={setItem}
+							selectedFolderURL={selectedFolderURL}
+							currentRevisionRef={currentRevisionRef}
+						/>
+					))(currentItem.blocks ? Write : Read)}
 			</motion.div>
 		</>
 	);

@@ -67,5 +67,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Blocknotes needs access to your camera to take pictures of documents.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Blocknotes needs access to your photo library to save the captured pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Blocknotes needs access to your photo library to select pictures.</string>
 </dict>
 </plist>

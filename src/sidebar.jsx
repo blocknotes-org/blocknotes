@@ -97,7 +97,6 @@ export default function SiderBar({
 	view,
 	setView,
 	items,
-	setItem,
 	currentId,
 	setCurrentId,
 	setIsSidebarOpen,
@@ -214,7 +213,7 @@ export default function SiderBar({
 			onSelectionChange={([item]) => {
 				if (item) {
 					setCurrentId(item.id);
-					setItem(currentId, { blocks: null });
+
 					if (!isWide) {
 						setIsSidebarOpen(false);
 					}
