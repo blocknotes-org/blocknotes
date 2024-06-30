@@ -20,6 +20,8 @@ import '@wordpress/components/build-style/style.css';
 import './app.css';
 
 import './block-types/auto-generated.js';
+import './blocks/list/init';
+import './blocks/list-item/init';
 
 setDefaultBlockName('core/paragraph');
 

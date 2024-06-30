@@ -5,3 +5,25 @@ body {
 	font-size: 20px;
 	padding: 1px 1em;
 }
+
+[data-type="core/checklist"] {
+	/* padding-left: 0; */
+}
+
+[data-type="core/checklist-item"] {
+	margin-top: 5px;
+}
+
+[data-type="core/checklist-item"] .components-checkbox-control__input[type=checkbox]:indeterminate {
+	filter: grayscale(1);
+}
+
+[data-type="core/checklist-item"] .components-checkbox-control__input[type=checkbox]:indeterminate + svg {
+	filter: grayscale(1);
+}
+
+[data-type="core/checklist-item"] > .components-checkbox-control {
+	position: absolute;
+    transform: translate(-100%);
+	top: 0;
+}
