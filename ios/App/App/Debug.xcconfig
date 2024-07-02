@@ -1,3 +1,6 @@
 #include "Base.xcconfig"
 
 CODE_SIGN_IDENTITY = Apple Development
+
+PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = match Development com.ellavandurpe.blocknotes
+PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*] = match Development com.ellavandurpe.blocknotes catalyst
