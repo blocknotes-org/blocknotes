@@ -37,6 +37,8 @@ USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
 import 'lib/helpers.rb'
 
 before_all do
+  setup_ci if runner.current_platform == :ios
+
   Dotenv.load(USER_ENV_FILE_PATH)
 end
 
@@ -98,20 +100,31 @@ platform :ios do
   end
 
   desc 'Sets up code signing'
-  lane :set_up_code_signing do |options|
-    require_env_vars!(*ASC_API_KEY_ENV_VARS, *MATCH_ENV_VARS)
+  lane :set_up_code_signing_app_store do |readonly: true|
+    _set_up_code_signing(type: 'appstore', readonly: readonly)
+  end
 
-    setup_ci
+  lane :set_up_code_signing_deveploment do |readonly: true|
+    _set_up_code_signing(type: 'development', readonly: readonly)
+  end
+
+  def _set_up_code_signing(type:, readonly: true)
+    require_env_vars!(*MATCH_ENV_VARS)
+
+    unless readonly
+      require_env_vars!(*ASC_API_KEY_ENV_VARS)
+      api_key = app_store_connect_api_key
+    end
 
     shared_options = {
-      type: 'appstore',
+      type: type,
       app_identifier: BUNDLE_IDENTIFIER,
       team_id: 'PZYM8XX95Q',
       storage_mode: 's3',
       s3_region: 'us-east-2',
       s3_bucket: 'a8c-fastlane-match',
-      readonly: options.fetch(:readonly, true),
-      api_key: app_store_connect_api_key
+      readonly: readonly,
+      api_key: api_key
     }
 
     sync_code_signing(
