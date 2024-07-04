@@ -20,7 +20,7 @@ import {
 	cog,
 	update,
 	backup,
-	capturePhoto,
+	// capturePhoto,
 } from '@wordpress/icons';
 import { useResizeObserver } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
@@ -37,10 +37,10 @@ import {
 import Editor from './editor';
 import Sidebar, { filterItems, INITIAL_VIEW } from './sidebar.jsx';
 import { Revisions } from './revisions';
-import { Camera, CameraResultType } from '@capacitor/camera';
-import { Ocr } from '@capacitor-community/image-to-text';
-import { createBlock, serialize } from '@wordpress/blocks';
-import { Capacitor } from '@capacitor/core';
+// import { Camera, CameraResultType } from '@capacitor/camera';
+// import { Ocr } from '@capacitor-community/image-to-text';
+// import { createBlock, serialize } from '@wordpress/blocks';
+// import { Capacitor } from '@capacitor/core';
 
 function getInitialSelection({ path, blocks }) {
 	if (path) {
@@ -374,7 +374,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							setIsModalOpen(true);
 						}}
 					/>
-					{Capacitor.getPlatform() !== 'web' && (
+					{/* {Capacitor.getPlatform() !== 'web' && (
 						<Button
 							icon={capturePhoto}
 							label={__('Scan Document')}
@@ -414,7 +414,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								setSelection([newItem.id]);
 							}}
 						/>
-					)}
+					)} */}
 					{isModalOpen && (
 						<Modal
 							title={__('Settings')}

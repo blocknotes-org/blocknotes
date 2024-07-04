@@ -17,9 +17,7 @@
     "regenerate-blocks": "node ./src/block-types/generate.js"
   },
   "dependencies": {
-    "@capacitor-community/image-to-text": "^6.0.1",
     "@capacitor/app": "^6.0.0",
-    "@capacitor/camera": "^6.0.1",
     "@capacitor/core": "^6.1.0",
     "@capacitor/filesystem": "file:./filesystem",
     "@capacitor/ios": "^6.1.0",

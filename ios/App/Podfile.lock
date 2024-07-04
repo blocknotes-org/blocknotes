@@ -3,10 +3,6 @@ PODS:
     - CapacitorCordova
   - CapacitorApp (6.0.0):
     - Capacitor
-  - CapacitorCamera (6.0.1):
-    - Capacitor
-  - CapacitorCommunityImageToText (6.0.1):
-    - Capacitor
   - CapacitorCordova (6.1.0)
   - CapacitorFilesystem (5.0.4):
     - Capacitor
@@ -18,8 +14,6 @@ PODS:
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
-  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
-  - "CapacitorCommunityImageToText (from `../../node_modules/@capacitor-community/image-to-text`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - CapacitorFilesystem (from `../../filesystem`)
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
@@ -30,10 +24,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorApp:
     :path: "../../node_modules/@capacitor/app"
-  CapacitorCamera:
-    :path: "../../node_modules/@capacitor/camera"
-  CapacitorCommunityImageToText:
-    :path: "../../node_modules/@capacitor-community/image-to-text"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -46,13 +36,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Capacitor: 187bd7847b6f71467015a20200a1a071be3e5f14
   CapacitorApp: 9d53aec7101f7b030a950c5bdc4df8612576b279
-  CapacitorCamera: 3b77b3e8311b98220de65e63445c0e4d0b30ce3a
-  CapacitorCommunityImageToText: 8cd893c6ffb35ba7809cc3be277a8cf811d08ff3
   CapacitorCordova: be703980ca797f847c3356f78fa175d21c8330c2
   CapacitorFilesystem: e1bdfab09b95b181c844c16abcfda45ec8e8ed6b
   CapacitorKeyboard: 5f32a712adf41e07a61caafb82cf29fb6d8ba123
   CapacitorPreferences: 72909b165bc7807103778ddbb86d5d8ce06abf71
 
-PODFILE CHECKSUM: 78940f0fc684b1b0a2e95c1ee39da95d614b87bb
+PODFILE CHECKSUM: 819cd761e49bf9831ac5aacdf49e6c69a9d83b31
 
 COCOAPODS: 1.15.2
