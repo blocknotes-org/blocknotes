@@ -101,11 +101,11 @@ platform :ios do
 
   desc 'Sets up code signing'
   lane :set_up_code_signing_app_store do |readonly: true|
-    _set_up_code_signing(type: 'appstore', readonly: readonly)
+    set_up_code_signing(type: 'appstore', readonly: readonly)
   end
 
   lane :set_up_code_signing_deveploment do |readonly: true|
-    _set_up_code_signing(type: 'development', readonly: readonly)
+    set_up_code_signing(type: 'development', readonly: readonly)
   end
 end
 
@@ -121,7 +121,7 @@ def bump_build_number
   )
 end
 
-def _set_up_code_signing(type:, readonly: true)
+def set_up_code_signing(type:, readonly: true)
   require_env_vars!(*MATCH_ENV_VARS)
 
   unless readonly
