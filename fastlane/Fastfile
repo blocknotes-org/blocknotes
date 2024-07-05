@@ -37,6 +37,8 @@ USER_ENV_FILE_PATH = File.join(Dir.home, '.a8c-apps', ENV_FILE_NAME)
 import 'lib/helpers.rb'
 
 before_all do
+  setup_ci if runner.current_platform == :ios
+
   Dotenv.load(USER_ENV_FILE_PATH)
 end
 
@@ -64,7 +66,7 @@ platform :ios do
 
   desc 'Builds the app for iOS and Mac Catalyst App Store distribution'
   lane :build_for_app_store do |options|
-    set_up_code_signing unless options[:skip_code_signing_setup]
+    set_up_code_signing_app_store unless options[:skip_code_signing_setup]
 
     shared_options = {
       scheme: 'Blocknotes',
@@ -97,34 +99,17 @@ platform :ios do
     )
   end
 
-  desc 'Sets up code signing'
-  lane :set_up_code_signing do |options|
-    require_env_vars!(*ASC_API_KEY_ENV_VARS, *MATCH_ENV_VARS)
+  lane :set_up_code_signing do |readonly: true|
+    set_up_code_signing_app_store(readonly: readonly)
+    set_up_code_signing_deveploment(readonly: readonly)
+  end
 
-    setup_ci
+  lane :set_up_code_signing_app_store do |readonly: true|
+    set_up_code_signing(type: 'appstore', readonly: readonly)
+  end
 
-    shared_options = {
-      type: 'appstore',
-      app_identifier: BUNDLE_IDENTIFIER,
-      team_id: 'PZYM8XX95Q',
-      storage_mode: 's3',
-      s3_region: 'us-east-2',
-      s3_bucket: 'a8c-fastlane-match',
-      readonly: options.fetch(:readonly, true),
-      api_key: app_store_connect_api_key
-    }
-
-    sync_code_signing(
-      platform: 'ios',
-      **shared_options
-    )
-    sync_code_signing(
-      platform: 'catalyst',
-      # Without this, we'll get:
-      # error: exportArchive: Provisioning profile "match AppStore com.ellavandurpe.blocknotes catalyst" doesn't include signing certificate "3rd Party Mac Developer Installer: Automattic, Inc. (PZYM8XX95Q)".
-      additional_cert_types: 'mac_installer_distribution',
-      **shared_options
-    )
+  lane :set_up_code_signing_deveploment do |readonly: true|
+    set_up_code_signing(type: 'development', readonly: readonly)
   end
 end
 
@@ -137,5 +122,37 @@ def bump_build_number
   increment_build_number(
     xcodeproj: File.join(APP_FOLDER, 'App.xcodeproj'),
     build_number: latest_build_number + 1
+  )
+end
+
+def set_up_code_signing(type:, readonly: true)
+  require_env_vars!(*MATCH_ENV_VARS)
+
+  unless readonly
+    require_env_vars!(*ASC_API_KEY_ENV_VARS)
+    api_key = app_store_connect_api_key
+  end
+
+  shared_options = {
+    type: type,
+    app_identifier: BUNDLE_IDENTIFIER,
+    team_id: 'PZYM8XX95Q',
+    storage_mode: 's3',
+    s3_region: 'us-east-2',
+    s3_bucket: 'a8c-fastlane-match',
+    readonly: readonly,
+    api_key: api_key
+  }
+
+  sync_code_signing(
+    platform: 'ios',
+    **shared_options
+  )
+  sync_code_signing(
+    platform: 'catalyst',
+    # Without this, we'll get:
+    # error: exportArchive: Provisioning profile "match AppStore com.ellavandurpe.blocknotes catalyst" doesn't include signing certificate "3rd Party Mac Developer Installer: Automattic, Inc. (PZYM8XX95Q)".
+    additional_cert_types: 'mac_installer_distribution',
+    **shared_options
   )
 end
