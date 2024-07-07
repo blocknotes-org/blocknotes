@@ -67,3 +67,25 @@ async function load() {
 }
 
 load();
+
+async function updateThemeColor() {
+	const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+	const backgroundColor = window
+		.getComputedStyle(document.documentElement)
+		.getPropertyValue('--wp-components-color-background');
+	metaThemeColor.setAttribute('content', backgroundColor);
+
+	// try {
+	// 	const { StatusBar, Style } = await import('@capacitor/status-bar');
+	// 	if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+	// 		StatusBar.setStyle({ style: Style.Dark });
+	// 	} else {
+	// 		StatusBar.setStyle({ style: Style.Light });
+	// 	}
+	// } catch (e) {}
+}
+
+updateThemeColor();
+window
+	.matchMedia('(prefers-color-scheme: dark)')
+	.addEventListener('change', updateThemeColor);
