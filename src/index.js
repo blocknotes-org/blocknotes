@@ -17,6 +17,8 @@ import '@wordpress/block-editor/build-style/content.css';
 
 import '@wordpress/block-editor/build-style/style.css';
 import '@wordpress/components/build-style/style.css';
+import './light.css';
+import './dark.css';
 import './app.css';
 
 import './block-types/auto-generated.js';

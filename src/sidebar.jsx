@@ -140,7 +140,7 @@ export default function SiderBar({
 					enableSorting: false,
 					render({ item }) {
 						return (
-							<span style={{ opacity: 0.6 }}>
+							<span>
 								{getTitleFromText(item, true)}
 								{item.path?.endsWith('.icloud') && (
 									<em>{__('Offloaded')}</em>

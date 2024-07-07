@@ -437,7 +437,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				initial={animation}
 				animate={animation}
 				transition={{ ease: 'anticipate', duration: 0.2 }}
-				style={{ borderLeft: '1px solid #e0e0e0' }}
 			>
 				<div
 					id="select"

@@ -1,9 +1,15 @@
 body {
+	background: var(--wp-components-color-background);
+	color: var(--wp-components-color-foreground);
 	max-width: 600px;
 	margin: 100px auto;
 	font-family: Hoefler Text;
 	font-size: 20px;
 	padding: 1px 1em;
+}
+
+a {
+	color: var(--wp-components-color-accent);
 }
 
 [data-type="core/checklist"] {

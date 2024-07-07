@@ -1,3 +1,33 @@
+.components-accessible-toolbar .components-button.is-pressed::before, .components-toolbar .components-button.is-pressed::before {
+  background: var(--wp-components-color-background-inverted);
+}
+
+.components-modal__frame {
+  background: var(--wp-components-color-background);
+}
+
+.components-dropdown__content .components-menu-group + .components-menu-group {
+  border-top: 1px solid var(--blocknotes-border-color);
+}
+
+.components-modal__content.has-scrolled-content:not(.hide-header) .components-modal__header {
+  border-bottom-color: var(--blocknotes-border-color);
+}
+
+.components-popover__content {
+  background: var(--wp-components-color-background);
+  box-shadow: 0 0 0 1px var(--blocknotes-border-color), 0 0.7px 1px var(--blocknotes-border-color), 0 1.2px 1.7px -0.2px var(--blocknotes-border-color), 0 2.3px 3.3px -0.5px var(--blocknotes-border-color);
+}
+
+.block-editor-block-list__empty-block-inserter .block-editor-inserter__toggle.components-button.has-icon {
+  background: var(--wp-components-color-background-inverted);
+  color: var(--wp-components-color-foreground-inverted);
+}
+
+.components-autocomplete__result.components-button.is-selected {
+  color: var(--wp-components-color-foreground-inverted);
+}
+
 html,
 body {
   padding: 0;
@@ -14,13 +44,8 @@ body {
 html {
   /* margin-top: env(safe-area-inset-top); */
   height: 100%;
-  background: white;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    filter: invert(.9) hue-rotate(180deg);
-  }
+  background: var(--wp-components-color-background);
+  color: var(--wp-components-color-foreground);
 }
 
 body,
@@ -46,7 +71,7 @@ body,
 }
 
 .dataviews-filters__view-actions {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--blocknotes-border-color);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -64,7 +89,7 @@ body,
   position: sticky;
   bottom: 0;
   padding: 5px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--blocknotes-border-color);
   padding-bottom: calc(env(safe-area-inset-bottom) + 5px);
 }
 
@@ -77,8 +102,8 @@ body,
 }
 
 .dataviews-view-list__item[aria-pressed="true"] {
-  background-color: #3858e9;
-  color: white;
+  background-color: var(--wp-components-color-accent);
+  color: var(--wp-components-color-accent-inverted);
 }
 
 .dataviews-view-list__item {
@@ -116,9 +141,10 @@ ul.dataviews-view-list li {
 
 #content {
   height: 100%;
-  background: white;
+  background: var(--wp-components-color-background);
   position: relative;
   z-index: 1;
+  border-left: 1px solid var(--blocknotes-border-color);
 }
 
 #select {
@@ -133,7 +159,8 @@ ul.dataviews-view-list li {
   justify-content: start;
   align-items: end;
   border: none;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--blocknotes-border-color);
+  border-radius: 0;
   z-index: 1;
   overflow-x: auto;
 }
@@ -166,7 +193,7 @@ ul.dataviews-view-list li {
 }
 
 .select-toolbar .components-toolbar {
-  border-color: #e0e0e0;
+  border-color: var(--blocknotes-border-color);
   border-width: 0 1px 0 0;
   background-color: transparent;
 }
@@ -196,7 +223,7 @@ iframe[name="editor-canvas"] {
 
 .components-button.components-menu-item__button.is-active {
   background: var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9));
-  color: white;
+  color: var(--wp-components-color-accent-inverted, #fff);
 }
 
 .select-toolbar,
@@ -204,14 +231,14 @@ iframe[name="editor-canvas"] {
 #sidebar-bottom,
 /* .is-unstyled ? */
 .components-dropdown__content div.components-popover__content {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  background-color: rgba(255, 255, 255, 0.85);
+  /* backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px); */
+  background-color: var(--wp-components-color-background);
 }
 
 .components-dropdown__content div.components-popover__content {
   box-shadow: none;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--blocknotes-border-color);
 }
 
 .select-toolbar .blocknotes-select button {
@@ -237,7 +264,7 @@ iframe[name="editor-canvas"] {
 }
 
 .select-toolbar .block-editor-block-contextual-toolbar .block-editor-block-toolbar .components-toolbar-group {
-  border-color: #e0e0e0;
+  border-color: var(--blocknotes-border-color);
 }
 
 .select-toolbar .block-editor-block-mover:not(.is-horizontal) .block-editor-block-mover__move-button-container .block-editor-block-mover-button.is-down-button svg {

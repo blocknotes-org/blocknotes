@@ -1,0 +1,24 @@
+@media (prefers-color-scheme: dark) {
+:root {
+    --wp-admin-theme-color: #7f99ff;
+    --wp-admin-theme-color--rgb: 56, 88, 233;
+    --wp-admin-theme-color-darker-10: #8ba8ff;
+    --wp-admin-theme-color-darker-10--rgb: 33, 69, 230;
+    --wp-admin-theme-color-darker-20: #96b1ff;
+    --wp-admin-theme-color-darker-20--rgb: 24, 58, 214;
+    --wp-admin-border-width-focus: 2px;
+
+    --wp-components-color-accent: #7f99ff;
+    --wp-components-color-accent-darker-10: #8ba8ff;
+    --wp-components-color-accent-darker-20: #96b1ff;
+    --wp-components-color-accent-inverted: #191919;
+    --wp-components-color-background: #191919;
+    --wp-components-color-background-inverted: #cecece;
+    --wp-components-color-foreground: #cecece;
+    --wp-components-color-foreground-inverted: #191919;
+
+    --wp-components-color-gray-100: #252525;
+
+    --blocknotes-border-color: #323232;
+}
+}

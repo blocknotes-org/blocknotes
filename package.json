@@ -14,7 +14,8 @@
     "lint": "eslint src tests --ext .js,.jsx",
     "prepare": "husky install",
     "regenerate-icons": "./src/assets/icon/generate.sh",
-    "regenerate-blocks": "node ./src/block-types/generate.js"
+    "regenerate-blocks": "node ./src/block-types/generate.js",
+    "regenerate-dark": "node ./src/dark-generate.js"
   },
   "dependencies": {
     "@capacitor/app": "^6.0.0",
@@ -51,6 +52,7 @@
     "patch-package": "^8.0.0",
     "prettier": "^3.3.2",
     "sharp-cli": "^4.2.0",
+    "tinycolor2": "^1.6.0",
     "vite": "^5.3.2"
   },
   "peerDependencies": {

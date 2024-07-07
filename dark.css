@@ -1,0 +1,22 @@
+:root {
+    --wp-admin-theme-color: #1636c7;
+    --wp-admin-theme-color--rgb: 56, 88, 233;
+    --wp-admin-theme-color-darker-10: #193dde;
+    --wp-admin-theme-color-darker-10--rgb: 33, 69, 230;
+    --wp-admin-theme-color-darker-20: #294be7;
+    --wp-admin-theme-color-darker-20--rgb: 24, 58, 214;
+    --wp-admin-border-width-focus: 2px;
+
+    --wp-components-color-accent: #1636c7;
+    --wp-components-color-accent-darker-10: #193dde;
+    --wp-components-color-accent-darker-20: #294be7;
+    --wp-components-color-accent-inverted: #fff;
+    --wp-components-color-background: #fff;
+    --wp-components-color-background-inverted: #e1e1e1;
+    --wp-components-color-foreground: #e1e1e1;
+    --wp-components-color-foreground-inverted: #fff;
+
+    --wp-components-color-gray-100: #0f0f0f;
+
+    --blocknotes-border-color: #1f1f1f;
+}
