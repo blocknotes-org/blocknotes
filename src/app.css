@@ -37,6 +37,10 @@ body {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif
 }
 
+a {
+	color: var(--wp-components-color-accent);
+}
+
 * {
   box-sizing: border-box;
 }
