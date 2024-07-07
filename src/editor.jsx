@@ -26,11 +26,11 @@ import componentsStyle from '@wordpress/components/build-style/style.css?raw';
 import contentStyle from './content.css?raw';
 
 const contentStyles = [
-	light,
-	dark,
 	componentsStyle,
 	blockLibraryContentStyle,
 	blockEditorContentStyle,
+	light,
+	dark,
 	contentStyle,
 ];
 const canvasStyles = contentStyles.map((css) => ({ css }));
