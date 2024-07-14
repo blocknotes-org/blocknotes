@@ -79,6 +79,11 @@ async function refresh({
 		}));
 		for (const id of selection) {
 			const pathObject = pathObjects.find((item) => item.id === id);
+
+			if (!pathObject) {
+				continue;
+			}
+
 			const previousState = items.find(
 				(item) => item.id === pathObject.id
 			);
@@ -124,10 +129,6 @@ async function refresh({
 				setItem(id, _update);
 			}
 		});
-	} catch (error) {
-		// eslint-disable-next-line no-alert
-		window.alert(error);
-		setIsLoading(false);
 	} finally {
 		setIsLoading(false);
 	}
