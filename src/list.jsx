@@ -87,7 +87,8 @@ async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
 				pathObject.blocks = previousState.blocks;
 			}
 		}
-		setItems(pathObjects);
+		const unsaved = items.filter((item) => !item.path);
+		setItems([...unsaved, ...pathObjects]);
 	} catch (error) {
 		// eslint-disable-next-line no-alert
 		window.alert(error);
