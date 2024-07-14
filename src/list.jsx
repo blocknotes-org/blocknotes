@@ -218,7 +218,6 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					selectedFolderURL,
 					items: itemsRef.current,
 					setItems,
-					setItem,
 					setIsLoading,
 				});
 			}
@@ -372,7 +371,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								selectedFolderURL,
 								items: itemsRef.current,
 								setItems,
-								setItem,
+								setIsLoading,
 							});
 						}}
 					/>
