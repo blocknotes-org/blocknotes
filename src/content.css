@@ -8,6 +8,15 @@ body {
 	padding: 1px 1em;
 }
 
+/* Disable scrollbars, there's a glitch in Safari with the content animation. */
+* {
+	scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+	display: none;
+}
+
 a {
 	color: var(--wp-components-color-accent);
 }
