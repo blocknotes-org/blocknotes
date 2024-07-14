@@ -64,6 +64,10 @@ body,
   font-size: 1em;
 }
 
+.components-popover.is-expanded {
+  top: env(safe-area-inset-top);
+}
+
 #sidebar {
   position: absolute;
   top: env(safe-area-inset-top);
