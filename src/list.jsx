@@ -10,6 +10,7 @@ import {
 	MenuGroup,
 	SearchControl,
 	Modal,
+	Spinner,
 } from '@wordpress/components';
 import {
 	addCard,
@@ -95,10 +96,13 @@ async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
 	}
 }
 
+const EMPTY_SELECTION = [];
+const EMPTY_ITEMS = [];
+
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [view, setView] = useState(INITIAL_VIEW);
-	const [selection, setSelection] = useState([]);
-	const [items, setItems] = useState([]);
+	const [selection, setSelection] = useState(EMPTY_SELECTION);
+	const [items, setItems] = useState(EMPTY_ITEMS);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
@@ -155,8 +159,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	}, [isSidebarOpen, setIsSidebarOpen]);
 
 	useEffect(() => {
-		setItems([]);
-		setSelection([]);
+		setItems(EMPTY_ITEMS);
+		setSelection(EMPTY_SELECTION);
 		getPaths('', selectedFolderURL)
 			.then((_paths) => {
 				const pathObjects = _paths.map((_file) => ({
@@ -173,17 +177,23 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				const nonSelectedPaths = [...filtered];
 				const currentPath = nonSelectedPaths.shift();
 				setSelection([currentPath.id]);
-				nonSelectedPaths.forEach((item) => {
-					Filesystem.readFile({
-						path: item.path,
-						directory: selectedFolderURL,
-						encoding: Encoding.UTF8,
-					}).then((__file) => {
-						setItem(item.id, {
+				const updates = new Map();
+				queueMicrotask(async () => {
+					for (const item of nonSelectedPaths) {
+						const __file = await Filesystem.readFile({
+							path: item.path,
+							directory: selectedFolderURL,
+							encoding: Encoding.UTF8,
+						});
+						updates.set(item.id, {
 							text: __file.data,
 							tags: getTagsFromText(__file.data),
 						});
-					});
+					}
+
+					for (const [id, _update] of updates) {
+						setItem(id, _update);
+					}
 				});
 			})
 			.catch(() => {
@@ -571,6 +581,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							}}
 						/>
 					)}
+					{currentItem && !currentItem.blocks && <Spinner />}
 				</div>
 				{currentItem &&
 					((ReadWrite) => (
