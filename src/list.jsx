@@ -58,36 +58,41 @@ function getInitialSelection({ path, blocks }) {
 	return { selectionStart: sel, selectionEnd: sel };
 }
 
-async function refresh({ selectedFolderURL, items, setItems, setItem }) {
-	await getPaths('', selectedFolderURL)
-		.then((_paths) => {
-			const pathObjects = _paths.map((_file) => ({
-				..._file,
-				mtime: +_file.mtime,
-				// Reuse the existing id if it exists.
-				id:
-					items.find((item) => item.path === _file.path)?.id ||
-					uuidv4(),
-				tags: [],
-			}));
-			setItems(pathObjects);
-			pathObjects.forEach((item) => {
-				Filesystem.readFile({
-					path: item.path,
-					directory: selectedFolderURL,
-					encoding: Encoding.UTF8,
-				}).then((__file) => {
-					setItem(item.id, {
-						text: __file.data,
-						tags: getTagsFromText(__file.data),
-					});
-				});
+async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
+	setIsLoading(true);
+	try {
+		const _paths = await getPaths('', selectedFolderURL);
+		const pathObjects = _paths.map((_file) => ({
+			..._file,
+			mtime: +_file.mtime,
+			// Reuse the existing id if it exists.
+			id: items.find((item) => item.path === _file.path)?.id || uuidv4(),
+			tags: [],
+		}));
+		for (const pathObject of pathObjects) {
+			const __file = await Filesystem.readFile({
+				path: pathObject.path,
+				directory: selectedFolderURL,
+				encoding: Encoding.UTF8,
 			});
-		})
-		.catch((error) => {
-			// eslint-disable-next-line no-alert
-			window.alert(error);
-		});
+			pathObject.text = __file.data;
+			pathObject.tags = getTagsFromText(__file.data);
+
+			const previousState = items.find(
+				(item) => item.id === pathObject.id
+			);
+
+			if (pathObject.text === previousState?.text) {
+				pathObject.blocks = previousState.blocks;
+			}
+		}
+		setItems(pathObjects);
+	} catch (error) {
+		// eslint-disable-next-line no-alert
+		window.alert(error);
+	} finally {
+		setIsLoading(false);
+	}
 }
 
 export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
@@ -97,7 +102,16 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 	const currentRevisionRef = useRef();
+
+	useEffect(() => {
+		if (isLoading) {
+			document.body.classList.add('is-loading');
+		} else {
+			document.body.classList.remove('is-loading');
+		}
+	}, [isLoading]);
 
 	const setItem = useCallback((id, item) => {
 		setItems((_items) =>
@@ -195,8 +209,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					items: itemsRef.current,
 					setItems,
 					setItem,
-				}).then(() => {
-					document.body.classList.remove('is-loading');
+					setIsLoading,
 				});
 			}
 		}
