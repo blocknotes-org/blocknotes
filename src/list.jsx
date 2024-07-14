@@ -59,7 +59,14 @@ function getInitialSelection({ path, blocks }) {
 	return { selectionStart: sel, selectionEnd: sel };
 }
 
-async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
+async function refresh({
+	selectedFolderURL,
+	items,
+	setItems,
+	setIsLoading,
+	selection,
+	setItem,
+}) {
 	setIsLoading(true);
 	try {
 		const _paths = await getPaths('', selectedFolderURL);
@@ -70,7 +77,18 @@ async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
 			id: items.find((item) => item.path === _file.path)?.id || uuidv4(),
 			tags: [],
 		}));
-		for (const pathObject of pathObjects) {
+		for (const id of selection) {
+			const pathObject = pathObjects.find((item) => item.id === id);
+			const previousState = items.find(
+				(item) => item.id === pathObject.id
+			);
+
+			// If loading previously failed, skip reading and don't block the
+			// UI.
+			if (!previousState || !previousState.blocks) {
+				continue;
+			}
+
 			const __file = await Filesystem.readFile({
 				path: pathObject.path,
 				directory: selectedFolderURL,
@@ -79,19 +97,37 @@ async function refresh({ selectedFolderURL, items, setItems, setIsLoading }) {
 			pathObject.text = __file.data;
 			pathObject.tags = getTagsFromText(__file.data);
 
-			const previousState = items.find(
-				(item) => item.id === pathObject.id
-			);
-
-			if (pathObject.text === previousState?.text) {
+			if (pathObject.text === previousState.text) {
 				pathObject.blocks = previousState.blocks;
 			}
 		}
 		const unsaved = items.filter((item) => !item.path);
 		setItems([...unsaved, ...pathObjects]);
+		queueMicrotask(async () => {
+			const nonSelectedPaths = pathObjects.filter(
+				(obj) => !selection.includes(obj.id)
+			);
+			const updates = new Map();
+			for (const item of nonSelectedPaths) {
+				const __file = await Filesystem.readFile({
+					path: item.path,
+					directory: selectedFolderURL,
+					encoding: Encoding.UTF8,
+				});
+				updates.set(item.id, {
+					text: __file.data,
+					tags: getTagsFromText(__file.data),
+				});
+			}
+
+			for (const [id, _update] of updates) {
+				setItem(id, _update);
+			}
+		});
 	} catch (error) {
 		// eslint-disable-next-line no-alert
 		window.alert(error);
+		setIsLoading(false);
 	} finally {
 		setIsLoading(false);
 	}
@@ -220,6 +256,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					items: itemsRef.current,
 					setItems,
 					setIsLoading,
+					selection,
+					setItem,
 				});
 			}
 		}
@@ -227,7 +265,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		return () => {
 			document.removeEventListener('visibilitychange', change);
 		};
-	}, [currentRevisionRef, selectedFolderURL, setItem]);
+	}, [currentRevisionRef, selectedFolderURL, setItem, selection]);
 
 	if (!selection.length) {
 		return null;
@@ -373,6 +411,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								items: itemsRef.current,
 								setItems,
 								setIsLoading,
+								selection,
+								setItem,
 							});
 						}}
 					/>
