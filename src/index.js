@@ -28,7 +28,10 @@ import './blocks/list-item/init';
 setDefaultBlockName('core/paragraph');
 
 export async function getSelectedFolderURL() {
-	const directoryHandle = await get('directoryHandle');
+	let directoryHandle;
+	try {
+		directoryHandle = await get('directoryHandle');
+	} catch (e) {}
 	if (directoryHandle) {
 		return directoryHandle;
 	}
