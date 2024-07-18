@@ -478,7 +478,7 @@ public class FilesystemPlugin: CAPPlugin, UIDocumentPickerDelegate {
                 call.reject("Failed to create bookmark for directory. \(error.localizedDescription)")
             }
         } else {
-            call.reject("No iCloud directory")
+            call.reject("No iCloud directory found. Please sign in to iCloud.")
         }
     }
 
