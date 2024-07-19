@@ -1,6 +1,10 @@
-body {
+html {
 	background: var(--wp-components-color-background);
 	color: var(--wp-components-color-foreground);
+}
+
+body {
+	background: transparent;
 	max-width: 600px;
 	margin: 100px auto;
 	font-family: Hoefler Text;
