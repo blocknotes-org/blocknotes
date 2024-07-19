@@ -33,7 +33,13 @@ const contentStyles = [
 	dark,
 	contentStyle,
 ];
-const canvasStyles = contentStyles.map((css) => ({ css }));
+
+const settings = {
+	hasFixedToolbar: true,
+	__unstableResolvedAssets: {
+		styles: contentStyles.map((css) => `<style>${css}</style>`).join(''),
+	},
+};
 
 export default function Editor({ initialState, setBlocks }) {
 	// To do: lift up and keep track of history for all notes.
@@ -51,7 +57,7 @@ export default function Editor({ initialState, setBlocks }) {
 				setValue({ blocks, selection }, false);
 				setBlocks(blocks);
 			}}
-			settings={{ hasFixedToolbar: true }}
+			settings={settings}
 		>
 			{document.getElementById('block-toolbar') &&
 				createPortal(
@@ -95,7 +101,7 @@ export default function Editor({ initialState, setBlocks }) {
 					}
 				}}
 			>
-				<BlockCanvas height="100%" styles={canvasStyles} />
+				<BlockCanvas height="100%" />
 			</div>
 		</BlockEditorProvider>
 	);
