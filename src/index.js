@@ -71,24 +71,35 @@ async function load() {
 
 load();
 
-async function updateThemeColor() {
-	const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-	const backgroundColor = window
-		.getComputedStyle(document.documentElement)
-		.getPropertyValue('--wp-components-color-background');
-	metaThemeColor.setAttribute('content', backgroundColor);
+(async () => {
+	let StatusBar, Style;
 
-	// try {
-	// 	const { StatusBar, Style } = await import('@capacitor/status-bar');
-	// 	if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-	// 		StatusBar.setStyle({ style: Style.Dark });
-	// 	} else {
-	// 		StatusBar.setStyle({ style: Style.Light });
-	// 	}
-	// } catch (e) {}
-}
+	if (import.meta.env.MODE !== 'web') {
+		const module = await import('@capacitor/status-bar');
+		StatusBar = module.StatusBar;
+		Style = module.Style;
+	}
 
-updateThemeColor();
-window
-	.matchMedia('(prefers-color-scheme: dark)')
-	.addEventListener('change', updateThemeColor);
+	async function updateThemeColor() {
+		const metaThemeColor = document.querySelector(
+			'meta[name="theme-color"]'
+		);
+		const backgroundColor = window
+			.getComputedStyle(document.documentElement)
+			.getPropertyValue('--wp-components-color-background');
+		metaThemeColor.setAttribute('content', backgroundColor);
+
+		if (import.meta.env.MODE !== 'web') {
+			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				StatusBar.setStyle({ style: Style.Dark });
+			} else {
+				StatusBar.setStyle({ style: Style.Light });
+			}
+		}
+	}
+
+	updateThemeColor();
+	window
+		.matchMedia('(prefers-color-scheme: dark)')
+		.addEventListener('change', updateThemeColor);
+})();

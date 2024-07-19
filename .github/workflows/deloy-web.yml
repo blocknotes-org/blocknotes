@@ -13,7 +13,7 @@ jobs:
       with:
         node-version: lts/*
     - run: npm ci
-    - run: npm run build
+    - run: npm run build:web
     - uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
