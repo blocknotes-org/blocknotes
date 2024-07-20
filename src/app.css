@@ -298,3 +298,17 @@ iframe[name="editor-canvas"] {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+.back-swiper {
+  position: absolute;
+  top: 0;
+  left: -10px;
+  bottom: 0;
+  width: 20px;
+  cursor: col-resize;
+}
+
+.back-swiper.is-open {
+  width: auto;
+  right: 0;
+}

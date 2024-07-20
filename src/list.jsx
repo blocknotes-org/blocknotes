@@ -23,7 +23,7 @@ import {
 	backup,
 	// capturePhoto,
 } from '@wordpress/icons';
-import { useResizeObserver } from '@wordpress/compose';
+import { useResizeObserver, useRefEffect } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
@@ -163,38 +163,63 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 		);
 	}, []);
 
-	useEffect(() => {
-		if (isSidebarOpen) {
-			return;
-		}
+	const backSwiperRef = useRefEffect(
+		(element) => {
+			element.addEventListener('touchstart', start);
+			element.addEventListener('mousedown', start);
 
-		let startTouchX = 0;
+			let startTime = 0;
+			let startX = 0;
+			let newX = 0;
 
-		document.addEventListener('touchstart', handleTouchStart);
-		document.addEventListener('touchmove', handleTouchMove);
-
-		function handleTouchStart(event) {
-			startTouchX = event.touches[0].clientX;
-		}
-
-		function handleTouchMove(event) {
-			if (event.touches.length > 1) {
-				return;
+			function start(event) {
+				startTime = Date.now();
+				startX = event.touches
+					? event.touches[0].clientX
+					: event.clientX;
+				move(event);
+				element.ownerDocument.addEventListener('touchmove', move);
+				element.ownerDocument.addEventListener('mousemove', move);
+				element.ownerDocument.addEventListener('touchend', end);
+				element.ownerDocument.addEventListener('mouseup', end);
 			}
 
-			const touchX = event.touches[0].clientX;
-			const deltaX = touchX - startTouchX;
+			function move(event) {
+				if (event.touches && event.touches.length > 1) {
+					setIsSidebarOpen(false);
+					return;
+				}
 
-			if (deltaX > 50 && startTouchX < 20) {
-				setIsSidebarOpen(true);
+				event.preventDefault();
+				newX = event.touches ? event.touches[0].clientX : event.clientX;
+				setIsSidebarOpen(newX);
 			}
-		}
 
-		return () => {
-			document.removeEventListener('touchstart', handleTouchStart);
-			document.removeEventListener('touchmove', handleTouchMove);
-		};
-	}, [isSidebarOpen, setIsSidebarOpen]);
+			function end(event) {
+				event.preventDefault();
+				// Less than 300ms is considered a click.
+				if (Date.now() - startTime < 300) {
+					setIsSidebarOpen(() => startX < 300 && newX - startX > 20);
+				} else {
+					setIsSidebarOpen((value) => value > 150);
+				}
+				element.ownerDocument.removeEventListener('touchmove', move);
+				element.ownerDocument.removeEventListener('mousemove', move);
+				element.ownerDocument.removeEventListener('touchend', end);
+				element.ownerDocument.removeEventListener('mouseup', end);
+			}
+
+			return () => {
+				element.removeEventListener('touchstart', start);
+				element.removeEventListener('mousedown', start);
+				element.ownerDocument.removeEventListener('touchmove', move);
+				element.ownerDocument.removeEventListener('mousemove', move);
+				element.ownerDocument.removeEventListener('touchend', end);
+				element.ownerDocument.removeEventListener('mouseup', end);
+			};
+		},
+		[setIsSidebarOpen]
+	);
 
 	useEffect(() => {
 		setItems(EMPTY_ITEMS);
@@ -274,10 +299,21 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 
 	const isWide = width > 900;
 	const currentItem = items.find(({ id }) => id === selection[0]);
-	const animation = {
-		x: isSidebarOpen ? 300 : -1,
-		width: isSidebarOpen && isWide ? 'calc(100% - 300px)' : '100%',
-	};
+	const animation =
+		typeof isSidebarOpen === 'boolean'
+			? {
+					x: isSidebarOpen ? 300 : -1,
+					width:
+						isSidebarOpen && isWide ? 'calc(100% - 300px)' : '100%',
+				}
+			: {
+					x: Math.min(isSidebarOpen, 300),
+					width:
+						isSidebarOpen && isWide
+							? `calc(100% - ${Math.min(isSidebarOpen, 300)}px)`
+							: '100%',
+				};
+	const duration = typeof isSidebarOpen === 'boolean' ? 0.1 : 0;
 
 	const allTags = items.reduce((acc, item) => {
 		item.tags.forEach((_tag) => {
@@ -500,7 +536,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 				id="content"
 				initial={animation}
 				animate={animation}
-				transition={{ ease: 'anticipate', duration: 0.2 }}
+				transition={{ ease: 'anticipate', duration }}
 			>
 				<div
 					id="select"
@@ -510,7 +546,9 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						<ToolbarButton
 							icon={archive}
 							label={__('Notes')}
-							isActive={isSidebarOpen}
+							isActive={
+								isSidebarOpen === true || isSidebarOpen > 150
+							}
 							onClick={() => {
 								setIsSidebarOpen(!isSidebarOpen);
 							}}
@@ -602,13 +640,17 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 						display: 'flex',
 						flexDirection: 'column',
 					}}
-					onClick={() => {
-						if (!isWide) {
-							setIsSidebarOpen(false);
-						}
-					}}
-					className={isSidebarOpen && !isWide ? 'has-overlay' : ''}
+					// className={hasOverlay ? 'has-overlay' : ''}
 				>
+					{(isSidebarOpen !== true || !isWide) && (
+						<div
+							ref={backSwiperRef}
+							className={
+								'back-swiper' +
+								(isSidebarOpen !== false ? ' is-open' : '')
+							}
+						></div>
+					)}
 					{currentItem && currentItem.blocks && (
 						<Editor
 							// Remount the editor when the item changes.
