@@ -34,13 +34,6 @@ const contentStyles = [
 	contentStyle,
 ];
 
-const settings = {
-	hasFixedToolbar: true,
-	__unstableResolvedAssets: {
-		styles: contentStyles.map((css) => `<style>${css}</style>`).join(''),
-	},
-};
-
 export default function Editor({ initialState, setBlocks }) {
 	// To do: lift up and keep track of history for all notes.
 	const { value, setValue, hasRedo, hasUndo, redo, undo } =
@@ -57,7 +50,14 @@ export default function Editor({ initialState, setBlocks }) {
 				setValue({ blocks, selection }, false);
 				setBlocks(blocks);
 			}}
-			settings={settings}
+			settings={{
+				hasFixedToolbar: true,
+				__unstableResolvedAssets: {
+					styles: contentStyles
+						.map((css) => `<style>${css}</style>`)
+						.join(''),
+				},
+			}}
 		>
 			{document.getElementById('block-toolbar') &&
 				createPortal(
