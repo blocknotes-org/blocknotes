@@ -28,6 +28,11 @@
   color: var(--wp-components-color-foreground-inverted);
 }
 
+.components-button.block-editor-block-types-list__item,
+.block-editor-block-types-list__item-icon {
+  color: var(--wp-components-color-foreground);
+}
+
 html,
 body {
   padding: 0;
@@ -117,7 +122,7 @@ body,
 .dataviews-view-list__item {
   padding: 10px 7px;
   border-radius: 2px;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 

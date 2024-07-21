@@ -18,6 +18,7 @@ import light from './light.css?raw';
 import dark from './dark.css?raw';
 
 import blockEditorContentStyle from '@wordpress/block-editor/build-style/content.css?raw';
+import blockLibraryCommonStyle from '@wordpress/block-library/build-style/common.css?raw';
 // eslint-disable-next-line import/no-unresolved
 import blockLibraryContentStyle from './block-types/auto-generated-content.css?raw';
 import componentsStyle from '@wordpress/components/build-style/style.css?raw';
@@ -28,6 +29,7 @@ import contentStyle from './content.css?raw';
 const contentStyles = [
 	componentsStyle,
 	blockLibraryContentStyle,
+	blockLibraryCommonStyle,
 	blockEditorContentStyle,
 	light,
 	dark,
