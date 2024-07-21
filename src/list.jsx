@@ -453,20 +453,7 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 							});
 						}}
 					/>
-					<Button
-						icon={file}
-						label={__('Pick Different Folder')}
-						onClick={async () => {
-							try {
-								const { url } =
-									await Filesystem.pickDirectory();
-								setSelectedFolderURL(url);
-							} catch (e) {
-								// eslint-disable-next-line no-alert
-								window.alert(e.message);
-							}
-						}}
-					/>
+
 					<Button
 						icon={cog}
 						label={__('Settings')}
@@ -517,16 +504,29 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 					)} */}
 					{isModalOpen && (
 						<Modal
-							title={__('Settings')}
+							title={__('Advanced Settings')}
 							onRequestClose={() => setIsModalOpen(false)}
 						>
+							<p>
+								{__(
+									'Use this to change the folder Blocknotes reads from. It could be a subfolder of your main folder. Note that with the iOS app, you can only pick the Blocknotes folder or a folder within.'
+								)}
+							</p>
 							<Button
-								onClick={() => {
-									setSelectedFolderURL();
-								}}
 								variant="secondary"
+								icon={file}
+								onClick={async () => {
+									try {
+										const { url } =
+											await Filesystem.pickDirectory();
+										setSelectedFolderURL(url);
+									} catch (e) {
+										// eslint-disable-next-line no-alert
+										window.alert(e.message);
+									}
+								}}
 							>
-								{__('Forget picked Folder')}
+								{__('Pick Different Folder')}
 							</Button>
 						</Modal>
 					)}

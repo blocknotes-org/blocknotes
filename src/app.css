@@ -288,7 +288,7 @@ iframe[name="editor-canvas"] {
   top: unset;
 }
 
-.revision-content {
+.components-modal__content {
   max-width: 600px;
 }
 
