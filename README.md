@@ -1,5 +1,12 @@
 # Blocknotes
 
+|Dark Note|Dark List|Light Note|Light List|
+|-|-|-|-|
+|![image](screenshots/Simulator%20Screenshot%20-%20iPhone%2011%20Pro%20Max%20-%202024-07-21%20at%2020.43.00.png)|![image](screenshots/Simulator%20Screenshot%20-%20iPhone%2011%20Pro%20Max%20-%202024-07-21%20at%2020.44.38.png)|![image](screenshots/Simulator%20Screenshot%20-%20iPhone%2011%20Pro%20Max%20-%202024-07-21%20at%2020.45.21.png)|![image](screenshots/Simulator%20Screenshot%20-%20iPhone%2011%20Pro%20Max%20-%202024-07-21%20at%2020.45.36.png)|
+
+![image](screenshots/mac-dark-padded.png)
+![image](screenshots/mac-light-padded.png)
+
 After cloning the repository and `npm install`, you can run `npm start` to run a
 local server with the dev files.
 
