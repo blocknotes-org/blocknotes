@@ -23,7 +23,9 @@ function App({
 				});
 			} else {
 				Preferences.remove({ key: 'selectedFolderURL' });
-				set('directoryHandle', selectedFolderURL);
+				try {
+					set('directoryHandle', selectedFolderURL);
+				} catch (e) {}
 			}
 		} else {
 			isMounted.current = true;
