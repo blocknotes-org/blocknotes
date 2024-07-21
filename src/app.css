@@ -317,3 +317,7 @@ iframe[name="editor-canvas"] {
   width: auto;
   right: 0;
 }
+
+.block-editor-block-switcher__preview__popover {
+  display: none;
+}
