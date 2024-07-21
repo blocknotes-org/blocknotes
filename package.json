@@ -16,7 +16,8 @@
     "prepare": "husky install",
     "regenerate-icons": "./src/assets/icon/generate.sh",
     "regenerate-blocks": "node ./src/block-types/generate.js",
-    "regenerate-dark": "node ./src/dark-generate.js"
+    "regenerate-dark": "node ./src/dark-generate.js",
+    "screenshot-pad": "node ./screenshots/pad.js"
   },
   "dependencies": {
     "@capacitor/app": "^6.0.0",
@@ -41,6 +42,7 @@
     "idb-keyval": "^6.2.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "sharp": "^0.33.4",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

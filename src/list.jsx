@@ -524,6 +524,8 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 										// eslint-disable-next-line no-alert
 										window.alert(e.message);
 									}
+
+									setIsModalOpen(false);
 								}}
 							>
 								{__('Pick Different Folder')}
