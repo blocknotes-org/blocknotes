@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 
 const info = `
 <!-- wp:paragraph -->
-<p>Notes are stored as simple files, so you own your data. Blocknotes never connects to the internet, so it’s completely offline and private. Files are stored natively, so you can use another service to sync them across devices (such as iCloud). It’s <a href="https://github.com/blocknotes-org/blocknotes">open source</a>.</p>
+<p>Own your data! This app stores your notes as simple, local HTML files. Blocknotes never connects to the internet. It’s completely offline and private. Files are stored natively, so you can use another service to sync them across devices (such as iCloud). It’s <a href="https://github.com/blocknotes-org/blocknotes">open source</a>.</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
