@@ -564,6 +564,9 @@ export default function Frame({ selectedFolderURL, setSelectedFolderURL }) {
 								const newItem = { id: uuidv4(), tags: [] };
 								setItems([newItem, ...items]);
 								setSelection([newItem.id]);
+								if (!isWide) {
+									setIsSidebarOpen(false);
+								}
 							}}
 						/>
 					</ToolbarGroup>
